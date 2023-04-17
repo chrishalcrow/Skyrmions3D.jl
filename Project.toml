@@ -3,6 +3,12 @@ uuid = "1ccad2fe-a5c3-464e-b06e-022e005d04e0"
 authors = ["Chris Halcrow"]
 version = "1.0.0-DEV"
 
+[deps]
+DiffEqCallbacks = "459566f4-90b8-5000-8ac3-15dfb0a30def"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+
 [compat]
 julia = "1"
 
