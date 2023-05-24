@@ -6,7 +6,7 @@ using DifferentialEquations, DiffEqCallbacks, Quaternions
 
 using Meshing, GeometryBasics, Interpolations, Colors
 
-	export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt
+	export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt, makeADHM!
 
 	mutable struct Skyrmion
 	    phi::Array{Float64, 4}
@@ -17,7 +17,8 @@ using Meshing, GeometryBasics, Interpolations, Colors
 
 
 	Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0] ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] )
-	Skyrmiom(lp,ls; vac = [0.0,0.0,0.0,1.0] ) = Skyrmion(zeros(lp,lp,lp,4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ] )
+
+	Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0] ) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ] )
 
 
 	include("initialise.jl")
