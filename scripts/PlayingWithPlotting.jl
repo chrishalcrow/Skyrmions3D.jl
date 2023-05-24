@@ -8,7 +8,7 @@ using Skyrmions
 
 
 
-an_ADHM_skyrmion = Skyrmion(30,0.3);
+an_ADHM_skyrmion = Skyrmion([30,30,20],[0.2,0.2,0.2]);
 
 
 λ=1.0;
@@ -24,6 +24,8 @@ M[1,1,:] = [0.0, 1.0, 0.0, 0.0]
 M[1,2,:] = [0.0, 0.0, 1.0, 0.0]
 M[2,1,:] = [0.0, 0.0, 1.0, 0.0]
 M[2,2,:] = [0.0, -1.0, 0.0, 0.0]
+
+makeADHM!(an_ADHM_skyrmion, L, M)
 
 an_ADHM_skyrmion.lp[1]
 
