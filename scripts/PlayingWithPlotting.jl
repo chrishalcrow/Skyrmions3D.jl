@@ -12,7 +12,7 @@ an_ADHM_skyrmion = Skyrmion(30,0.3);
 
 
 λ=1.0;
-B=2.0
+B=2
 
 L = zeros(B,4)
 M = zeros(B,B,4)
