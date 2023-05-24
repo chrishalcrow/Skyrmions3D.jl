@@ -5,19 +5,58 @@ end
 
 function Energy(sk, mpi)
 
+    ED = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
+
     engtot = 0.0
     dp = zeros(3,4)
 
     for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
     
         getDX!(dp, sk ,i, j, k )
-        @inbounds sk.ED[i,j,k] = engpt(dp,sk.phi[4,i,j,k],mpi)
+        @inbounds ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],mpi)
         
     end
 
-    engtot = sum(sk.ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(12.0*pi^2)
+    engtot = sum(ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(12.0*pi^2)
 
     return engtot
+
+end 
+
+
+function EnergyD(sk, mpi)
+
+	engD = zeros(sk.lp[1], sk.lp[2], sk.lp[3] )
+    dp = zeros(3,4)
+
+    @inbounds for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    
+        getDX!(dp, sk ,i, j, k )
+        engD[i,j,k] = engpt(dp,sk.phi[i,j,k,4],mpi)
+        
+    end
+
+    return engD
+
+end 
+
+function BaryonD(sk)
+
+	barD = zeros(sk.lp[1], sk.lp[2], sk.lp[3] )
+
+    dp = zeros(3,4)
+    pp = zeros(4)
+
+    @inbounds for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    
+        getDX!(dp, sk ,i, j, k )
+        getX!(pp,sk,i,j,k)
+
+        barD[i,j,k] = barypt(dp,pp)
+        
+    end
+    
+    return barD
 
 end 
 
@@ -28,6 +67,8 @@ end
 
 function Baryon(sk)
 
+    BD = zeros(sk.lp[1],sk.lp[2],sk.lp[3])
+
     bartot = 0.0
     dp = zeros(3,4)
     pp = zeros(4)
@@ -37,11 +78,11 @@ function Baryon(sk)
         getDX!(dp, sk ,i, j, k )
         getX!(pp,sk,i,j,k)
         
-        @inbounds sk.BD[i,j,k] = barypt(dp,pp)
+        BD[i,j,k] = barypt(dp,pp)
             
     end
     
-    bartot = sum(sk.BD)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(2.0*pi^2)
+    bartot = sum(BD)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(2.0*pi^2)
     
     return bartot
     

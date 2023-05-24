@@ -1,14 +1,38 @@
 
 function dxD(phi, a, i, j, k, lsx)
-    @inbounds (-phi[a,i+2,j,k] + 8.0*phi[a,i+1,j,k] - 8.0*phi[a,i-1,j,k] + phi[a,i-2,j,k])/(12.0*lsx)
+    @inbounds (-phi[i+2,j,k,a] + 8.0*phi[i+1,j,k,a] - 8.0*phi[i-1,j,k,a] + phi[i-2,j,k,a])/(12.0*lsx)
 end
 function dyD(phi, a, i, j, k, lsy)
-    @inbounds (-phi[a,i,j+2,k] + 8.0*phi[a,i,j+1,k] - 8.0*phi[a,i,j-1,k] + phi[a,i,j-2,k])/(12.0*lsy)
+    @inbounds (-phi[i,j+2,k,a] + 8.0*phi[i,j+1,k,a] - 8.0*phi[i,j-1,k,a] + phi[i,j-2,k,a])/(12.0*lsy)
 end
 function dzD(phi, a, i, j, k, lsz)
-    @inbounds (-phi[a,i,j,k+2] + 8.0*phi[a,i,j,k+1] - 8.0*phi[a,i,j,k-1] + phi[a,i,j,k-2])/(12.0*lsz)
+    @inbounds (-phi[i,j,k+2,a] + 8.0*phi[i,j,k+1,a] - 8.0*phi[i,j,k-1,a] + phi[i,j,k-2,a])/(12.0*lsz)
 end
 
+function d2xD(phi, a, i, j, k, lsx)
+    @inbounds (-phi[i+2,j,k,a] + 16.0*phi[i+1,j,k,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i-1,j,k,a] - phi[i-2,j,k,a])/(12.0*lsx^2)
+end
+function d2yD(phi, a, i, j, k, lsx)
+    @inbounds (-phi[i,j+2,k,a] + 16.0*phi[i,j+1,k,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i,j-1,k,a] - phi[i,j-2,k,a])/(12.0*lsx^2)
+end
+function d2zD(phi, a, i, j, k, lsx)
+    @inbounds (-phi[i,j,k+2,a] + 16.0*phi[i,j,k+1,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i,j,k-1,a] - phi[i,j,k-2,a])/(12.0*lsx^2)
+end
+
+function dxdydiffD(phi, a, i, j, k, lsx, lsy)
+    @inbounds (-phi[i+2,j+2,k,a] + 16.0*phi[i+1,j+1,k,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i-1,j-1,k,a] - phi[i-2,j-2,k,a])/(12.0*lsx*lsy)
+end
+function dxdzdiffD(phi, a, i, j, k, lsx, lsy)
+    @inbounds (-phi[i+2,j,k+2,a] + 16.0*phi[i+1,j,k+1,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i-1,j,k-1,a] - phi[i-2,j,k-2,a])/(12.0*lsx*lsy)
+end
+function dydzdiffD(phi, a, i, j, k, lsx, lsy)
+    @inbounds (-phi[i,j+2,k+2,a] + 16.0*phi[i,j+1,k+1,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i,j-1,k-1,a] - phi[i,j-2,k-2,a])/(12.0*lsx*lsy)
+end
+
+
+
+
+#=
 function d2xD(phi, a, i, j, k, lsx)
     @inbounds (-phi[a,i+2,j,k] + 16.0*phi[a,i+1,j,k] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i-1,j,k] - phi[a,i-2,j,k])/(12.0*lsx^2)
 end
@@ -28,6 +52,7 @@ end
 function dydzdiffD(phi, a, i, j, k, lsx, lsy)
     @inbounds (-phi[a,i,j+2,k+2] + 16.0*phi[a,i,j+1,k+1] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i,j-1,k-1] - phi[a,i,j-2,k-2])/(12.0*lsx*lsy)
 end
+=#
 
 
 function getDXf!(dp, phi,i,j,k,ls)
@@ -40,7 +65,7 @@ end
 
 function getDDXf!(ddp, phi ,i,j,k,ls)
     
-    @simd for a in 1:4
+    for a in 1:4
             
         @inbounds ddp[1,a] = d2xD(phi,a,i,j,k,ls[1])
         @inbounds ddp[2,a] = d2yD(phi,a,i,j,k,ls[2])
@@ -80,7 +105,7 @@ function getDDX!(ddp, sk ,i,j,k)
 end
 
 function getX!(pp,sk,i,j,k)
-    for a in 1:4
-        @inbounds pp[a] = sk.phi[a,i,j,k]
+    @inbounds for a in 1:4
+        pp[a] = sk.phi[i,j,k,a]
     end
 end
