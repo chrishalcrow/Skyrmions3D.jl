@@ -12,6 +12,7 @@ function dEdu!(du,u,p,t)
             getDXf!(dp, u ,i, j, k, p[1])
             getDDXf!(ddp, u, i, j, k, p[1])
 
+
             #@inbounds du[i,j,k,1] = dedfpt1v(dp,ddp)
             #@inbounds du[i,j,k,2] = dedfpt2v(dp,ddp)
             #@inbounds du[i,j,k,3] = dedfpt3v(dp,ddp)
@@ -138,7 +139,209 @@ function flow!(ϕ,mpi,dt,n)
     dp = zeros(3,4)
     ddp = zeros(6,4)
 
+    println("initial: ", Energy(ϕ, mpi) )
+
     for _ in 1:n
         gradvD!(ϕ,dEdp,mpi,dt,dp,ddp)
     end
+
+    println("  final: ", Energy(ϕ, mpi) )
 end
+
+
+
+function ANFflow!(ϕ,ϕd,mpi,dt,n)
+
+    dEdp = zeros(2,ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dp = zeros(3,4)
+    ddp = zeros(6,4)
+
+    previous_phi = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    previous_phi .= ϕ.phi;
+
+    old_energy = 1000.0
+    new_energy = 500.0
+
+    for _ in 1:n
+        previous_phi .= ϕ.phi;
+        old_energy = new_energy
+        stepANF!(ϕ,ϕd,dEdp,mpi,dt,dp,ddp)
+        new_energy = Energy(ϕ,mpi)
+
+        if new_energy > old_energy
+
+            println("ARREST!")
+
+            ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+            ϕ.phi .= previous_phi
+
+            #new_energy = old_energy
+
+
+        end
+
+        println(Energy(ϕ, mpi))
+
+    end
+end
+
+
+function stepANF!(sk, skd, dEdp, mpi, dt, dp, ddp)
+
+    dE_dot_mom = 0.0
+
+    for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+        
+            getDX!(dp, sk ,i, j, k )
+            getDDX!(ddp, sk, i, j, k)
+
+            @inbounds dEdp[2,i,j,k,1] = dedfpt1v(dp,ddp)
+            @inbounds dEdp[2,i,j,k,2] = dedfpt2v(dp,ddp)
+            @inbounds dEdp[2,i,j,k,3] = dedfpt3v(dp,ddp)
+            @inbounds dEdp[2,i,j,k,4] = dedfpt4v(dp,ddp,mpi)
+
+            for a in 1:4
+                dEdp[1,i,j,k,a] = skd[i,j,k,a]
+            end
+
+            for a in 1:4
+                dE_dot_mom += dEdp[2,i,j,k,a]*skd[i,j,k,a]
+            end
+
+        end
+    end
+
+    #if dE_dot_mom < 0 
+    #    for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
+    #        dEdp[1,i,j,k,a] = 0.0
+    #    end
+    #end
+
+
+    #println("dot: ", dE_dot_mom)
+    
+        
+    @simd for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
+
+            @inbounds sk.phi[i,j,k,a] += dt*dEdp[1,i,j,k,a]
+
+
+            @inbounds skd[i,j,k,a] += dt*dEdp[2,i,j,k,a]
+
+
+            for b in 1:4
+                skd[i,j,k,a] -= dt*( dEdp[2,i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
+            end
+
+
+
+        end
+    end
+    
+    normer(sk)
+   
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+function momflow!(ϕ,ϕd,mpi,dt,n;α=1.0, β=1.0)
+
+    dEdp = zeros(2,ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dp = zeros(3,4)
+    ddp = zeros(6,4)
+
+
+    for _ in 1:n
+
+        stepMOM!(ϕ,ϕd,dEdp,mpi,dt,dp,ddp,α, β)
+        println(Energy(ϕ, mpi))
+
+    end
+end
+
+
+function stepMOM!(sk, skd, dEdp, mpi, dt, dp, ddp, α, β)
+
+
+    for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+        
+            getDX!(dp, sk ,i, j, k )
+            getDDX!(ddp, sk, i, j, k)
+
+            @inbounds dEdp[2,i,j,k,1] = dedfpt1v(dp,ddp)
+            @inbounds dEdp[2,i,j,k,2] = dedfpt2v(dp,ddp)
+            @inbounds dEdp[2,i,j,k,3] = dedfpt3v(dp,ddp)
+            @inbounds dEdp[2,i,j,k,4] = dedfpt4v(dp,ddp,mpi)
+
+            for a in 1:4
+                dEdp[1,i,j,k,a] = skd[i,j,k,a]
+            end
+
+            #for a in 1:4
+            #    dE_dot_mom += dEdp[2,i,j,k,a]*skd[i,j,k,a]
+            #end
+
+        end
+    end
+
+
+    #println("dot: ", dE_dot_mom)
+    
+        
+    @simd for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
+
+            @inbounds sk.phi[i,j,k,a] = sk.phi[i,j,k,a] + dt*α*skd[i,j,k,a]
+
+
+            @inbounds skd[i,j,k,a] = β*skd[i,j,k,a] + dt*dEdp[2,i,j,k,a] 
+
+
+            for b in 1:4
+                skd[i,j,k,a] -= dt*( dEdp[2,i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
+            end
+
+            #dt*dEdp[1,i,j,k,a]
+
+
+
+        end
+    end
+    
+    normer(sk)
+   
+end 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

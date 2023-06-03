@@ -1,5 +1,31 @@
+function R_from_axis_angle(th, n)
 
-function makeRM!(skyrmion, prof, pfn, qfn)
+    if th == 0.0
+        return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
+    end
+
+    n1 = n[1]
+    n2 = n[2]
+    n3 = n[3]
+
+    normer = sqrt( n1^2 + n2^2 + n3^2 )
+
+    n1 /= normer
+    n2 /= normer
+    n3 /= normer
+
+     #return [ 1.0 + 1.0 1.0 1.0 ; 1.0 0.0 0.0 ; 0.0 0.0 0.0 ]
+
+
+
+     return [ n1^2 + (n2^2 + n3^2)*cos(th) 2*sin(th/2.0)*(-(n3*cos(th/2.0 + n1*n3*sin(th/2.0)))) 2*sin(th/2.0)*(n2*cos(th/2.0) + n1*n3*sin(th/2.0)) ;  2*sin(th/2.0)*(n3*cos(th/2.0) + n1*n2*sin(th/2.0)) n2^2 + (n1^2 + n3^2)*cos(th) n2*n3 - n2*n3*cos(th) - n1*sin(th) ; 2*n1*n3*sin(th/2.0)^2 - n2*sin(th) 2*sin(th/2.0)*(n1*cos(th/2.0) + n2*n3*sin(th/2.0)) n3^2 + (n1^2 + n2^2)*cos(th) ]
+        
+
+end
+
+
+
+function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
     
     lp, x = skyrmion.lp, skyrmion.x
 
@@ -10,23 +36,54 @@ function makeRM!(skyrmion, prof, pfn, qfn)
     qRM = complex(0.0,0.0) 
     den = complex(0.0,0.0)
 
+
+    RI = R_from_axis_angle(iTH, i_n)
+    RJ = R_from_axis_angle(jTH, i_n)
+
+    #p(z) = z
+    #q(z) = z
+
     sine_of_prof_r = 0.0
+
+    #if i_TH != 0.0
+    #    p(z) = ( cos(i_TH/2.0) + 1.0im*i_n[3]*sin(i_TH/2.0) )*pfn(z) + (i_n[2] - 1.0im*i_n[1])*sin(i_TH/2.0)*qfn(z);
+    #    q(z) = (-i_n[2] - 1.0im*i_n[1])*sin(i_TH/2.0)*pfn(z) + ( cos(i_TH/2.0) - 1.0im*i_n[3]*sin(i_TH/2.0) )*qfn(z);
+    #else
+    #    p(z) = pfn(z)
+    #    q(z) = qfn(z)
+    #end
+
+    Xt = zeros(3)
 
     @inbounds for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
-        r = sqrt( x[1][i]^2 + x[2][j]^2 + x[3][k]^2 )
+        Xt[1] = x[1][i]-X[1];
+        Xt[2] = x[2][j]-X[2];
+        Xt[3] = x[3][k]-X[3];
+
+        Xt = RJ*Xt;
+
+        #r = sqrt( (x[1][i]-X[1])^2 + (x[2][j]-X[2])^2 + (x[3][k]-X[3])^2 )
+        r = sqrt( Xt[1]^2 + Xt[2]^2 + Xt[3]^2 )
+
         sine_of_prof_r = sin(prof(r))
 
-        zRM = (x[1][i] + 1.0im*x[2][j])/(r + x[3][k])
+        #zRM = (x[1][i] - X[1] + 1.0im*(x[2][j] - X[2])  )/(r + (x[3][k] - X[3]))
+        zRM = ( Xt[1] + 1.0im*Xt[2] )/(r + Xt[3])
 
         pRM = pfn(zRM)
         qRM = qfn(zRM)
+
         den = real( qRM*conj(qRM) + pRM*conj(pRM) )
 
         skyrmion.phi[i,j,k,1] = (sine_of_prof_r/den)*real( pRM*conj(qRM) + qRM*conj(pRM) )
         skyrmion.phi[i,j,k,2] = (sine_of_prof_r/den)*imag( pRM*conj(qRM) - qRM*conj(pRM) )
         skyrmion.phi[i,j,k,3] = (sine_of_prof_r/den)*real( qRM*conj(qRM) - pRM*conj(pRM) )
         skyrmion.phi[i,j,k,4] = cos(prof(r))
+
+        if iTH != 0.0
+            skyrmion.phi[i,j,k,1:3] = RI*skyrmion.phi[i,j,k,1:3]
+        end
 
     end
     
@@ -203,43 +260,188 @@ function makeQmultmatrix2(q)
 
 end
 
+function makeQmultmatrix2!(qM,q)
+
+    qM[1,1] = q[1];  qM[1,2] = -q[2]; qM[1,3] = -q[3]; qM[1,4] = -q[4]; 
+    qM[2,1] = q[2];  qM[2,2] = q[1]; qM[2,3] = -q[4]; qM[2,4] = q[3]; 
+    qM[3,1] = q[3];  qM[3,2] = q[4]; qM[3,3] = q[1]; qM[3,4] = -q[2]; 
+    qM[4,1] = q[4];  qM[4,2] = -q[3]; qM[4,3] = q[2]; qM[4,4] = q[1]; 
+
+end
+
 function makeADHM!(an_ADHM_skyrmion, L, M)
 
+    tsteps = 42
+    lstime = pi/tsteps
+
+    ctL = [ cos(lstime*(tint-1)) for tint in 1:tsteps+1 ]
+    stL = [ sin(lstime*(tint-1)) for tint in 1:tsteps+1 ]
+
+
     B = size(L)[1]
+
+
 
     x = an_ADHM_skyrmion.x
     lp = an_ADHM_skyrmion.lp
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
-        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L,M,[x[1][i],x[2][j],x[3][k]],B)
+        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L,M,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
     end
+
+end
+
+function third_order_update!(Q,q1,q2,q3)
+
+    Q[1,1] = (4.0*q1[1]*q2[1] - 4.0*q1[2]*q2[2] - 4.0*q1[3]*q2[3] - 4.0*q1[4]*q2[4] - q3[1])/3.0
+    Q[1,2] = (-4.0*q1[2]*q2[1] - 4.0*q1[1]*q2[2] + 4.0*q1[4]*q2[3] - 4.0*q1[3]*q2[4] + q3[2])/3.0
+    Q[1,3] = (-4.0*q1[3]*q2[1] - 4.0*q1[4]*q2[2] - 4.0*q1[1]*q2[3] + 4.0*q1[2]*q2[4] + q3[3])/3.0
+    Q[1,4] = (-4.0*q1[4]*q2[1] + 4.0*q1[3]*q2[2] - 4.0*q1[2]*q2[3] - 4.0*q1[1]*q2[4] + q3[4])/3.0
+    Q[2,1] = (4.0*q1[2]*q2[1] + 4.0*q1[1]*q2[2] - 4.0*q1[4]*q2[3] + 4.0*q1[3]*q2[4] - q3[2])/3.0
+    Q[2,2] = (4.0*q1[1]*q2[1] - 4.0*q1[2]*q2[2] - 4.0*q1[3]*q2[3] - 4.0*q1[4]*q2[4] - q3[1])/3.0
+    Q[2,3] = (-4.0*q1[4]*q2[1] + 4.0*q1[3]*q2[2] - 4.0*q1[2]*q2[3] - 4.0*q1[1]*q2[4] + q3[4])/3.0
+    Q[2,4] = (4.0*q1[3]*q2[1] + 4.0*q1[4]*q2[2] + 4.0*q1[1]*q2[3] - 4.0*q1[2]*q2[4] - q3[3])/3.0
+    Q[3,1] = (4.0*q1[3]*q2[1] + 4.0*q1[4]*q2[2] + 4.0*q1[1]*q2[3] - 4.0*q1[2]*q2[4] - q3[3])/3.0
+    Q[3,2] = (4.0*q1[4]*q2[1] - 4.0*q1[3]*q2[2] + 4.0*q1[2]*q2[3] + 4.0*q1[1]*q2[4] - q3[4])/3.0
+    Q[3,3] = (4.0*q1[1]*q2[1] - 4.0*q1[2]*q2[2] - 4.0*q1[3]*q2[3] - 4.0*q1[4]*q2[4] - q3[1])/3.0
+    Q[3,4] = (-4.0*q1[2]*q2[1] - 4.0*q1[1]*q2[2] + 4.0*q1[4]*q2[3] - 4.0*q1[3]*q2[4] + q3[2])/3.0
+    Q[4,1] = (4.0*q1[4]*q2[1] - 4.0*q1[3]*q2[2] + 4.0*q1[2]*q2[3] + 4.0*q1[1]*q2[4] - q3[4])/3.0
+    Q[4,2] = (-4.0*q1[3]*q2[1] - 4.0*q1[4]*q2[2] - 4.0*q1[1]*q2[3] + 4.0*q1[2]*q2[4] + q3[3])/3.0
+    Q[4,3] = (4.0*q1[2]*q2[1] + 4.0*q1[1]*q2[2] - 4.0*q1[4]*q2[3] + 4.0*q1[3]*q2[4] - q3[2])/3.0
+    Q[4,4] = (4.0*q1[1]*q2[1] - 4.0*q1[2]*q2[2] - 4.0*q1[3]*q2[3] - 4.0*q1[4]*q2[4] - q3[1])/3.0
+
+end
+
+function B3_tet_data(lam)
+
+    L = zeros(3,4)
+    M = zeros(3,3,4)
+
+    L[1,2] = lam
+    L[2,3] = lam
+    L[3,4] = lam
+
+    M[1,2,4] = lam;    M[1,3,3] = lam;
+    M[2,1,4] = lam;    M[2,3,2] = lam;
+    M[3,1,3] = lam;    M[3,2,2] = lam;
+
+    return L, M
+
+end
+
+function B4_cube_data(lam)
+
+    L = zeros(4,4)
+    M = zeros(4,4,4)
+
+    L[1,1] = lam
+    L[2,2] = lam
+    L[3,3] = lam
+    L[4,4] = lam
+
+    lam /= sqrt(2.0)
+
+    M[1,2,3] = -lam; M[1,2,4] = -lam;
+    M[1,3,2] = -lam; M[1,3,4] = -lam;
+    M[1,4,2] = -lam; M[1,4,3] = -lam;
+
+    M[2,3,2] = -lam; M[2,3,3] =  lam;
+    M[2,4,2] =  lam; M[2,4,4] = -lam;
+
+    M[3,4,3] = -lam; M[3,4,4] =  lam;
+
+    for a in 1:4, b in 1:a, c in 1:4
+        M[a,b,c] = M[b,a,c]
+    end
+
+    return L, M
+
+end
+
+function B3_tet_data(lam)
+
+    L = zeros(3,4)
+    M = zeros(3,3,4)
+
+    L[1,2] = lam
+    L[2,3] = lam
+    L[3,4] = lam
+
+    M[1,2,4] = lam;    M[1,3,3] = lam;
+    M[2,1,4] = lam;    M[2,3,2] = lam;
+    M[3,1,3] = lam;    M[3,2,2] = lam;
+
+    return L, M
 
 end
 
 
 
-function ADHMpt2(L,M,y,B)
 
-    U = [1.0 ; 0.0; 0; 0]
+function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
+
+    #Rnm = zeros(B,B)
+    #iRnm = zeros(B,B)
+
+    if B == 2
+        Rnm = zeros( MMatrix{2,2,Float64} )
+        iRnm = zeros( MMatrix{2,2,Float64} )
+    elseif B == 3
+        Rnm = zeros( MMatrix{3,3,Float64} )
+        iRnm = zeros( MMatrix{3,3,Float64} )
+    elseif B == 4
+        Rnm = zeros( MMatrix{4,4,Float64} )
+        iRnm = zeros( MMatrix{4,4,Float64} )
+    elseif B == 5
+        Rnm = zeros( MMatrix{5,5,Float64} )
+        iRnm = zeros( MMatrix{5,5,Float64} )
+    elseif B == 6
+        Rnm = zeros( MMatrix{6,6,Float64} )
+        iRnm = zeros( MMatrix{6,6,Float64} )
+    elseif B == 7
+        Rnm = zeros( MMatrix{7,7,Float64} )
+        iRnm = zeros( MMatrix{7,7,Float64} )
+    elseif B == 8
+        Rnm = zeros( MMatrix{8,8,Float64} )
+        iRnm = zeros( MMatrix{8,8,Float64} )
+    else
+        Rnm = zeros(B, B)
+        iRnm = zeros(B,B)
+    end
 
 
+    #U = [1.0 ; 0.0; 0; 0]
+
+    Ln = zeros(B,4)
+    Mn = zeros(B,B,4)
+
+    #Ln = zeros( MMatrix{2,4,Float64} )
+    #Mn = zeros( MArray{2,2,4,Float64} )
+
+    U = zeros( MVector{4,Float64} )
+    U[1] = 1.0
 
 
     Mmdysp = zeros(B,B,4)
     p = zeros(B,4)
 
 
-    Ω1M = zeros(4,4)
-    Ω2M = zeros(4,4)
-    Ω3M = zeros(4,4)
+    #Ω1M = zeros(4,4)
+    Ω1M = zeros( MMatrix{4,4,Float64} )
 
-    Ω1 = zeros(4)
-    Ω1i = zeros(4)
-    Ω2 = zeros(4)
-    Ω3 = zeros(4)
+    #Ω2M = zeros(4,4)
+    #Ω3M = zeros(4,4)
+
+    #Ω1 = zeros(4)
+    Ω1 = zeros( MVector{4,Float64} )
+    Ω2 = zeros( MVector{4,Float64} )
+    Ω3 = zeros( MVector{4,Float64} )
+    #Ω1i = zeros(4)
+    #Ω2 = zeros(4)
+    #Ω3 = zeros(4)
 
 
-    tsteps = 42;
+    
     lstime = pi/tsteps;
 
     allN = zeros(tsteps+1,B+1,4)
@@ -248,18 +450,30 @@ function ADHMpt2(L,M,y,B)
 
     
 
-    
+
 
     for tint in 1:tsteps+1
 
         #Nfy!(allN,tint,L,M,[t,y[1],y[2],y[3]], Mmdysp ,p, B,1.0)
         #t += δt
 
-        ct = cos(lstime*(tint-1));
-        x0 = sin(lstime*(tint-1));
+        ct = ctL[tint]
 
-        x1t = y[1]*ct; x2t = y[2]*ct; x3t = y[3]*ct;
-        Nfy!(allN,tint,L.*ct,M.*ct,[x0,x1t,x2t,x3t], Mmdysp ,p, B,ct)
+        @inbounds x1t = y[1]*ct; x2t = y[2]*ct; x3t = y[3]*ct;
+
+        @inbounds for c in 1:4
+            for a in 1:B
+                Ln[a,c] = ct*L[a,c]
+                for b in 1:B
+                    Mn[a,b,c] = ct*M[a,b,c]
+                end
+            end
+        end
+
+        
+        Nfy!(allN,tint,Ln,Mn,[stL[tint],x1t,x2t,x3t], Mmdysp ,p, B,ct,Rnm,iRnm)
+
+        #Nfy!(allN,tint,L.*ct,M.*ct,[x0,x1t,x2t,x3t], Mmdysp ,p, B,ct,Rnm,iRnm)
 
         
         
@@ -282,22 +496,54 @@ function ADHMpt2(L,M,y,B)
         U = Ω1M*U =#
 
         #= SECOND ORDER =#
-        getΩ!(Ω1,allN[tint+2,:,:],allN[tint+1,:,:],B)
-        getΩ!(Ω2,allN[tint+1,:,:],allN[tint,:,:],B)
-        getΩ!(Ω3,allN[tint+2,:,:],allN[tint,:,:],B)
-        
-        Ω1M = makeQmultmatrix2(Ω1)
-        Ω2M = makeQmultmatrix2(Ω2)
-        Ω3M = makeQmultmatrix2(Ω3)
+        #getΩ!(Ω1,allN[tint+2,:,:],allN[tint+1,:,:],B)
+        #getΩ!(Ω2,allN[tint+1,:,:],allN[tint,:,:],B)
+        #getΩ!(Ω3,allN[tint+2,:,:],allN[tint,:,:],B)
 
-        U = (4.0.*Ω1M*Ω2M - Ω3M)*U./3.0
+        getΩf!(Ω1,allN,tint+2,tint+1,B)
+        getΩf!(Ω2,allN,tint+1,tint,B)
+        getΩf!(Ω3,allN,tint+2,tint,B)
+
+        third_order_update!(Ω1M,Ω1,Ω2,Ω3)
+
+        #makeQmultmatrix2!(Ω1M,Ω1)
+        #makeQmultmatrix2!(Ω2M,Ω2)
+        #makeQmultmatrix2!(Ω3M,Ω3)
+        
+        #Ω1M = makeQmultmatrix2(Ω1)
+        #Ω2M = makeQmultmatrix2(Ω2)
+        #Ω3M = makeQmultmatrix2(Ω3)
+
+        U = Ω1M*U#(4.0.*Ω1M*Ω2M - Ω3M)*U./3.0
         
 
     end
 
     normer = sqrt( U[1]^2 + U[2]^2 + U[3]^2 + U[4]^2 )
+    @simd for a in 1:4
+        @inbounds U[a] /= normer
+    end
     
-    return [U[2],U[3],U[4],U[1]]./normer
+    return [U[2],U[3],U[4],U[1]]#./normer
+
+end
+
+
+
+
+function getΩf!(Ω1,allv,t1,t2,B)
+
+    Ω1[1] = 0.0; 
+    Ω1[2] = 0.0; 
+    Ω1[3] = 0.0; 
+    Ω1[4] = 0.0;
+
+    @simd for a in 1:B+1
+        @inbounds Ω1[1] += allv[t2,a,1]*allv[t1,a,1] + allv[t2,a,2]*allv[t1,a,2] + allv[t2,a,3]*allv[t1,a,3] + allv[t2,a,4]*allv[t1,a,4]
+        @inbounds Ω1[2] += allv[t2,a,2]*allv[t1,a,1] - allv[t2,a,1]*allv[t1,a,2] - allv[t2,a,4]*allv[t1,a,3] + allv[t2,a,3]*allv[t1,a,4]
+        @inbounds Ω1[3] += allv[t2,a,3]*allv[t1,a,1] + allv[t2,a,4]*allv[t1,a,2] - allv[t2,a,1]*allv[t1,a,3] - allv[t2,a,2]*allv[t1,a,4]
+        @inbounds Ω1[4] += allv[t2,a,4]*allv[t1,a,1] - allv[t2,a,3]*allv[t1,a,2] + allv[t2,a,2]*allv[t1,a,3] - allv[t2,a,1]*allv[t1,a,4]
+    end
 
 end
 
@@ -308,7 +554,7 @@ function getΩ!(Ω1,vp,v,B)
     Ω1[3] = 0.0; 
     Ω1[4] = 0.0;
 
-    for a in 1:B+1
+    @inbounds for a in 1:B+1
         Ω1[1] += v[a,1]*vp[a,1] + v[a,2]*vp[a,2] + v[a,3]*vp[a,3] + v[a,4]*vp[a,4]
         Ω1[2] += v[a,2]*vp[a,1] - v[a,1]*vp[a,2] - v[a,4]*vp[a,3] + v[a,3]*vp[a,4]
         Ω1[3] += v[a,3]*vp[a,1] + v[a,4]*vp[a,2] - v[a,1]*vp[a,3] - v[a,2]*vp[a,4]
@@ -318,31 +564,34 @@ function getΩ!(Ω1,vp,v,B)
 end
 
 
+#=
 
+function Nfy!(Nα,L,M,y,Mmdysp,p,B::Int64)
 
-function Nfy!(Nα,L,M,y,Mmdysp,p,B)
-
-    Rnm = zeros(B,B)#zeros( MMatrix{2,2,Float64} )
+    Rnm = zeros( MMatrix{2,2,Float64} )#zeros(B,B)#zeros( MMatrix{2,2,Float64} )
+    #Rnm = zeros(B,B)
     
-    for a in 1:B, b in 1:B, c in 1:4
+    @inbounds for a in 1:B, b in 1:B, c in 1:4
         Mmdysp[a,b,c] = 0.0
     end
 
-    for a in 1:B, c in 1:4
+    @inbounds for a in 1:B, c in 1:4
         p[a,c] = 0.0
     end
     
     @inbounds for b in 1:B, a in 1:4
-        Mmdysp[b,b,a] -= y[a]
         for c in 1:B
-            Mmdysp[b,c,a] += M[b,c,a]
+            Mmdysp[b,c,a] = M[b,c,a]
         end
+        Mmdysp[b,b,a] -= y[a]
+        
     end
 
     makeRnm!(Rnm, L, Mmdysp, B)
     
     
     iRnm = inv(Rnm)
+    #iRnm = rand(B,B)
 
 
     @inbounds for a in 1:B
@@ -367,7 +616,7 @@ function Nfy!(Nα,L,M,y,Mmdysp,p,B)
 
 
 
-    for c in 1:4
+    @inbounds for c in 1:4
         Nα[B+1,c] = 0.0
     end
 
@@ -404,32 +653,29 @@ function Nfy!(Nα,L,M,y,Mmdysp,p,B)
 end
 
 
+=#
 
 
 
+function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct,Rnm,iRnm)
 
-function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct)
-
-    Rnm = zeros(B,B)#zeros( MMatrix{2,2,Float64} )
+    #Rnm = zeros(B,B)#zeros( MMatrix{2,2,Float64} )
+    #Rnm = zeros( MMatrix{B,B,Float64} )
     
-    for a in 1:B, b in 1:B, c in 1:4
-        Mmdysp[a,b,c] = 0.0
-    end
 
     for a in 1:B, c in 1:4
         p[a,c] = 0.0
     end
     
-    @inbounds for b in 1:B, a in 1:4
-        Mmdysp[b,b,a] -= y[a]
+        @inbounds for b in 1:B, a in 1:4
         for c in 1:B
-            Mmdysp[b,c,a] += M[b,c,a]
+            Mmdysp[b,c,a] = M[b,c,a]
         end
+        Mmdysp[b,b,a] -= y[a]
+        
     end
 
     makeRnm!(Rnm, L, Mmdysp, B)
-    
-    
     iRnm = inv(Rnm)
 
 
@@ -479,6 +725,8 @@ function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct)
 
     end
 
+
+
     normer = 0.0
 
     @inbounds for a in 1:B+1, b in 1:4 
@@ -497,12 +745,14 @@ end
 
 
 function makeRnm!(Rnm,L,M,B)
-    @inbounds for a in 1:B, b in 1:B
-        @fastmath Rnm[a,b] = L[a,1]*L[b,1] + L[a,2]*L[b,2] + L[a,3]*L[b,3] + L[a,4]*L[b,4]
+    @simd for a in 1:B
+        for  b in 1:B
+        @inbounds @fastmath Rnm[a,b] = L[a,1]*L[b,1] + L[a,2]*L[b,2] + L[a,3]*L[b,3] + L[a,4]*L[b,4]
         for c in 1:B, d in 1:4
-            @fastmath Rnm[a,b] += (M[a,c,d]*M[c,b,d])
+            @inbounds @fastmath Rnm[a,b] += (M[a,c,d]*M[c,b,d])
         end
     end
+end
     
     #return Rnm
         

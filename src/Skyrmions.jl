@@ -2,11 +2,15 @@ module Skyrmions
 
 using Makie
 using GLMakie
-using DifferentialEquations, DiffEqCallbacks, Quaternions
+using DifferentialEquations, DiffEqCallbacks
 
-using Meshing, GeometryBasics, Interpolations, Colors
+using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
-	export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt, makeADHM!
+	export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt, makeADHM!, ADHMpt2V
+
+
+	include("transform.jl")
+	export shift, product, product!, make_RM_product!, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
 
 	mutable struct Skyrmion
 	    phi::Array{Float64, 4}
@@ -22,7 +26,7 @@ using Meshing, GeometryBasics, Interpolations, Colors
 
 
 	include("initialise.jl")
-	export makeRM!
+	export makeRM!, R_from_axis_angle
 
 	export makeRM, SkyrIso, MakeProduct, SkyrShift, multicubes!
 	export Skyr
