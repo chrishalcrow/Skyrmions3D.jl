@@ -6,11 +6,11 @@ using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, Quaternionic
 
-export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt, makeADHM!, ADHMpt2V, normer
+export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt, makeADHM!, ADHMpt2V, normer, R_from_axis_angle
 
 
 include("transform.jl")
-export shift, product, product!, make_RM_product!, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
+export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
 
 mutable struct Skyrmion
 	phi::Array{Float64, 4}

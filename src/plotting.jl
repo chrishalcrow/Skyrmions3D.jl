@@ -76,9 +76,10 @@ function make_color_map(skyrmion, BDmesh)
 end
 
 
-function plot_baryon_density(skyrmion; iso_value = 0.5)
+function plot_baryon_density(skyrmion; iso_value = 0.5, kwargs...)
     
 	x = skyrmion.x
+	lp = skyrmion.lp
 
 	BD = BaryonD(skyrmion)
 
@@ -87,7 +88,9 @@ function plot_baryon_density(skyrmion; iso_value = 0.5)
 
     fig = Figure()
 
-        Makie.mesh(fig[1,1],BDmesh,
+	ax = Axis3(fig[1,1],aspect=(lp[1],lp[2],lp[3]), ;kwargs...)
+
+        Makie.mesh!(ax,BDmesh,
         	color = skcolormap,
         	shading=false,
 
