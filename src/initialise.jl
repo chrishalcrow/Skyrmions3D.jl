@@ -269,7 +269,57 @@ function makeQmultmatrix2!(qM,q)
 
 end
 
+"""
+    bar(x[, y])
+
+Compute the Bar index between `x` and `y`.
+
+If `y` is unspecified, compute the Bar index between all pairs of columns of `x`.
+
+# Examples
+```julia-repl
+julia> bar([1, 2], [1, 2])
+1
+```
+"""
 function makeADHM!(an_ADHM_skyrmion, L, M)
+
+    B = size(L)[1]
+
+    L_final = zeros(B,4)
+    M_final = zeros(B,B,4)
+
+
+   if typeof(L[1]) == QuaternionF64
+
+        for a in 1:B
+            L_final[a,1] = L[a].w
+            L_final[a,2] = L[a].x
+            L_final[a,3] = L[a].y
+            L_final[a,4] = L[a].z
+        end
+    else
+        for a in 1:B, c in 1:4
+            L_final[a,c] = L[a,c]
+        end
+    end
+
+    if typeof(M[1,1]) == QuaternionF64
+
+        for a in 1:B, b in 1:B
+            M_final[a,b,1] = M[a,b].w
+            M_final[a,b,2] = M[a,b].x
+            M_final[a,b,3] = M[a,b].y
+            M_final[a,b,4] = M[a,b].z
+        end
+    else
+
+        for a in 1:B, b in 1:B, c in 1:4
+            M_final[a,b,c] = M[a,b,c]
+        end
+    end
+
+
 
     tsteps = 42
     lstime = pi/tsteps
@@ -278,7 +328,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     stL = [ sin(lstime*(tint-1)) for tint in 1:tsteps+1 ]
 
 
-    B = size(L)[1]
+   
 
 
 
@@ -286,7 +336,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     lp = an_ADHM_skyrmion.lp
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
-        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L,M,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
+        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
     end
 
 end
@@ -357,7 +407,7 @@ function B4_cube_data(lam)
     return L, M
 
 end
-
+#=
 function B3_tet_data(lam)
 
     L = zeros(3,4)
@@ -374,7 +424,7 @@ function B3_tet_data(lam)
     return L, M
 
 end
-
+=#
 
 
 

@@ -71,7 +71,7 @@ function make_color_map(skyrmion, BDmesh)
 
    p3color = (phi_on_mesh[3,:] .- minp)./(maxp - minp)
 
-	return [ Colors.HSL( 360*(atan.(phi_on_mesh[1,a], phi_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ];
+	return [ Colors.HSL( 360*(atan.(phi_on_mesh[1,a], -phi_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ];
 
 end
 
