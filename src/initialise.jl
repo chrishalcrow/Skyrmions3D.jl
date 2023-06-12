@@ -34,7 +34,7 @@ function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,
 
 
     RI = R_from_axis_angle(iTH, i_n)
-    RJ = R_from_axis_angle(jTH, i_n)
+    RJ = R_from_axis_angle(jTH, j_n)
 
     #p(z) = z
     #q(z) = z

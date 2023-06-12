@@ -88,7 +88,7 @@ function plot_baryon_density(skyrmion; iso_value = 0.5, kwargs...)
 
     fig = Figure()
 
-	ax = Axis3(fig[1,1],aspect=(lp[1],lp[2],lp[3]), ;kwargs...)
+	ax = Axis3(fig[1,1], ;kwargs...)
 
         Makie.mesh!(ax,BDmesh,
         	color = skcolormap,
