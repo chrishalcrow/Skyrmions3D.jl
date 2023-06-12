@@ -14,10 +14,6 @@ function R_from_axis_angle(th, n)
     n2 /= normer
     n3 /= normer
 
-     #return [ 1.0 + 1.0 1.0 1.0 ; 1.0 0.0 0.0 ; 0.0 0.0 0.0 ]
-
-
-
      return [ n1^2 + (n2^2 + n3^2)*cos(th) 2*sin(th/2.0)*(-(n3*cos(th/2.0 + n1*n3*sin(th/2.0)))) 2*sin(th/2.0)*(n2*cos(th/2.0) + n1*n3*sin(th/2.0)) ;  2*sin(th/2.0)*(n3*cos(th/2.0) + n1*n2*sin(th/2.0)) n2^2 + (n1^2 + n3^2)*cos(th) n2*n3 - n2*n3*cos(th) - n1*sin(th) ; 2*n1*n3*sin(th/2.0)^2 - n2*sin(th) 2*sin(th/2.0)*(n1*cos(th/2.0) + n2*n3*sin(th/2.0)) n3^2 + (n1^2 + n2^2)*cos(th) ]
         
 
@@ -290,7 +286,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     M_final = zeros(B,B,4)
 
 
-   if typeof(L[1]) == QuaternionF64
+   if typeof(L[end]) == QuaternionF64
 
         for a in 1:B
             L_final[a,1] = L[a].w
@@ -304,7 +300,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
         end
     end
 
-    if typeof(M[1][1]) == QuaternionF64
+    if typeof(M[end]) == QuaternionF64
 
         for a in 1:B, b in 1:B
             M_final[a,b,1] = M[a,b].w
