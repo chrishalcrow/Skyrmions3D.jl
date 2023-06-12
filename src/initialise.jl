@@ -304,7 +304,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
         end
     end
 
-    if typeof(M[1,1]) == QuaternionF64
+    if typeof(M[1][1]) == QuaternionF64
 
         for a in 1:B, b in 1:B
             M_final[a,b,1] = M[a,b].w
@@ -327,8 +327,6 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     ctL = [ cos(lstime*(tint-1)) for tint in 1:tsteps+1 ]
     stL = [ sin(lstime*(tint-1)) for tint in 1:tsteps+1 ]
 
-
-   
 
 
 
