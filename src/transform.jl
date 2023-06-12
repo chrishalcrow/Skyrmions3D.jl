@@ -17,8 +17,6 @@ end
 
 
 
-
-
 function product!(sk1, sk2)
 
     if sk1.x != sk2.x
@@ -79,11 +77,6 @@ function product(sk1, sk2)
 end
 
 
-
-
-
-
-
 function shift(skyrmion,X)
 
     x = skyrmion.x
@@ -111,7 +104,7 @@ function shift(skyrmion,X)
 end
 
 
-function isorotate!(sky_temp,skyrmion,θ,n)
+function isorotate!(skyrmion,θ,n)
 
     rotation_matrix = [ cos(θ) sin(θ) 0
                         -sin(θ) cos(θ) 0
@@ -119,20 +112,26 @@ function isorotate!(sky_temp,skyrmion,θ,n)
 
     x = skyrmion.x
     lp = skyrmion.lp
+    ls = skyrmion.ls
+
+    tempsk = Skyrmion(lp,ls)
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:3
-        sky_temp.phi[i,j,k,a] = 0.0
+        tempsk.phi[i,j,k,a] = 0.0
     end
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
         for a in 1:3, b in 1:3
-                sky_temp.phi[i,j,k,a] += rotation_matrix[a,b]*skyrmion.phi[i,j,k,b]
+            tempsk.phi[i,j,k,a] += rotation_matrix[a,b]*skyrmion.phi[i,j,k,b]
         end
 
-        sky_temp.phi[i,j,k,4] = skyrmion.phi[i,j,k,4]
+        tempsk.phi[i,j,k,4] = skyrmion.phi[i,j,k,4]
 
     end
 
-    #normer(sky_temp)
+    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:4
+        skyrmion.phi[i,j,k,a] = tempsk.phi[i,j,k,a]
+    end
+
 end
