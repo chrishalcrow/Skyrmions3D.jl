@@ -38,7 +38,7 @@ export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
 export flow!
 export flowRAK!
 
-export imusingnotebook, imusingterminal
+export imusingnotebook, imusingterminal, imusingJupyter
 
 
 include("plotting.jl")
@@ -50,6 +50,10 @@ include("derivatives.jl")
 
 include("diff.jl")
 
+
+function imusingJupyter()
+	WGLMakie.activate!()
+end
 
 
 """
