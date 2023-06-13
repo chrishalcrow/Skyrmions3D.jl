@@ -42,7 +42,7 @@ export imusingnotebook, imusingterminal, imusingJupyter
 
 
 include("plotting.jl")
-export plot_skyrmion, plot_field, plot_baryon_density
+export plot_skyrmion, plot_field, plot_baryon_density, getmesh
 
 include("derivatives.jl")
 
@@ -52,7 +52,8 @@ include("diff.jl")
 
 
 function imusingJupyter()
-	WGLMakie.activate!()
+	Makie.inline!(true) 
+	GLMakie.activate!()
 end
 
 
@@ -126,8 +127,8 @@ See also [`normer!`]
 """
 function normer(sk)
 
-    lp = skyrmion.lp
-    ls = skyrmion.ls
+    lp = sk.lp
+    ls = sk.ls
 
     sk_new = Skyrmion(lp,ls)
 

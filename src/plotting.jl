@@ -146,7 +146,10 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs
 
     fig = Figure()
 
-	ax = Axis3(fig[1,1], ;kwargs...)
+	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:7840 ] ) for b in 1:3 ]
+	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
+
+	ax = Axis3(fig[1,1], aspect = the_aspect ;kwargs...)
 
         Makie.mesh!(ax,BDmesh,
         	color = skcolormap,
