@@ -6,7 +6,9 @@ Compute energy of `skyrmion`.
 Set 'density = true' to output the energy density and moment to `n` to calculate the nth moment of the energy density.
 
 """
-function Energy(sk; density=false, moment=0)
+function Energy(sk,pion_mass; density=false, moment=0)
+
+    sk.mpi = pion_mass
 
     ED = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
 
