@@ -6,58 +6,76 @@ using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, Quaternionic
 
-export Skyrmion, getmesh,  Nfy!, ADHMpt2, checkunitpt, makeADHM!, ADHMpt2V, normer, R_from_axis_angle
-
+export Skyrmion, check_if_normalised, makeADHM!, normer!, R_from_axis_angle
 
 include("transform.jl")
-export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
+export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!
+
+include("properties.jl")
+export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass
+
 
 mutable struct Skyrmion
 	phi::Array{Float64, 4}
 	lp::Vector{Int64}
 	ls::Vector{Float64}
 	x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
+	mpi::Float64
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0] ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] )
-
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0] ) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ] )
+Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi)
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi )
 
 
 include("initialise.jl")
 export makeRM!, R_from_axis_angle
 
 export makeRM, SkyrIso, MakeProduct, SkyrShift, multicubes!
-export Skyr
-export Energy, Baryon
+export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
+
 
 export flow!
 export flowRAK!
-export checkunit, getMOI
 
 export imusingnotebook, imusingterminal
 
 
 include("plotting.jl")
 export plot_skyrmion, plot_field, plot_baryon_density
+
 include("derivatives.jl")
-include("properties.jl")
-export EnergyD, BaryonD
+
+
 
 include("diff.jl")
 
 
-function checkunit(phi,lp)
+
+"""
+    check_if_normalised(skyrmion)
+
+Check if skyrmion is normalised.
+
+Throws an error if *any* point is not normalised
+
+"""
+function check_if_normalised(skyrmion)
 	for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
-		@assert  phi[i,j,k,1]^2 + phi[i,j,k,2]^2 + phi[i,j,k,3]^2 + phi[i,j,k,4]^2 ≈ 1.0 "nooo"
+		@assert  skyrmion.phi[i,j,k,1]^2 + skyrmion.phi[i,j,k,2]^2 + skyrmion.phi[i,j,k,3]^2 + skyrmion.phi[i,j,k,4]^2 ≈ 1.0 "nooo"
 	end
 end
 
-function checkunitpt(phi,i,j,k)
-	return phi[i,j,k,1]^2 + phi[i,j,k,2]^2 + phi[i,j,k,3]^2 + phi[i,j,k,4]^2
-end
 
+
+"""
+    setgrid(lp, ls)
+
+Compute a Cartesian lattice with `lp` lattice points and `ls` lattice spacing.
+
+`lp` and `ls` should be 3-vectors
+
+"""
 function setgrid(lp,ls)
 
 	x = [zeros(lp[1]), zeros(lp[2]), zeros(lp[3])]
@@ -70,44 +88,58 @@ function setgrid(lp,ls)
 end
 
 """
-bar(x[, y])
+    normer!(skyrmion)
 
-Compute the Bar index between `x` and `y`.
+Normalise a skyrmion.
 
-If `y` is unspecified, compute the Bar index between all pairs of columns of `x`.
+See also [`normer`]
 
-# Examples
-```julia-repl
-julia> bar([1, 2], [1, 2])
-1
-```
+
 """
-function normer(sk)
+function normer!(sk)
 
 	@simd for i in 3:sk.lp[1]-2
 		for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
 			
-		@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
-		for a in 1:4
-			@inbounds sk.phi[i,j,k,a] *= normer
-		end
+			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			for a in 1:4
+				@inbounds sk.phi[i,j,k,a] *= normer
+			end
 	
 		end
 	end
 end
 
-function normer!(phi,lp)
+
+"""
+    normer(skyrmion)
+
+Returns the normalised skyrmion
+
+See also [`normer!`]
+
+
+"""
+function normer!(sk)
+
+    lp = skyrmion.lp
+    ls = skyrmion.ls
+
+    sk_new = Skyrmion(lp,ls)
 
 	@simd for i in 3:lp[1]-2
 		for j in 3:lp[2]-2, k in 3:lp[3]-2
 			
-		@inbounds normer = 1.0/sqrt( phi[i,j,k,1]^2 + phi[i,j,k,2]^2 + phi[i,j,k,3]^2 + phi[i,j,k,4]^2 )
-		for a in 1:4
-			phi[i,j,k,a] *= normer
-		end
+			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			for a in 1:4
+				@inbounds sk_new.phi[i,j,k,a] = sk.phi[i,j,k,a]*normer
+			end
 	
 		end
 	end
+
+	return sk_new
+
 end
 
 end

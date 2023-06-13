@@ -48,6 +48,57 @@ function getmesh(a_density, iso_value,x)
 
 end
 
+function make_color_map_juggle(skyrmion, BDmesh)
+
+	x = skyrmion.x
+
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:3 ]
+    Npts = size(coordinates(BDmesh))[1]
+    phi_on_mesh = zeros(3, Npts)
+
+	the_color_function = zeros(RGB{Float64}, Npts)
+
+	cube_faces = [ [1.0,0.0,0.0], [-1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,-1.0,0.0], [0.0,0.0,1.0], [0.0,0.0,-1.0] ]
+	distances = zeros(6)
+
+	which_is_min = 1
+
+    a=1
+	for vertex in coordinates(BDmesh)
+
+	    for b in 1:3
+	        phi_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
+	    end
+
+		for c in 1:6
+			distances[c] = 0.0
+			for b in 1:3
+				distances[c] += (phi_on_mesh[b,a] - cube_faces[c][b])^2
+			end
+		end
+
+		which_is_min = findmin( distances )[2]
+
+		if which_is_min == 1
+			the_color_function[a] = Colors.RGB(1.0,0.0,0.0)
+		elseif which_is_min == 2
+			the_color_function[a] = Colors.RGB(0.0,1.0,0.0)
+		elseif which_is_min == 3
+			the_color_function[a] = Colors.RGB(0.0,0.0,1.0)
+		elseif which_is_min == 4
+			the_color_function[a] = Colors.RGB(1.0,1.0,0.0)
+		elseif which_is_min == 5
+			the_color_function[a] = Colors.RGB(0.0,1.0,1.0)
+		else
+			the_color_function[a] = Colors.RGB(1.0,0.0,1.0)
+		end
+
+	    a += 1
+	end
+
+	return the_color_function 
+end
+
 
 
 function make_color_map(skyrmion, BDmesh)
@@ -76,7 +127,7 @@ function make_color_map(skyrmion, BDmesh)
 end
 
 
-function plot_baryon_density(skyrmion; iso_value = 0.5, kwargs...)
+function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs...)
     
 	x = skyrmion.x
 	lp = skyrmion.lp
@@ -84,7 +135,11 @@ function plot_baryon_density(skyrmion; iso_value = 0.5, kwargs...)
 	BD = BaryonD(skyrmion)
 
 	BDmesh = getmesh(BD, iso_value, x)
-	skcolormap = make_color_map(skyrmion, BDmesh)
+	if juggling == false
+		skcolormap = make_color_map(skyrmion, BDmesh)
+	else
+		skcolormap = make_color_map_juggle(skyrmion, BDmesh)
+	end
 
     fig = Figure()
 

@@ -250,12 +250,6 @@ end
 
 
 
-
-
-
-
-
-
 function momflow!(ϕ,ϕd,mpi,dt,n;α=1.0, β=1.0)
 
     dEdp = zeros(2,ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
