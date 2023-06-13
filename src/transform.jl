@@ -1,4 +1,39 @@
 """
+    set_dirichlet!(skyrmion; vac = [0.0,0.0,0.0,1.0])
+
+    Sets the boundary of `skyrmion` equal to `vac`, with default value `[0.0, 0.0, 0.0, 1.0]`
+
+"""
+function set_dirichlet!(sk;vac=[0.0,0.0,0.0,1.0])
+
+    vac = [0.0,0.0,0.0,1.0]
+
+    for i in 1:sk.lp[1], j in 1:sk.lp[2]
+        sk.phi[i,j,1,:] .= vac
+        sk.phi[i,j,2,:] .= vac
+        sk.phi[i,j,sk.lp[3],:] .= vac
+        sk.phi[i,j,sk.lp[3]-1,:] .= vac
+    end
+    
+    for k in 1:sk.lp[3], j in 1:sk.lp[2]
+        sk.phi[1,j,k,:] .= vac
+        sk.phi[2,j,k,:] .= vac
+        sk.phi[sk.lp[1],j,k,:] .= vac
+        sk.phi[sk.lp[1]-1,j,k,:] .= vac
+    end
+    
+    for k in 1:sk.lp[3], i in 1:sk.lp[1]
+        sk.phi[i,1,k,:] .= vac
+        sk.phi[i,2,k,:] .= vac
+        sk.phi[i,sk.lp[2],k,:] .= vac
+        sk.phi[i,sk.lp[2]-1,k,:] .= vac
+    end
+    
+    
+
+end
+
+"""
     make_RM_product!(skyrmion, X_list) 
 
 Makes a product approximation of many rational map skyrmions, determined through the  list `X_list`. The final field is written into `skyrmion`.

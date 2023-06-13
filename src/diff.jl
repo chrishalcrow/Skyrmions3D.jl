@@ -40,7 +40,7 @@ condition(u, t, integrator) = true#t ∈ integrator.p[4]
 
 function affect!(integrator)
 	
-	normer!(integrator.u, integrator.p[2])
+	normer!(integrator.u)
 	
 end
 
