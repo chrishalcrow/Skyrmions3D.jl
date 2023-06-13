@@ -98,12 +98,10 @@ end
 Normalise a skyrmion.
 
 See also [`normer`]
-
-
 """
 function normer!(sk)
 
-	@simd for i in 3:sk.lp[1]-2
+	for i in 3:sk.lp[1]-2
 		for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
 			
 			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )

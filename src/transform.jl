@@ -1,3 +1,27 @@
+"""
+    make_RM_product!(skyrmion, X_list) 
+
+Makes a product approximation of many rational map skyrmions, determined through the  list `X_list`. The final field is written into `skyrmion`.
+
+The formatting of the list is as follow:
+`X_list = [ data_1, data_2, data_3, ... ]`
+where
+`data_1 = [ f(r), p(z), q(z), X, θiso, n_iso, θrot, n_rot ]`
+
+See also [`product`]
+
+# Example of list
+```
+p1(z) = z; q1(z) = 1; f1(r) = 4*atan(exp(-r));
+p2(z) = z^2; q2(z) = 1; f2(r) = 4*atan(exp(-0.7*r));
+X_list = [ [ f1, p1, q1, [0.0,0.0,1.5], 0.0, [0.0,0.0,1.0], 0.0, [0.0,0.0,1.0] ], [ f2, p2, q2, [0.0,0.0,-1.5], pi, [1.0,0.0,0.0], 0.0, [0.0,0.0,1.0] ] ]
+```
+
+# Technical details
+
+The product is taken pairwise in order. E.g. for a list of 3 skyrmions, we first calculate the symmetrised product of the first and second skyrmions then calculate the symmtrised product with the third skyrmion. Hence the final solution is not symmetric under permutations.
+
+"""
 function make_RM_product!(sk, Xs)
 
     x = sk.x
@@ -18,7 +42,13 @@ function make_RM_product!(sk, Xs)
 end
 
 
+"""
+    product!(skyrmion1,skyrmion2) 
 
+Makes the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The output is written in to `skyrmion1`. The returned field is normalised.
+
+See also [`product`]
+"""
 function product!(sk1, sk2)
 
     if sk1.x != sk2.x
@@ -42,13 +72,18 @@ function product!(sk1, sk2)
 
     end
 
-    normer(tempsk)
-
+    normer!(tempsk)
     sk1.phi .= tempsk.phi
 
 end
 
+"""
+    product(skyrmion1,skyrmion2) -> product_skyrmion
 
+Returns the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The returned field is normalised.
+
+See also [`product!`]
+"""
 function product(sk1, sk2)
 
     if sk1.x != sk2.x
@@ -72,13 +107,19 @@ function product(sk1, sk2)
 
     end
 
-    normer(tempsk)
+    normer!(tempsk)
 
     return tempsk
 
 end
 
+"""
+    translate(skyrmion,X) -> translated_skyrmion
 
+Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
+
+See also [`translate!`]
+"""
 function translate(skyrmion,X)
 
     x = skyrmion.x
@@ -99,12 +140,19 @@ function translate(skyrmion,X)
         end
     end
 
-    normer(sky_temp)
+    normer!(sky_temp)
 
     return sky_temp
 
 end
 
+"""
+    translate!(skyrmion,X)
+
+Translates `skyrmion` by the 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
+
+See also [`translate`]
+"""
 function translate!(skyrmion,X)
 
     x = skyrmion.x
@@ -129,12 +177,25 @@ function translate!(skyrmion,X)
         skyrmion.phi[i,j,k,a] = sky_temp.phi[i,j,k,a]
     end
 
-    normer(skyrmion)
+    normer!(skyrmion)
 
 end
 
+"""
+    isorotate!(skyrmion,θ,n)
 
+Isorotates `skyrmion` by `θ` around the vector `n`. The given vector is automatically normalised.
+
+See also [`isorotate!`]
+
+
+"""
 function isorotate!(skyrmion,θ,n)
+
+    if n == [0.0, 0.0, 0.0]
+        println("ERROR: your vector is zero.")
+        return
+    end
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
@@ -163,12 +224,23 @@ function isorotate!(skyrmion,θ,n)
         skyrmion.phi[i,j,k,a] = tempsk.phi[i,j,k,a]
     end
 
-    normer(skyrmion)
+    normer!(skyrmion)
 
 end
 
+"""
+    isorotate(skyrmion,θ,n) -> isorotated_skyrmion
 
+Returns `skyrmion` isorotated by `θ` around the vector `n`. The given vector is automatically normalised.
+
+See also [`isorotate!`]
+"""
 function isorotate(skyrmion,θ,n)
+
+    if n == [0.0, 0.0, 0.0]
+        println("ERROR: your vector is zero.")
+        return
+    end
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
@@ -192,7 +264,7 @@ function isorotate(skyrmion,θ,n)
 
     end
 
-    normer(tempsk)
+    normer!(tempsk)
 
     return tempsk
 
@@ -200,8 +272,19 @@ end
 
 
 
+"""
+    rotate!(skyrmion,θ,n)
 
+Rotates `skyrmion` by `θ` around the vector `n`. The given vector is automatically normalised.
+
+See also [`rotate`]
+"""
 function rotate!(skyrmion,θ,n)
+
+    if n == [0.0, 0.0, 0.0]
+        println("ERROR: your vector is zero.")
+        return
+    end
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
@@ -235,13 +318,24 @@ function rotate!(skyrmion,θ,n)
         skyrmion.phi[i,j,k,a] = sky_temp.phi[i,j,k,a]
     end
 
-    normer(skyrmion)
+    normer!(skyrmion)
 
 end
 
 
+"""
+    rotate(skyrmion,θ,n) -> rotated_skyrmion
 
+Returns `skyrmion` rotated by `θ` around the vector `n`. The given vector is automatically normalised.
+
+See also [`rotate!`]
+"""
 function rotate(skyrmion,θ,n)
+
+    if n == [0.0, 0.0, 0.0]
+        println("ERROR: your vector is zero.")
+        return
+    end
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
@@ -271,7 +365,7 @@ function rotate(skyrmion,θ,n)
         end
     end
 
-    normer(sky_temp)
+    normer!(sky_temp)
 
     return sky_temp
 

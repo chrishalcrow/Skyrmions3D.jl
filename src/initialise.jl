@@ -4,6 +4,10 @@ function R_from_axis_angle(th, n)
         return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
     end
 
+    if n == [0.0,0.0,0.0]
+        println("ERROR: your vector is zero.")
+    end
+
     n1 = n[1]
     n2 = n[2]
     n3 = n[3]
@@ -32,22 +36,10 @@ function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,
     qRM = complex(0.0,0.0) 
     den = complex(0.0,0.0)
 
-
     RI = R_from_axis_angle(iTH, i_n)
     RJ = R_from_axis_angle(jTH, j_n)
 
-    #p(z) = z
-    #q(z) = z
-
     sine_of_prof_r = 0.0
-
-    #if i_TH != 0.0
-    #    p(z) = ( cos(i_TH/2.0) + 1.0im*i_n[3]*sin(i_TH/2.0) )*pfn(z) + (i_n[2] - 1.0im*i_n[1])*sin(i_TH/2.0)*qfn(z);
-    #    q(z) = (-i_n[2] - 1.0im*i_n[1])*sin(i_TH/2.0)*pfn(z) + ( cos(i_TH/2.0) - 1.0im*i_n[3]*sin(i_TH/2.0) )*qfn(z);
-    #else
-    #    p(z) = pfn(z)
-    #    q(z) = qfn(z)
-    #end
 
     Xt = zeros(3)
 
