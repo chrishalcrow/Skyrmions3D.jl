@@ -129,7 +129,7 @@ function gradvD!(sk, dEdp,mpi, dt, dp, ddp)
         end
     end
     
-    normer(sk)
+    normer!(sk)
    
 end 
 
@@ -147,6 +147,16 @@ function flow!(ϕ,mpi,dt,n)
 
     println("  final: ", Energy(ϕ, mpi) )
 end
+
+
+
+
+
+
+
+
+
+
 
 
 
