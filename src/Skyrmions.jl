@@ -1,7 +1,7 @@
 module Skyrmions
 
 using Makie
-using GLMakie
+using GLMakie, WGLMakie
 using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, Quaternionic
