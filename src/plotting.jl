@@ -132,7 +132,7 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs
 	x = skyrmion.x
 	lp = skyrmion.lp
 
-	BD = BaryonD(skyrmion)
+	BD = Baryon(skyrmion,density=true)
 
 	BDmesh = getmesh(BD, iso_value, x)
 	if juggling == false
