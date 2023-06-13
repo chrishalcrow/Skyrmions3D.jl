@@ -2,6 +2,8 @@ function imusingnotebook()
 	CairoMakie.activate!()
 end
 
+
+
 function imusingterminal()
 	Makie.inline!(false) 
 	GLMakie.activate!()
