@@ -123,7 +123,6 @@ Returns the normalised skyrmion
 
 See also [`normer!`]
 
-
 """
 function normer(sk)
 
