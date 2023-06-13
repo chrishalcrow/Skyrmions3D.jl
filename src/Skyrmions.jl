@@ -124,7 +124,7 @@ See also [`normer!`]
 
 
 """
-function normer!(sk)
+function normer(sk)
 
     lp = skyrmion.lp
     ls = skyrmion.ls

@@ -3,6 +3,7 @@ function imusingnotebook()
 end
 
 function imusingterminal()
+	Makie.inline!(false) 
 	GLMakie.activate!()
 end
 
