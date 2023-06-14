@@ -2,24 +2,21 @@ function imusingnotebook()
 	CairoMakie.activate!()
 end
 
-
-
 function imusingterminal()
 	Makie.inline!(false) 
 	GLMakie.activate!()
 end
 
-function plot_skyrmion(phi)
+
+"""
+    plot_field!(skyrmion; component=3, iso_value=0.5 )
     
-	Makie.volume(phi.ED,algorithm = :iso, isorange = 0.5, isovalue = 7.0)
+Plots an isosurface of constant value, `skyrme_field[component] = iso_value`
 
-end
-
+"""
 function plot_field(skyrmion; component=3, iso_value = 0.5)
     
     fig = Figure()
-
-
 
     ax = Axis3(fig[1,1], 
     	title= "Isosurface ϕ" * string(component) * " = " * string(iso_value),
@@ -129,7 +126,18 @@ function make_color_map(skyrmion, BDmesh)
 
 end
 
+"""
+    plot_baryon_density(skyrmion; iso_value = 0.5, juggling = false, kwargs...)
+    
+Plots an isosurface of constant baryon density, with value `iso_value`, coloured to reveal the pion field structure, originally described in [].
 
+Can use a _juggling ball_ colouring scheme by setting `juggling = true`.
+
+# Optional argument
+
+Can accept any arguments used in `Axis3` from the `Makie` package. See more: [].
+
+"""
 function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs...)
     
 	x = skyrmion.x

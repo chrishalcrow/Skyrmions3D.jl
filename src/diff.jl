@@ -103,6 +103,44 @@ function dedfpt4v(dp,ddp,mpi)
 end
 
 
+#=
+function gradvD_SA!(sk, dEdp,mpi, dt, dp, ddp)
+
+    @simd for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+
+            dp = zeros( MMatrix{3,4,Float64} )
+            ddp = zeros( MArray{Tuple{3,3,4},Float64} )
+        
+            getDX_SA!(dp, sk ,i, j, k )
+            getDDX_SA!(ddp, sk, i, j, k)
+
+            
+
+            #@inbounds dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
+            #@inbounds dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
+            #@inbounds dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
+            #@inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpi)
+                    
+        end
+    end
+    
+        
+    @simd for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
+            @inbounds sk.phi[i,j,k,a] += dt*dEdp[i,j,k,a]
+            for b in 1:4
+                sk.phi[i,j,k,a] -= dt*( dEdp[i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
+            end
+        end
+    end
+    
+    normer!(sk)
+   
+end 
+=#
+
+
 function gradvD!(sk, dEdp,mpi, dt, dp, ddp)
 
     @simd for i in 3:sk.lp[1]-2
@@ -114,7 +152,7 @@ function gradvD!(sk, dEdp,mpi, dt, dp, ddp)
             @inbounds dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
             @inbounds dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
             @inbounds dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
-            @inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpi)
+            @inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,sk.mpi)
                     
         end
     end
@@ -133,7 +171,16 @@ function gradvD!(sk, dEdp,mpi, dt, dp, ddp)
    
 end 
 
-function flow!(ϕ,mpi,dt,n)
+
+"""
+    flow!(skyrmion, n; dt=0.0001)
+    
+Applies a gradient flow to `skyrmion` with timestep `dt` for `n` steps.
+
+Within the code, a variation array is created. As such, it is significantly more efficient to use n=1000 than to loop the method 1000 times with `n=1`.
+
+"""
+function flow!(ϕ;dt=0.0001,n)
 
     dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     dp = zeros(3,4)
@@ -142,7 +189,7 @@ function flow!(ϕ,mpi,dt,n)
     println("initial: ", Energy(ϕ, mpi) )
 
     for _ in 1:n
-        gradvD!(ϕ,dEdp,mpi,dt,dp,ddp)
+        gradvD!(ϕ,dEdp,dt,dp,ddp)
     end
 
     println("  final: ", Energy(ϕ, mpi) )

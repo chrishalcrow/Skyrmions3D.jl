@@ -24,7 +24,19 @@ function R_from_axis_angle(th, n)
 end
 
 
+"""
+    makeRM!(skyrmion, prof, pfn, qfn; kwargs... )
+    
+Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
 
+# Optional arguments
+-  `X=[0.0,0.0,0.0]`: translate the initial skyrmion by `X`
+-  `iTH = 0.0`: isorotate by initial skyrmion by `iTH`
+-  `i_n = 0.0`: isorotate initial skyrmion around `i_n`
+-  `jTH = 0.0`: isorotate by initial skyrmion by `jTH`
+-  `j_n = 0.0`: isorotate initial skyrmion around `j_n`
+
+"""
 function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
     
     lp, x = skyrmion.lp, skyrmion.x
@@ -51,12 +63,10 @@ function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,
 
         Xt = RJ*Xt;
 
-        #r = sqrt( (x[1][i]-X[1])^2 + (x[2][j]-X[2])^2 + (x[3][k]-X[3])^2 )
         r = sqrt( Xt[1]^2 + Xt[2]^2 + Xt[3]^2 )
 
         sine_of_prof_r = sin(prof(r))
 
-        #zRM = (x[1][i] - X[1] + 1.0im*(x[2][j] - X[2])  )/(r + (x[3][k] - X[3]))
         zRM = ( Xt[1] + 1.0im*Xt[2] )/(r + Xt[3])
 
         pRM = pfn(zRM)
@@ -78,116 +88,79 @@ function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,
 end
 
 
-function multicubes!(phi3,phi1,phi2,phi,Xs)
-	
-	
-	for a in 1:8
 
-	    SkyrShift!(phi1,phi,Xs[a][1],Xs[a][2],Xs[a][3])
-	    #SkyrIso!(ϕ1,αs[a])
-	    MakeProduct!(phi3,phi1,phi2)
 
-	    phi2.phi .= phi3.phi
+
+
+
+# ADHM stuff
+
+
+
+"""
+    makeADHM!(skyrmion, L, M )
     
-	end
+Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M can be given by `Bx4` and `BxBx4` arrays or as `B` and `BxB` arrays of Quaternions, from the `Quaternionic` package.
 
-end
-	
+# Example
 
+"""
+function makeADHM!(an_ADHM_skyrmion, L, M)
 
+    B = size(L)[1]
 
-function makeVac(lp)
-    
-    phi = zeros(4,lp[1],lp[2],lp[3])
-    phi[4,:,:,:] = ones(lp[1],lp[2],lp[3])
-    
-    return phi
-
-end
-
-function SkyrIso!(ϕ,α)
-
-    newphi = makeVac()
-
-    for i in 1:ϕ.lp[1], j in 1:ϕ.lp[2], k in 1:ϕ.lp[3]
-        newphi[1,i,j,k] = cos(α)*ϕ.phi[1,i,j,k] + sin(α)*ϕ.phi[2,i,j,k]
-        newphi[2,i,j,k] = -sin(α)*ϕ.phi[1,i,j,k] + cos(α)*ϕ.phi[2,i,j,k]
-        newphi[3,i,j,k] = ϕ.phi[3,i,j,k]
-        newphi[4,i,j,k] = ϕ.phi[4,i,j,k]
-    end
-    
-    ϕ.phi .= newphi
-    
-end
+    L_final = zeros(B,4)
+    M_final = zeros(B,B,4)
 
 
+   if typeof(L[end]) == QuaternionF64
 
-function MakeProduct!(ϕ3,ϕ1,ϕ2)
-    
-    for i in 1:ϕ3.lp[1], j in 1:ϕ3.lp[2], k in 1:ϕ3.lp[3]
-        
-        ϕ3.phi[4,i,j,k] = ϕ1.phi[4,i,j,k]*ϕ2.phi[4,i,j,k]
-        
-        for a in 1:3
-            ϕ3.phi[a,i,j,k] = ϕ1.phi[4,i,j,k]*ϕ2.phi[a,i,j,k] + ϕ2.phi[4,i,j,k]*ϕ1.phi[a,i,j,k]
-            ϕ3.phi[4,i,j,k] -= ϕ1.phi[a,i,j,k]*ϕ2.phi[a,i,j,k]
+        for a in 1:B
+            L_final[a,1] = L[a].w
+            L_final[a,2] = L[a].x
+            L_final[a,3] = L[a].y
+            L_final[a,4] = L[a].z
+        end
+    else
+        for a in 1:B, c in 1:4
+            L_final[a,c] = L[a,c]
         end
     end
-    
-    normer(ϕ3)
-    
-end
-        
 
+    if typeof(M[end]) == QuaternionF64
 
+        for a in 1:B, b in 1:B
+            M_final[a,b,1] = M[a,b].w
+            M_final[a,b,2] = M[a,b].x
+            M_final[a,b,3] = M[a,b].y
+            M_final[a,b,4] = M[a,b].z
+        end
+    else
 
-
-function SkyrShift!(ϕnew,ϕ, xs, ys, zs)
-
-    ϕnew.phi = zeros(4,ϕ.lp[1],ϕ.lp[2],ϕ.lp[3])
-    ϕnew.phi[4,:,:,:] = ones(ϕ.lp[1],ϕ.lp[2],ϕ.lp[3])
-
-    xdn = 1
-    xup = ϕnew.lp[1]
-
-    ydn = 1
-    yup = ϕnew.lp[2]
-
-    zdn = 1
-    zup = ϕnew.lp[3]
-
-    if xs > 0
-        xdn = 1 + xs
-    elseif xs < 0
-        xup = ϕnew.lp[1] + xs
+        for a in 1:B, b in 1:B, c in 1:4
+            M_final[a,b,c] = M[a,b,c]
+        end
     end
 
-    if ys > 0
-        ydn = 1 + ys
-    elseif ys < 0
-        yup = ϕnew.lp[2] + ys
-    end
 
-    if zs > 0
-        zdn = 1 + zs
-    elseif zs < 0
-        zup = ϕnew.lp[3] + zs
-    end
 
-    for i in xdn:xup, j in ydn:yup, k in zdn:zup, a in 1:4
-        ϕnew.phi[a,i,j,k] = ϕ.phi[a,i-xs,j-ys,k-zs]
+    tsteps = 42
+    lstime = pi/tsteps
+
+    ctL = [ cos(lstime*(tint-1)) for tint in 1:tsteps+1 ]
+    stL = [ sin(lstime*(tint-1)) for tint in 1:tsteps+1 ]
+
+
+
+
+    x = an_ADHM_skyrmion.x
+    lp = an_ADHM_skyrmion.lp
+
+    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
     end
-    
-    
 
 end
-
-
-
-
-
-
-# ADHM STUFF
 
 function q1(l,p,a)
     @inbounds l[a,1]*p[a,1] - l[a,2]*p[a,2] - l[a,3]*p[a,3] - l[a,4]*p[a,4]
@@ -257,76 +230,6 @@ function makeQmultmatrix2!(qM,q)
 
 end
 
-"""
-    bar(x[, y])
-
-Compute the Bar index between `x` and `y`.
-
-If `y` is unspecified, compute the Bar index between all pairs of columns of `x`.
-
-# Examples
-```julia-repl
-julia> bar([1, 2], [1, 2])
-1
-```
-"""
-function makeADHM!(an_ADHM_skyrmion, L, M)
-
-    B = size(L)[1]
-
-    L_final = zeros(B,4)
-    M_final = zeros(B,B,4)
-
-
-   if typeof(L[end]) == QuaternionF64
-
-        for a in 1:B
-            L_final[a,1] = L[a].w
-            L_final[a,2] = L[a].x
-            L_final[a,3] = L[a].y
-            L_final[a,4] = L[a].z
-        end
-    else
-        for a in 1:B, c in 1:4
-            L_final[a,c] = L[a,c]
-        end
-    end
-
-    if typeof(M[end]) == QuaternionF64
-
-        for a in 1:B, b in 1:B
-            M_final[a,b,1] = M[a,b].w
-            M_final[a,b,2] = M[a,b].x
-            M_final[a,b,3] = M[a,b].y
-            M_final[a,b,4] = M[a,b].z
-        end
-    else
-
-        for a in 1:B, b in 1:B, c in 1:4
-            M_final[a,b,c] = M[a,b,c]
-        end
-    end
-
-
-
-    tsteps = 42
-    lstime = pi/tsteps
-
-    ctL = [ cos(lstime*(tint-1)) for tint in 1:tsteps+1 ]
-    stL = [ sin(lstime*(tint-1)) for tint in 1:tsteps+1 ]
-
-
-
-
-    x = an_ADHM_skyrmion.x
-    lp = an_ADHM_skyrmion.lp
-
-    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
-        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
-    end
-
-end
-
 function third_order_update!(Q,q1,q2,q3)
 
     Q[1,1] = (4.0*q1[1]*q2[1] - 4.0*q1[2]*q2[2] - 4.0*q1[3]*q2[3] - 4.0*q1[4]*q2[4] - q3[1])/3.0
@@ -393,31 +296,9 @@ function B4_cube_data(lam)
     return L, M
 
 end
-#=
-function B3_tet_data(lam)
-
-    L = zeros(3,4)
-    M = zeros(3,3,4)
-
-    L[1,2] = lam
-    L[2,3] = lam
-    L[3,4] = lam
-
-    M[1,2,4] = lam;    M[1,3,3] = lam;
-    M[2,1,4] = lam;    M[2,3,2] = lam;
-    M[3,1,3] = lam;    M[3,2,2] = lam;
-
-    return L, M
-
-end
-=#
-
 
 
 function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
-
-    #Rnm = zeros(B,B)
-    #iRnm = zeros(B,B)
 
     if B == 2
         Rnm = zeros( MMatrix{2,2,Float64} )
@@ -445,14 +326,8 @@ function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
         iRnm = zeros(B,B)
     end
 
-
-    #U = [1.0 ; 0.0; 0; 0]
-
     Ln = zeros(B,4)
     Mn = zeros(B,B,4)
-
-    #Ln = zeros( MMatrix{2,4,Float64} )
-    #Mn = zeros( MArray{2,2,4,Float64} )
 
     U = zeros( MVector{4,Float64} )
     U[1] = 1.0
@@ -462,36 +337,17 @@ function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
     p = zeros(B,4)
 
 
-    #Ω1M = zeros(4,4)
     Ω1M = zeros( MMatrix{4,4,Float64} )
 
-    #Ω2M = zeros(4,4)
-    #Ω3M = zeros(4,4)
-
-    #Ω1 = zeros(4)
     Ω1 = zeros( MVector{4,Float64} )
     Ω2 = zeros( MVector{4,Float64} )
     Ω3 = zeros( MVector{4,Float64} )
-    #Ω1i = zeros(4)
-    #Ω2 = zeros(4)
-    #Ω3 = zeros(4)
 
-
-    
     lstime = pi/tsteps;
 
     allN = zeros(tsteps+1,B+1,4)
 
-   
-
-    
-
-
-
     for tint in 1:tsteps+1
-
-        #Nfy!(allN,tint,L,M,[t,y[1],y[2],y[3]], Mmdysp ,p, B,1.0)
-        #t += δt
 
         ct = ctL[tint]
 
@@ -508,33 +364,15 @@ function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
 
         
         Nfy!(allN,tint,Ln,Mn,[stL[tint],x1t,x2t,x3t], Mmdysp ,p, B,ct,Rnm,iRnm)
-
-        #Nfy!(allN,tint,L.*ct,M.*ct,[x0,x1t,x2t,x3t], Mmdysp ,p, B,ct,Rnm,iRnm)
-
-        
-        
-        #if tint == 2; println(t, allN[tint,:,:]); end;
-        
-        #println(t)
-
-        #Nfy!(allN,tint,L.*ct,M.*ct,[x0,x1t,x2t,x3t], Mmdysp ,p, B,ct)
-
         
     end
 
     for tint in 1:2:tsteps-1
 
-
-        
         #= FIRST ORDER 
         getΩ!(Ω1,allN[tint+1,:,:],allN[tint,:,:],B)
         Ω1M = makeQmultmatrix2(Ω1)
         U = Ω1M*U =#
-
-        #= SECOND ORDER =#
-        #getΩ!(Ω1,allN[tint+2,:,:],allN[tint+1,:,:],B)
-        #getΩ!(Ω2,allN[tint+1,:,:],allN[tint,:,:],B)
-        #getΩ!(Ω3,allN[tint+2,:,:],allN[tint,:,:],B)
 
         getΩf!(Ω1,allN,tint+2,tint+1,B)
         getΩf!(Ω2,allN,tint+1,tint,B)
@@ -542,17 +380,8 @@ function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
 
         third_order_update!(Ω1M,Ω1,Ω2,Ω3)
 
-        #makeQmultmatrix2!(Ω1M,Ω1)
-        #makeQmultmatrix2!(Ω2M,Ω2)
-        #makeQmultmatrix2!(Ω3M,Ω3)
+        U = Ω1M*U
         
-        #Ω1M = makeQmultmatrix2(Ω1)
-        #Ω2M = makeQmultmatrix2(Ω2)
-        #Ω3M = makeQmultmatrix2(Ω3)
-
-        U = Ω1M*U#(4.0.*Ω1M*Ω2M - Ω3M)*U./3.0
-        
-
     end
 
     normer = sqrt( U[1]^2 + U[2]^2 + U[3]^2 + U[4]^2 )
@@ -560,12 +389,9 @@ function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
         @inbounds U[a] /= normer
     end
     
-    return [U[2],U[3],U[4],U[1]]#./normer
+    return [U[2],U[3],U[4],U[1]]
 
 end
-
-
-
 
 function getΩf!(Ω1,allv,t1,t2,B)
 
@@ -600,104 +426,11 @@ function getΩ!(Ω1,vp,v,B)
 end
 
 
-#=
-
-function Nfy!(Nα,L,M,y,Mmdysp,p,B::Int64)
-
-    Rnm = zeros( MMatrix{2,2,Float64} )#zeros(B,B)#zeros( MMatrix{2,2,Float64} )
-    #Rnm = zeros(B,B)
-    
-    @inbounds for a in 1:B, b in 1:B, c in 1:4
-        Mmdysp[a,b,c] = 0.0
-    end
-
-    @inbounds for a in 1:B, c in 1:4
-        p[a,c] = 0.0
-    end
-    
-    @inbounds for b in 1:B, a in 1:4
-        for c in 1:B
-            Mmdysp[b,c,a] = M[b,c,a]
-        end
-        Mmdysp[b,b,a] -= y[a]
-        
-    end
-
-    makeRnm!(Rnm, L, Mmdysp, B)
-    
-    
-    iRnm = inv(Rnm)
-    #iRnm = rand(B,B)
-
-
-    @inbounds for a in 1:B
-
-        for b in 1:B
-            
-            p[a,1] += iRnm[a,b]*L[b,1]
-
-            for c in 2:4
-                p[a,c] -= iRnm[a,b]*L[b,c]
-            end
-
-        end
-        
-        for c in 2:4
-            Nα[a,c] = 0.0
-        end
-
-    end
-
-    Nα[1,1] = 1.0
-
-
-
-    @inbounds for c in 1:4
-        Nα[B+1,c] = 0.0
-    end
-
-    normer = 0.0
-
-    @inbounds for a in 1:B
-
-        Nα[1,1] -= q1(L,p,a)
-        Nα[1,2] -= q2(L,p,a)
-        Nα[1,3] -= q3(L,p,a)
-        Nα[1,4] -= q4(L,p,a)
-
-        for b in 1:B
-
-            Nα[b+1,1] -= q1(Mmdysp,p,b,a)
-            Nα[b+1,2] -= q2(Mmdysp,p,b,a)
-            Nα[b+1,3] -= q3(Mmdysp,p,b,a)
-            Nα[b+1,4] -= q4(Mmdysp,p,b,a)
-
-        end
-
-    end
-
-    @inbounds for a in 1:B+1, b in 1:4 
-        normer += Nα[a,b]^2
-    end
-    normer = sqrt(normer)
-
-    @inbounds for a in 1:B+1, b in 1:4 
-        Nα[a,b] /= normer
-    end
-    
-
-end
-
-
-=#
 
 
 
 function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct,Rnm,iRnm)
 
-    #Rnm = zeros(B,B)#zeros( MMatrix{2,2,Float64} )
-    #Rnm = zeros( MMatrix{B,B,Float64} )
-    
 
     for a in 1:B, c in 1:4
         p[a,c] = 0.0
@@ -735,8 +468,6 @@ function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct,Rnm,iRnm)
 
     Nα[tint,1,1] = 1.0
 
-
-
     for c in 1:4
         Nα[tint,B+1,c] = 0.0
     end
@@ -761,8 +492,6 @@ function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct,Rnm,iRnm)
 
     end
 
-
-
     normer = 0.0
 
     @inbounds for a in 1:B+1, b in 1:4 
@@ -783,15 +512,12 @@ end
 function makeRnm!(Rnm,L,M,B)
     @simd for a in 1:B
         for  b in 1:B
-        @inbounds @fastmath Rnm[a,b] = L[a,1]*L[b,1] + L[a,2]*L[b,2] + L[a,3]*L[b,3] + L[a,4]*L[b,4]
-        for c in 1:B, d in 1:4
-            @inbounds @fastmath Rnm[a,b] += (M[a,c,d]*M[c,b,d])
+            @inbounds @fastmath Rnm[a,b] = L[a,1]*L[b,1] + L[a,2]*L[b,2] + L[a,3]*L[b,3] + L[a,4]*L[b,4]
+            for c in 1:B, d in 1:4
+                @inbounds @fastmath Rnm[a,b] += (M[a,c,d]*M[c,b,d])
+            end
         end
-    end
-end
-    
-    #return Rnm
-        
+    end    
 end
 
 

@@ -81,6 +81,36 @@ end
 
 
 
+
+function getDX_SA!(dp, ϕ,i,j,k)
+    @simd for a in 1:4
+        @inbounds dp[1,a] = dxD(ϕ.phi,a,i,j,k,ϕ.ls[1])
+        @inbounds dp[2,a] = dyD(ϕ.phi,a,i,j,k,ϕ.ls[2])
+        @inbounds dp[3,a] = dzD(ϕ.phi,a,i,j,k,ϕ.ls[3]) 
+    end
+end
+
+function getDDX_SA!(ddp, sk ,i,j,k)
+    
+    @simd for a in 1:4
+            
+        @inbounds ddp[1,1,a] = d2xD(sk.phi,a,i,j,k,sk.ls[1])
+        @inbounds ddp[2,2,a] = d2yD(sk.phi,a,i,j,k,sk.ls[2])
+        @inbounds ddp[3,3,a] = d2zD(sk.phi,a,i,j,k,sk.ls[3]) 
+
+        @inbounds ddp[1,2,a] = (dxdydiffD(sk.phi, a, i, j, k, sk.ls[1], sk.ls[2]) - ddp[1,a] - ddp[2,a])/2.0
+        @inbounds ddp[1,3,a] = (dxdzdiffD(sk.phi, a, i, j, k, sk.ls[1], sk.ls[3]) - ddp[1,a] - ddp[3,a])/2.0
+        @inbounds ddp[2,3,a] = (dydzdiffD(sk.phi, a, i, j, k, sk.ls[2], sk.ls[3]) - ddp[2,a] - ddp[3,a])/2.0
+
+        @inbounds ddp[2,1,a] = ddp[1,2,a]
+        @inbounds ddp[3,2,a] = ddp[2,3,a]
+        @inbounds ddp[3,1,a] = ddp[1,3,a]
+
+    end
+end
+
+
+
 function getDX!(dp, ϕ,i,j,k)
     @simd for a in 1:4
         @inbounds dp[1,a] = dxD(ϕ.phi,a,i,j,k,ϕ.ls[1])

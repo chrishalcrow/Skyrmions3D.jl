@@ -14,18 +14,42 @@ export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, p
 include("properties.jl")
 export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass
 
+"""
+    Skyrmion(lp::Int64, ls::Float64)
+	Skyrmion([lpx,lpy,lpx], [lsx,lsy,lsz])
+    
+Create a skyrme field with `lp` lattice points and `ls` lattice spacing. 
 
+# Optional arguments
+- `mpi = 0.0`: sets the pion mass for this Skyrme field
+
+"""
 mutable struct Skyrmion
 	phi::Array{Float64, 4}
 	lp::Vector{Int64}
 	ls::Vector{Float64}
 	x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
 	mpi::Float64
+	Fpi::Float64
+	ee::Float64
+	physical::Bool
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi)
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi )
+Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, FpiANW, eeANW, false)
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,FpiANW, eeANW, false)
+
+"""
+	turn_on_physical!(skyrmion)
+
+Turns on physical units. Output of energy etc will now be displayed in units of MeV and fm.
+
+"""
+function turn_on_physical!(skyrmion)
+	skyrmion.physical = true
+	#println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.m)
+	#println("Hence, mpi = ", skyrmions.m, ", length unit = ", 1, "and energy unit = ", 1)
+end
 
 
 include("initialise.jl")

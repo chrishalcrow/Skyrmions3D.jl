@@ -33,7 +33,11 @@ function Energy(sk,pion_mass; density=false, moment=0)
 
     if density == false
         engtot = sum(ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(12.0*pi^2)
-        return engtot
+        if sk.physical == false
+            return engtot
+        else
+            return engtot
+        end
     else
         return ED
     end
