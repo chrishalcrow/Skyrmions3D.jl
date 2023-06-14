@@ -141,7 +141,7 @@ end
 =#
 
 
-function gradvD!(sk, dEdp,mpi, dt, dp, ddp)
+function gradvD!(sk, dEdp, dt, dp, ddp)
 
     @simd for i in 3:sk.lp[1]-2
         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
@@ -180,7 +180,7 @@ Applies a gradient flow to `skyrmion` with timestep `dt` for `n` steps.
 Within the code, a variation array is created. As such, it is significantly more efficient to use n=1000 than to loop the method 1000 times with `n=1`.
 
 """
-function flow!(ϕ;dt=0.0001,n)
+function flow!(ϕ, n; dt=0.0001)
 
     dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     dp = zeros(3,4)

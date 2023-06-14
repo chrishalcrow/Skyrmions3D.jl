@@ -9,7 +9,7 @@ using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, Quaternioni
 export Skyrmion, check_if_normalised, makeADHM!, normer!, R_from_axis_angle
 
 include("transform.jl")
-export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!
+export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!, set_dirichlet!
 
 include("properties.jl")
 export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass
