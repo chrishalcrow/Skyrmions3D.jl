@@ -186,13 +186,13 @@ function flow!(ϕ;dt=0.0001,n)
     dp = zeros(3,4)
     ddp = zeros(6,4)
 
-    println("initial: ", Energy(ϕ, mpi) )
+    println("initial: ", Energy(ϕ, ϕ.mpi) )
 
     for _ in 1:n
         gradvD!(ϕ,dEdp,dt,dp,ddp)
     end
 
-    println("  final: ", Energy(ϕ, mpi) )
+    println("  final: ", Energy(ϕ, ϕ.mpi) )
 end
 
 
