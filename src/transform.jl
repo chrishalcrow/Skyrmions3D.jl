@@ -78,13 +78,13 @@ end
 
 
 """
-    product!(skyrmion1,skyrmion2) 
+    product_approx!(skyrmion1,skyrmion2) 
 
 Makes the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The output is written in to `skyrmion1`. The returned field is normalised.
 
-See also [`product`]
+See also [`product_approx`]
 """
-function product!(sk1, sk2)
+function product_approx!(sk1, sk2)
 
     if sk1.x != sk2.x
         println("Skyrmion grids are not equal. Aborting product.")
@@ -113,13 +113,13 @@ function product!(sk1, sk2)
 end
 
 """
-    product(skyrmion1,skyrmion2) -> product_skyrmion
+    product_approx(skyrmion1,skyrmion2) -> product_skyrmion
 
 Returns the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The returned field is normalised.
 
-See also [`product!`]
+See also [`product_approx!`]
 """
-function product(sk1, sk2)
+function product_approx(sk1, sk2)
 
     if sk1.x != sk2.x
         println("Skyrmion grids are not equal. Aborting product.")
@@ -149,13 +149,13 @@ function product(sk1, sk2)
 end
 
 """
-    translate(skyrmion,X) -> translated_skyrmion
+    translate_sk(skyrmion,X) -> translated_skyrmion
 
 Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
-See also [`translate!`]
+See also [`translate_sk!`]
 """
-function translate(skyrmion,X)
+function translate_sk(skyrmion,X)
 
     x = skyrmion.x
     lp = skyrmion.lp
@@ -182,13 +182,13 @@ function translate(skyrmion,X)
 end
 
 """
-    translate!(skyrmion,X)
+    translate_sk!(skyrmion,X)
 
 Translates `skyrmion` by the 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
-See also [`translate`]
+See also [`translate_sk`]
 """
-function translate!(skyrmion,X)
+function translate_sk!(skyrmion,X)
 
     x = skyrmion.x
     lp = skyrmion.lp
@@ -217,15 +217,15 @@ function translate!(skyrmion,X)
 end
 
 """
-    isorotate!(skyrmion,θ,n)
+    isorotate_sk!(skyrmion,θ,n)
 
 Isorotates `skyrmion` by `θ` around the vector `n`. The given vector is automatically normalised.
 
-See also [`isorotate!`]
+See also [`isorotate_sk!`]
 
 
 """
-function isorotate!(skyrmion,θ,n)
+function isorotate_sk!(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
         println("ERROR: your vector is zero.")
@@ -264,13 +264,13 @@ function isorotate!(skyrmion,θ,n)
 end
 
 """
-    isorotate(skyrmion,θ,n) -> isorotated_skyrmion
+    isorotate_sk(skyrmion,θ,n) -> isorotated_skyrmion
 
 Returns `skyrmion` isorotated by `θ` around the vector `n`. The given vector is automatically normalised.
 
-See also [`isorotate!`]
+See also [`isorotate_sk!`]
 """
-function isorotate(skyrmion,θ,n)
+function isorotate_sk(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
         println("ERROR: your vector is zero.")
@@ -308,13 +308,13 @@ end
 
 
 """
-    rotate!(skyrmion,θ,n)
+    rotate_sk!(skyrmion,θ,n)
 
 Rotates `skyrmion` by `θ` around the vector `n`. The given vector is automatically normalised.
 
-See also [`rotate`]
+See also [`rotate_sk`]
 """
-function rotate!(skyrmion,θ,n)
+function rotate_sk!(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
         println("ERROR: your vector is zero.")
@@ -359,13 +359,13 @@ end
 
 
 """
-    rotate(skyrmion,θ,n) -> rotated_skyrmion
+    rotate_sk(skyrmion,θ,n) -> rotated_skyrmion
 
 Returns `skyrmion` rotated by `θ` around the vector `n`. The given vector is automatically normalised.
 
-See also [`rotate!`]
+See also [`rotate_sk!`]
 """
-function rotate(skyrmion,θ,n)
+function rotate_sk(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
         println("ERROR: your vector is zero.")

@@ -112,7 +112,35 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     L_final = zeros(B,4)
     M_final = zeros(B,B,4)
 
+    if typeof(L[end]) == Quaternion{Float64}
 
+        for a in 1:B
+            L_final[a,1] = L[a][4]
+            L_final[a,2] = L[a][1]
+            L_final[a,3] = L[a][2]
+            L_final[a,4] = L[a][3]
+        end
+    else
+        for a in 1:B, c in 1:4
+            L_final[a,c] = L[a,c]
+        end
+    end
+
+    if typeof(M[end]) == Quaternion{Float64}
+
+        for a in 1:B, b in 1:B
+            M_final[a,b,1] = M[a,b][4]
+            M_final[a,b,2] = M[a,b][1]
+            M_final[a,b,3] = M[a,b][2]
+            M_final[a,b,4] = M[a,b][3]
+        end
+    else
+        for a in 1:B, b in 1:B, c in 1:4
+            M_final[a,b,c] = M[a,b,c]
+        end
+    end
+
+    #=
    if typeof(L[end]) == Quaternionic.QuaternionF64
 
         for a in 1:B
@@ -141,7 +169,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
             M_final[a,b,c] = M[a,b,c]
         end
     end
-
+    =#
 
 
     tsteps = 42

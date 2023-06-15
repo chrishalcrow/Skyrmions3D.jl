@@ -252,7 +252,7 @@ function rms_baryon(sk)
     if sk.physical == false
         return sqrt(Baryon(sk; moment = 2))
     else
-        return ( sqrt(Baryon(sk; moment = 2))*(2.0/(sk.ee*sk.Fpi)), "fm" )
+        return ( sqrt(Baryon(sk; moment = 2))*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
     end
 
 end

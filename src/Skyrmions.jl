@@ -4,12 +4,12 @@ using Makie
 using GLMakie, WGLMakie, CairoMakie
 using DifferentialEquations, DiffEqCallbacks
 
-using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, Quaternionic
+using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
 export Skyrmion, check_if_normalised, makeADHM!, normer!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!
 
 include("transform.jl")
-export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!, set_dirichlet!
+export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
 
 include("properties.jl")
 export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon
