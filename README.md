@@ -2,7 +2,7 @@
 
 A package to create and visualise 3D Skyrmions in the Skyrme model.
 
-A beginners tutorial written in Jupyter notebook can be found here: scripts/SkyrmionTutorial.ipynb
+A beginners tutorial written in Jupyter notebook can be downloaded from the scripts folder.
 
 ## Features
 - Create skyrmions using the Rational Map and ADHM approximations.
