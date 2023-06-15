@@ -71,7 +71,7 @@ export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
 export flow!
 export flowRAK!
 
-export imusingnotebook, imusingterminal, imusingJupyter
+export imusingnotebook, interactive_plot, imusingJupyter
 
 
 include("plotting.jl")
