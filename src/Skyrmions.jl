@@ -1,18 +1,18 @@
 module Skyrmions
 
 using Makie
-using GLMakie, WGLMakie
+using GLMakie, WGLMakie, CairoMakie
 using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, Quaternionic
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, R_from_axis_angle
+export Skyrmion, check_if_normalised, makeADHM!, normer!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!
 
 include("transform.jl")
 export translate, translate!, isorotate, isorotate!, rotate!, rotate, product, product!, make_RM_product!, set_dirichlet!
 
 include("properties.jl")
-export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass
+export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon
 
 """
     Skyrmion(lp::Int64, ls::Float64)
@@ -46,9 +46,18 @@ Turns on physical units. Output of energy etc will now be displayed in units of 
 
 """
 function turn_on_physical!(skyrmion)
+	
 	skyrmion.physical = true
-	#println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.m)
-	#println("Hence, mpi = ", skyrmions.m, ", length unit = ", 1, "and energy unit = ", 1)
+
+	println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.mpi)
+	println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee/(2.0*skyrmion.mpi), ", length unit = ", 2.0/(skyrmion.ee*skyrmion.Fpi), "and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
+
+end
+
+function turn_off_physical!(skyrmion)
+	
+	skyrmion.physical = false
+
 end
 
 

@@ -32,11 +32,11 @@ function Energy(sk,pion_mass; density=false, moment=0)
     end
 
     if density == false
-        engtot = sum(ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(12.0*pi^2)
+        engtot = sum(ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]
         if sk.physical == false
-            return engtot
+            return engtot/(12.0*pi^2)
         else
-            return engtot
+            return (engtot*sk.Fpi/(4.0*sk.ee), "MeV" )
         end
     else
         return ED
@@ -176,7 +176,11 @@ function getMOI(sk; density = false, moment=0)
                 VV[a,b] += MOI_D[a,b,i,j,k]*sk.ls[1]*sk.ls[2]*sk.ls[3]
             end
         end
-        return VV
+        if sk.physical == false
+            return VV
+        else
+            return (VV*sk.Fpi/(4.0*sk.ee)*(2.0/(sk.ee*sk.Fpi))^2, "MeV fm^2")
+        end
     else
         return MOI_D
     end
@@ -236,5 +240,21 @@ function center_of_mass(sk)
     return com/toteng
 
 end 
+
+
+"""
+    rms_baryon(skyrmion)
+
+Compute root mean square charge radius of a skyrmion, using the baryon density.
+"""
+function rms_baryon(sk)
+
+    if sk.physical == false
+        return sqrt(Baryon(sk; moment = 2))
+    else
+        return ( sqrt(Baryon(sk; moment = 2))*(2.0/(sk.ee*sk.Fpi)), "fm" )
+    end
+
+end
 
 
