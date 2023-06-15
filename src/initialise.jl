@@ -113,7 +113,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     M_final = zeros(B,B,4)
 
 
-   if typeof(L[end]) == QuaternionF64
+   if typeof(L[end]) == Quaternionic.QuaternionF64
 
         for a in 1:B
             L_final[a,1] = L[a].w
