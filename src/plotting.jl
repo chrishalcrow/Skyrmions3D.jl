@@ -2,8 +2,7 @@ function imusingnotebook()
 	CairoMakie.activate!()
 end
 
-function imusingterminal()
-	Makie.inline!(false) 
+function interactive_plot()
 	GLMakie.activate!()
 end
 
