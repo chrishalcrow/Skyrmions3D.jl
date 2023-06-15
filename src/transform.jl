@@ -71,7 +71,7 @@ function make_RM_product!(sk, Xs)
     for a in 2:size(Xs)[1]
 
         makeRM!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
-        product!(sk, temp_sk)
+        product_approx!(sk, temp_sk)
     end
 
 end

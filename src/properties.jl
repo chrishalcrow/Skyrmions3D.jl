@@ -6,9 +6,7 @@ Compute energy of `skyrmion`.
 Set 'density = true' to output the energy density and moment to `n` to calculate the nth moment of the energy density.
 
 """
-function Energy(sk,pion_mass; density=false, moment=0)
-
-    sk.mpi = pion_mass
+function Energy(sk; density=false, moment=0)
 
     ED = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
 
@@ -36,7 +34,11 @@ function Energy(sk,pion_mass; density=false, moment=0)
         if sk.physical == false
             return engtot/(12.0*pi^2)
         else
-            return (engtot*sk.Fpi/(4.0*sk.ee), "MeV" )
+            if moment == 0
+                return (engtot*sk.Fpi/(4.0*sk.ee), "MeV" )
+            else
+                return (engtot*sk.Fpi*(197.327*2.0/(sk.ee*sk.Fpi))/(4.0*sk.ee), "MeV fm^"*string(moment))
+            end
         end
     else
         return ED
@@ -179,7 +181,7 @@ function getMOI(sk; density = false, moment=0)
         if sk.physical == false
             return VV
         else
-            return (VV*sk.Fpi/(4.0*sk.ee)*(2.0/(sk.ee*sk.Fpi))^2, "MeV fm^2")
+            return (VV*sk.Fpi/(4.0*sk.ee)*(197.327*2.0/(sk.ee*sk.Fpi))^2*(197.327*2.0/(sk.ee*sk.Fpi))^moment, "MeV fm^"*string(2+moment))
         end
     else
         return MOI_D

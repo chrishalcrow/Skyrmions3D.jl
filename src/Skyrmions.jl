@@ -50,7 +50,7 @@ function turn_on_physical!(skyrmion)
 	skyrmion.physical = true
 
 	println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.mpi)
-	println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee/(2.0*skyrmion.mpi), ", length unit = ", 2.0/(skyrmion.ee*skyrmion.Fpi), "and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
+	println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee*skyrmion.mpi/2.0, ", length unit = ", 197.327*2.0/(skyrmion.ee*skyrmion.Fpi), "and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
 
 end
 
