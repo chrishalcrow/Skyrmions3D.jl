@@ -12,7 +12,7 @@ include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
 
 include("properties.jl")
-export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon
+export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon, Energy_SA
 
 """
     Skyrmion(lp::Int64, ls::Float64)

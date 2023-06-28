@@ -6,8 +6,8 @@ function dEdu!(du,u,p,t)
     dp = zeros(3,4)
     ddp = zeros(6,4)
     
-    for i in 3:p[2][1]-2
-        for j in 3:p[2][2]-2, k in 3:p[2][3]-2
+    @simd for i in 3:p[2][1]-2
+        @inbounds for j in 3:p[2][2]-2, k in 3:p[2][3]-2
         
             getDXf!(dp, u ,i, j, k, p[1])
             getDDXf!(ddp, u, i, j, k, p[1])
@@ -186,13 +186,13 @@ function flow!(ϕ, n; dt=0.0001)
     dp = zeros(3,4)
     ddp = zeros(6,4)
 
-    println("initial: ", Energy(ϕ, ϕ.mpi) )
+    println("initial: ", Energy(ϕ) )
 
     for _ in 1:n
         gradvD!(ϕ,dEdp,dt,dp,ddp)
     end
 
-    println("  final: ", Energy(ϕ, ϕ.mpi) )
+    println("  final: ", Energy(ϕ) )
 end
 
 
