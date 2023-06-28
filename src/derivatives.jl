@@ -109,7 +109,28 @@ function getDDX_SA!(ddp, sk ,i,j,k)
     end
 end
 
+function getDX(ϕ,i,j,k)
 
+    return SMatrix{3,4,Float64, 12}(
+        dxD(ϕ.phi,1,i,j,k,ϕ.ls[1]),
+        dyD(ϕ.phi,1,i,j,k,ϕ.ls[2]),
+        dzD(ϕ.phi,1,i,j,k,ϕ.ls[3]),
+
+        dxD(ϕ.phi,2,i,j,k,ϕ.ls[1]),
+        dyD(ϕ.phi,2,i,j,k,ϕ.ls[2]),
+        dzD(ϕ.phi,2,i,j,k,ϕ.ls[3]),
+
+        dxD(ϕ.phi,3,i,j,k,ϕ.ls[1]),
+        dyD(ϕ.phi,3,i,j,k,ϕ.ls[2]),
+        dzD(ϕ.phi,3,i,j,k,ϕ.ls[3]),
+
+        dxD(ϕ.phi,4,i,j,k,ϕ.ls[1]),
+        dyD(ϕ.phi,4,i,j,k,ϕ.ls[2]),
+        dzD(ϕ.phi,4,i,j,k,ϕ.ls[3])
+    )
+    
+
+end
 
 function getDX!(dp, ϕ,i,j,k)
     @simd for a in 1:4
