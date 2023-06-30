@@ -6,13 +6,15 @@ using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!
+export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!
+
+export gradvD_SA!, gradvD!
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
 
 include("properties.jl")
-export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon, Energy_SA
+export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon, Baryon_SA
 
 """
     Skyrmion(lp::Int64, ls::Float64)
@@ -99,7 +101,7 @@ Throws an error if *any* point is not normalised
 
 """
 function check_if_normalised(skyrmion)
-	for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+	for i in 1:skyrmion.lp[1], j in 1:skyrmion.lp[2], k in 1:skyrmion.lp[3]
 		@assert  skyrmion.phi[i,j,k,1]^2 + skyrmion.phi[i,j,k,2]^2 + skyrmion.phi[i,j,k,3]^2 + skyrmion.phi[i,j,k,4]^2 ≈ 1.0 "nooo"
 	end
 end
@@ -135,6 +137,27 @@ See also [`normer`]
 function normer!(sk)
 
 	for i in 3:sk.lp[1]-2
+		for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+			
+			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			for a in 1:4
+				@inbounds sk.phi[i,j,k,a] *= normer
+			end
+	
+		end
+	end
+end
+
+"""
+    normer_SA!(skyrmion)
+
+Normalise a skyrmion.
+
+See also [`normer`]
+"""
+function normer_SA!(sk)
+
+	Threads.@threads for i in 3:sk.lp[1]-2
 		for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
 			
 			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )

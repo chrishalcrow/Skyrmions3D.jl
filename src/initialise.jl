@@ -184,8 +184,10 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     x = an_ADHM_skyrmion.x
     lp = an_ADHM_skyrmion.lp
 
-    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
-        an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
+    Threads.@threads for i in 1:lp[1]
+        for j in 1:lp[2], k in 1:lp[3]
+            @inbounds an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
+        end
     end
 
 end

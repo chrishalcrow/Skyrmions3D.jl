@@ -29,7 +29,17 @@ function dydzdiffD(phi, a, i, j, k, lsx, lsy)
     @inbounds (-phi[i,j+2,k+2,a] + 16.0*phi[i,j+1,k+1,a] - 30.0*phi[i,j,k,a] + 16.0*phi[i,j-1,k-1,a] - phi[i,j-2,k-2,a])/(12.0*lsx*lsy)
 end
 
+function dxdyD(phi, a, i, j, k, lsx, lsy)
+    @inbounds 0.5*( dxdydiffD(phi, a, i, j, k, lsx, lsy) - d2xD(phi, a, i, j, k, lsx) - d2yD(phi, a, i, j, k, lsx) )
+end
 
+function dxdzD(phi, a, i, j, k, lsx, lsz)
+    @inbounds 0.5*( dxdzdiffD(phi, a, i, j, k, lsx, lsz) - d2xD(phi, a, i, j, k, lsx) - d2zD(phi, a, i, j, k, lsz) )
+end
+
+function dydzD(phi, a, i, j, k, lsy, lsz)
+    @inbounds 0.5*( dydzdiffD(phi, a, i, j, k, lsy, lsz) - d2yD(phi, a, i, j, k, lsy) - d2zD(phi, a, i, j, k, lsz) )
+end
 
 
 #=
@@ -82,33 +92,6 @@ end
 
 
 
-function getDX_SA!(dp, ϕ,i,j,k)
-    @simd for a in 1:4
-        @inbounds dp[1,a] = dxD(ϕ.phi,a,i,j,k,ϕ.ls[1])
-        @inbounds dp[2,a] = dyD(ϕ.phi,a,i,j,k,ϕ.ls[2])
-        @inbounds dp[3,a] = dzD(ϕ.phi,a,i,j,k,ϕ.ls[3]) 
-    end
-end
-
-function getDDX_SA!(ddp, sk ,i,j,k)
-    
-    @simd for a in 1:4
-            
-        @inbounds ddp[1,1,a] = d2xD(sk.phi,a,i,j,k,sk.ls[1])
-        @inbounds ddp[2,2,a] = d2yD(sk.phi,a,i,j,k,sk.ls[2])
-        @inbounds ddp[3,3,a] = d2zD(sk.phi,a,i,j,k,sk.ls[3]) 
-
-        @inbounds ddp[1,2,a] = (dxdydiffD(sk.phi, a, i, j, k, sk.ls[1], sk.ls[2]) - ddp[1,a] - ddp[2,a])/2.0
-        @inbounds ddp[1,3,a] = (dxdzdiffD(sk.phi, a, i, j, k, sk.ls[1], sk.ls[3]) - ddp[1,a] - ddp[3,a])/2.0
-        @inbounds ddp[2,3,a] = (dydzdiffD(sk.phi, a, i, j, k, sk.ls[2], sk.ls[3]) - ddp[2,a] - ddp[3,a])/2.0
-
-        @inbounds ddp[2,1,a] = ddp[1,2,a]
-        @inbounds ddp[3,2,a] = ddp[2,3,a]
-        @inbounds ddp[3,1,a] = ddp[1,3,a]
-
-    end
-end
-
 function getDX(ϕ,i,j,k)
 
     return SMatrix{3,4,Float64, 12}(
@@ -131,6 +114,57 @@ function getDX(ϕ,i,j,k)
     
 
 end
+
+
+function getDDX(ϕ,i,j,k)
+
+    return SMatrix{6,4,Float64, 24}(
+
+        d2xD(ϕ.phi,1,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.phi,1,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.phi,1,i,j,k,ϕ.ls[3]),
+        dydzD(ϕ.phi,1,i,j,k,ϕ.ls[2],ϕ.ls[3]),
+        dxdzD(ϕ.phi,1,i,j,k,ϕ.ls[1],ϕ.ls[3]),
+        dxdyD(ϕ.phi,1,i,j,k,ϕ.ls[1],ϕ.ls[2]),
+
+        d2xD(ϕ.phi,2,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.phi,2,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.phi,2,i,j,k,ϕ.ls[3]),
+        dydzD(ϕ.phi,2,i,j,k,ϕ.ls[2],ϕ.ls[3]),
+        dxdzD(ϕ.phi,2,i,j,k,ϕ.ls[1],ϕ.ls[3]),
+        dxdyD(ϕ.phi,2,i,j,k,ϕ.ls[1],ϕ.ls[2]),
+
+        d2xD(ϕ.phi,3,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.phi,3,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.phi,3,i,j,k,ϕ.ls[3]),
+        dydzD(ϕ.phi,3,i,j,k,ϕ.ls[2],ϕ.ls[3]),
+        dxdzD(ϕ.phi,3,i,j,k,ϕ.ls[1],ϕ.ls[3]),
+        dxdyD(ϕ.phi,3,i,j,k,ϕ.ls[1],ϕ.ls[2]),
+
+        d2xD(ϕ.phi,4,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.phi,4,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.phi,4,i,j,k,ϕ.ls[3]),
+        dydzD(ϕ.phi,4,i,j,k,ϕ.ls[2],ϕ.ls[3]),
+        dxdzD(ϕ.phi,4,i,j,k,ϕ.ls[1],ϕ.ls[3]),
+        dxdyD(ϕ.phi,4,i,j,k,ϕ.ls[1],ϕ.ls[2])
+    )
+    
+
+end
+
+function getX(sk,i,j,k)
+
+    return SVector{4,Float64}(
+        sk.phi[i,j,k,1],
+        sk.phi[i,j,k,2],
+        sk.phi[i,j,k,3],
+        sk.phi[i,j,k,4]
+    )
+    
+end
+
+
+
 
 function getDX!(dp, ϕ,i,j,k)
     @simd for a in 1:4

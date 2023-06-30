@@ -12,12 +12,6 @@ function dEdu!(du,u,p,t)
             getDXf!(dp, u ,i, j, k, p[1])
             getDDXf!(ddp, u, i, j, k, p[1])
 
-
-            #@inbounds du[i,j,k,1] = dedfpt1v(dp,ddp)
-            #@inbounds du[i,j,k,2] = dedfpt2v(dp,ddp)
-            #@inbounds du[i,j,k,3] = dedfpt3v(dp,ddp)
-            #@inbounds du[i,j,k,4] = dedfpt4v(dp,ddp,p[3])
-
             p[4][i,j,k,1] = dedfpt1v(dp,ddp)
             p[4][i,j,k,2] = dedfpt2v(dp,ddp)
             p[4][i,j,k,3] = dedfpt3v(dp,ddp)
@@ -35,6 +29,9 @@ function dEdu!(du,u,p,t)
     end
 	
 end
+
+
+
 
 condition(u, t, integrator) = true#t ∈ integrator.p[4]
 
@@ -103,51 +100,14 @@ function dedfpt4v(dp,ddp,mpi)
 end
 
 
-#=
-function gradvD_SA!(sk, dEdp,mpi, dt, dp, ddp)
 
-    @simd for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+function gradvD_SA!(sk, dEdp, dt)
 
-            dp = zeros( MMatrix{3,4,Float64} )
-            ddp = zeros( MArray{Tuple{3,3,4},Float64} )
-        
-            getDX_SA!(dp, sk ,i, j, k )
-            getDDX_SA!(ddp, sk, i, j, k)
-
-            
-
-            #@inbounds dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
-            #@inbounds dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
-            #@inbounds dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
-            #@inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpi)
-                    
-        end
-    end
-    
-        
-    @simd for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
-            @inbounds sk.phi[i,j,k,a] += dt*dEdp[i,j,k,a]
-            for b in 1:4
-                sk.phi[i,j,k,a] -= dt*( dEdp[i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
-            end
-        end
-    end
-    
-    normer!(sk)
-   
-end 
-=#
-
-
-function gradvD!(sk, dEdp, dt, dp, ddp)
-
-    @simd for i in 3:sk.lp[1]-2
+    Threads.@threads for i in 3:sk.lp[1]-2
         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
         
-            getDX!(dp, sk ,i, j, k )
-            getDDX!(ddp, sk, i, j, k)
+            dp = getDX(sk ,i, j, k )
+            ddp = getDDX(sk, i, j, k)
 
             @inbounds dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
             @inbounds dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
@@ -157,12 +117,60 @@ function gradvD!(sk, dEdp, dt, dp, ddp)
         end
     end
     
+    Threads.@threads for i in 3:sk.lp[1]-2
+         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+            
+            DEdotPHI = Float64(0.0)
+            for a in 1:4
+                @inbounds DEdotPHI += dEdp[i,j,k,a]*sk.phi[i,j,k,a]
+            end
+
+            for a in 1:4
+                @inbounds sk.phi[i,j,k,a] += dt*(dEdp[i,j,k,a] - sk.phi[i,j,k,a]*DEdotPHI)
+            end
+
+            # reusing DEdotPHI as the normalising constant, to reduce allocations
+            @inbounds DEdotPHI = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			for a in 1:4
+				@inbounds sk.phi[i,j,k,a] *= DEdotPHI
+			end
+        end
+    end
+    
+
+   
+end 
+
+
+
+function gradvD!(sk, dEdp, dt, dp, ddp)
+
+    mpi = sk.mpi
+
+    @inbounds for i in 3:sk.lp[1]-2
+        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
         
-    @simd for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
-            @inbounds sk.phi[i,j,k,a] += dt*dEdp[i,j,k,a]
-            for b in 1:4
-                sk.phi[i,j,k,a] -= dt*( dEdp[i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
+            getDX!(dp, sk ,i, j, k )
+            getDDX!(ddp, sk, i, j, k)
+
+            dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
+            dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
+            dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
+            dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpi)
+                    
+        end
+    end
+    
+    @inbounds for i in 3:sk.lp[1]-2
+         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+            
+            DEdotPHI = 0.0
+            for a in 1:4
+                DEdotPHI += dEdp[i,j,k,a]*sk.phi[i,j,k,a]
+            end
+
+            for a in 1:4
+                sk.phi[i,j,k,a] += dt*(dEdp[i,j,k,a] - sk.phi[i,j,k,a]*DEdotPHI)
             end
         end
     end
@@ -183,13 +191,23 @@ Within the code, a variation array is created. As such, it is significantly more
 function flow!(ϕ, n; dt=0.0001)
 
     dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dp = zeros(3,4)
-    ddp = zeros(6,4)
+    
 
     println("initial: ", Energy(ϕ) )
 
-    for _ in 1:n
-        gradvD!(ϕ,dEdp,dt,dp,ddp)
+    if Threads.nthreads() == 1
+        
+        dp = zeros(3,4)
+        ddp = zeros(6,4)
+        
+        for _ in 1:n
+            gradvD!(ϕ,dEdp,dt,dp,ddp)
+        end
+        
+    else
+        for _ in 1:n
+            gradvD_SA!(ϕ,dEdp,dt)
+        end
     end
 
     println("  final: ", Energy(ϕ) )
@@ -278,26 +296,22 @@ function stepANF!(sk, skd, dEdp, mpi, dt, dp, ddp)
 
     #println("dot: ", dE_dot_mom)
     
-        
+    DEdotPHI = 0.0
     @simd for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
-
-            @inbounds sk.phi[i,j,k,a] += dt*dEdp[1,i,j,k,a]
-
-
-            @inbounds skd[i,j,k,a] += dt*dEdp[2,i,j,k,a]
-
-
-            for b in 1:4
-                skd[i,j,k,a] -= dt*( dEdp[2,i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
+        @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+            
+            DEdotPHI = 0.0
+            for a in 1:4
+                DEdotPHI += dEdp[i,j,k,a]*sk.phi[i,j,k,a]
             end
 
-
-
+            for a in 1:4
+                sk.phi[i,j,k,a] += dt*(dEdp[i,j,k,a] - sk.phi[i,j,k,a]*DEdotPHI)
+            end
         end
     end
     
-    normer(sk)
+    normer!(sk)
    
 end
 
