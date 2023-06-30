@@ -185,7 +185,7 @@ end
     
 Applies a gradient flow to `skyrmion` with timestep `dt` for `n` steps.
 
-Within the code, a variation array is created. As such, it is significantly more efficient to use n=1000 than to loop the method 1000 times with `n=1`.
+Within the code, an array which holds the variation is created. As such, it is significantly more efficient to use n=1000 than to loop the method 1000 times with `n=1`.
 
 """
 function flow!(ϕ, n; dt=0.0001)
@@ -203,7 +203,7 @@ function flow!(ϕ, n; dt=0.0001)
         for _ in 1:n
             gradvD!(ϕ,dEdp,dt,dp,ddp)
         end
-        
+
     else
         for _ in 1:n
             gradvD_SA!(ϕ,dEdp,dt)
@@ -216,179 +216,104 @@ end
 
 
 
+function ANFflow!(ϕ,ϕd,dt,n)
 
+    println("intial energy: ", Energy(ϕ))
 
+    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    ED = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3])
 
-
-
-
-
-
-
-function ANFflow!(ϕ,ϕd,mpi,dt,n)
-
-    dEdp = zeros(2,ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dp = zeros(3,4)
-    ddp = zeros(6,4)
-
-    previous_phi = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    previous_phi = zeros(Float64, ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     previous_phi .= ϕ.phi;
 
-    old_energy = 1000.0
-    new_energy = 500.0
+    old_energy = 10000000.0
+    new_energy = 5000000.0
+
+    arrestnumber = Int64(0)
 
     for _ in 1:n
-        previous_phi .= ϕ.phi;
+  
         old_energy = new_energy
-        stepANF!(ϕ,ϕd,dEdp,mpi,dt,dp,ddp)
-        new_energy = Energy(ϕ,mpi)
+        stepANF!(ϕ,ϕd,previous_phi,dEdp,dt)
+        new_energy = EnergyANF(ϕ,ED)
+        #println("old: ", old_energy, ", new: ", new_energy)
 
         if new_energy > old_energy
 
-            println("ARREST!")
+            arrestnumber += 1
 
-            ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-            ϕ.phi .= previous_phi
+            #println("ARREST!")
 
-            #new_energy = old_energy
-
-
-        end
-
-        println(Energy(ϕ, mpi))
+            fill!(ϕd, 0.0);
+            ϕ.phi .= previous_phi;
+  
+        end        
 
     end
+
+    println("Final energy: ", Energy(ϕ))
+
+    return arrestnumber
+
 end
 
 
-function stepANF!(sk, skd, dEdp, mpi, dt, dp, ddp)
 
-    dE_dot_mom = 0.0
-
-    for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-        
-            getDX!(dp, sk ,i, j, k )
-            getDDX!(ddp, sk, i, j, k)
-
-            @inbounds dEdp[2,i,j,k,1] = dedfpt1v(dp,ddp)
-            @inbounds dEdp[2,i,j,k,2] = dedfpt2v(dp,ddp)
-            @inbounds dEdp[2,i,j,k,3] = dedfpt3v(dp,ddp)
-            @inbounds dEdp[2,i,j,k,4] = dedfpt4v(dp,ddp,mpi)
-
-            for a in 1:4
-                dEdp[1,i,j,k,a] = skd[i,j,k,a]
-            end
-
-            for a in 1:4
-                dE_dot_mom += dEdp[2,i,j,k,a]*skd[i,j,k,a]
-            end
-
-        end
-    end
-
-    #if dE_dot_mom < 0 
-    #    for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
-    #        dEdp[1,i,j,k,a] = 0.0
-    #    end
-    #end
+function stepANF!(sk, skd, previous_phi,dEdp, dt)
 
 
-    #println("dot: ", dE_dot_mom)
-    
-    DEdotPHI = 0.0
-    @simd for i in 3:sk.lp[1]-2
+    Threads.@threads for i in 3:sk.lp[1]-2
+    #for i in 3:sk.lp[1]-2
         @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+
             
-            DEdotPHI = 0.0
+        
+            dp = getDX(sk ,i, j, k )
+            ddp = getDDX(sk, i, j, k)
+    
+            dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
+            dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
+            dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
+            dEdp[i,j,k,4] = dedfpt4v(dp,ddp,sk.mpi)
+
+            DEdotPHI = Float64(0.0)
             for a in 1:4
-                DEdotPHI += dEdp[i,j,k,a]*sk.phi[i,j,k,a]
+                previous_phi[i,j,k,a] = sk.phi[i,j,k,a]
+                @inbounds DEdotPHI += dEdp[i,j,k,a]*sk.phi[i,j,k,a]
             end
 
             for a in 1:4
-                sk.phi[i,j,k,a] += dt*(dEdp[i,j,k,a] - sk.phi[i,j,k,a]*DEdotPHI)
+                dEdp[i,j,k,a] -= sk.phi[i,j,k,a]*DEdotPHI
             end
+
+
         end
     end
-    
-    normer!(sk)
-   
-end
 
-
-
-
-
-
-
-function momflow!(ϕ,ϕd,mpi,dt,n;α=1.0, β=1.0)
-
-    dEdp = zeros(2,ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dp = zeros(3,4)
-    ddp = zeros(6,4)
-
-
-    for _ in 1:n
-
-        stepMOM!(ϕ,ϕd,dEdp,mpi,dt,dp,ddp,α, β)
-        println(Energy(ϕ, mpi))
-
-    end
-end
-
-
-function stepMOM!(sk, skd, dEdp, mpi, dt, dp, ddp, α, β)
-
-
-    for i in 3:sk.lp[1]-2
+    Threads.@threads for i in 3:sk.lp[1]-2
+    #for i in 3:sk.lp[1]-2
         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-        
-            getDX!(dp, sk ,i, j, k )
-            getDDX!(ddp, sk, i, j, k)
+           
+           for a in 1:4
+               @inbounds sk.phi[i,j,k,a] -= dt*skd[i,j,k,a]
+           end
+           for a in 1:4
 
-            @inbounds dEdp[2,i,j,k,1] = dedfpt1v(dp,ddp)
-            @inbounds dEdp[2,i,j,k,2] = dedfpt2v(dp,ddp)
-            @inbounds dEdp[2,i,j,k,3] = dedfpt3v(dp,ddp)
-            @inbounds dEdp[2,i,j,k,4] = dedfpt4v(dp,ddp,mpi)
-
-            for a in 1:4
-                dEdp[1,i,j,k,a] = skd[i,j,k,a]
-            end
-
-            #for a in 1:4
-            #    dE_dot_mom += dEdp[2,i,j,k,a]*skd[i,j,k,a]
-            #end
-
-        end
-    end
-
-
-    #println("dot: ", dE_dot_mom)
-    
-        
-    @simd for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2, a in 1:4
-
-            @inbounds sk.phi[i,j,k,a] = sk.phi[i,j,k,a] + dt*α*skd[i,j,k,a]
-
-
-            @inbounds skd[i,j,k,a] = β*skd[i,j,k,a] + dt*dEdp[2,i,j,k,a] 
-
-
-            for b in 1:4
-                skd[i,j,k,a] -= dt*( dEdp[2,i,j,k,b]*sk.phi[i,j,k,b]*sk.phi[i,j,k,a] ) 
-            end
-
-            #dt*dEdp[1,i,j,k,a]
-
-
-
-        end
-    end
-    
-    normer(sk)
+               @inbounds skd[i,j,k,a] -= dt*dEdp[i,j,k,a]    
+           end
    
-end 
+           @inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+           for a in 1:4
+               @inbounds sk.phi[i,j,k,a] *= normer
+           end
+       end
+   end
+   
+end
+
+
+
+
 
 
 
