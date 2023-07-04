@@ -95,13 +95,60 @@ end
 function dedfpt3v(dp,ddp)
     return ddp[3,3] + ddp[3,3]*dp[1,1]^2 + ddp[3,3]*dp[1,2]^2 - ddp[2,1]*dp[1,1]*dp[1,3] - ddp[3,1]*dp[1,1]*dp[1,3] - ddp[2,2]*dp[1,2]*dp[1,3] - ddp[3,2]*dp[1,2]*dp[1,3] - ddp[2,4]*dp[1,3]*dp[1,4] - ddp[3,4]*dp[1,3]*dp[1,4] + ddp[3,3]*dp[1,4]^2 - 2*ddp[6,3]*dp[1,1]*dp[2,1] + ddp[6,1]*dp[1,3]*dp[2,1] + ddp[3,3]*dp[2,1]^2 - 2*ddp[6,3]*dp[1,2]*dp[2,2] + ddp[6,2]*dp[1,3]*dp[2,2] + ddp[3,3]*dp[2,2]^2 + ddp[6,1]*dp[1,1]*dp[2,3] + ddp[6,2]*dp[1,2]*dp[2,3] + ddp[6,4]*dp[1,4]*dp[2,3] - ddp[1,1]*dp[2,1]*dp[2,3] - ddp[3,1]*dp[2,1]*dp[2,3] - ddp[1,2]*dp[2,2]*dp[2,3] - ddp[3,2]*dp[2,2]*dp[2,3] + ddp[6,4]*dp[1,3]*dp[2,4] - 2*ddp[6,3]*dp[1,4]*dp[2,4] - ddp[1,4]*dp[2,3]*dp[2,4] - ddp[3,4]*dp[2,3]*dp[2,4] + ddp[3,3]*dp[2,4]^2 - 2*ddp[5,3]*dp[1,1]*dp[3,1] + ddp[5,1]*dp[1,3]*dp[3,1] - 2*ddp[4,3]*dp[2,1]*dp[3,1] + ddp[4,1]*dp[2,3]*dp[3,1] - 2*ddp[5,3]*dp[1,2]*dp[3,2] + ddp[5,2]*dp[1,3]*dp[3,2] - 2*ddp[4,3]*dp[2,2]*dp[3,2] + ddp[4,2]*dp[2,3]*dp[3,2] + ddp[5,1]*dp[1,1]*dp[3,3] + ddp[5,2]*dp[1,2]*dp[3,3] + ddp[5,4]*dp[1,4]*dp[3,3] + ddp[4,1]*dp[2,1]*dp[3,3] + ddp[4,2]*dp[2,2]*dp[3,3] + ddp[4,4]*dp[2,4]*dp[3,3] - ddp[1,1]*dp[3,1]*dp[3,3] - ddp[2,1]*dp[3,1]*dp[3,3] - ddp[1,2]*dp[3,2]*dp[3,3] - ddp[2,2]*dp[3,2]*dp[3,3] + (ddp[5,4]*dp[1,3] - 2*ddp[5,3]*dp[1,4] + ddp[4,4]*dp[2,3] - 2*ddp[4,3]*dp[2,4] - (ddp[1,4] + ddp[2,4])*dp[3,3])*dp[3,4] + ddp[2,3]*(1 + dp[1,1]^2 + dp[1,2]^2 + dp[1,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,4]^2) + ddp[1,3]*(1 + dp[2,1]^2 + dp[2,2]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,4]^2)
 end
-function dedfpt4v(dp,ddp,mpi)
-    return mpi + ddp[3,4] + ddp[3,4]*dp[1,1]^2 + ddp[3,4]*dp[1,2]^2 + ddp[3,4]*dp[1,3]^2 - ddp[2,1]*dp[1,1]*dp[1,4] - ddp[3,1]*dp[1,1]*dp[1,4] - ddp[2,2]*dp[1,2]*dp[1,4] - ddp[3,2]*dp[1,2]*dp[1,4] - ddp[2,3]*dp[1,3]*dp[1,4] - ddp[3,3]*dp[1,3]*dp[1,4] - 2*ddp[6,4]*dp[1,1]*dp[2,1] + ddp[6,1]*dp[1,4]*dp[2,1] + ddp[3,4]*dp[2,1]^2 - 2*ddp[6,4]*dp[1,2]*dp[2,2] + ddp[6,2]*dp[1,4]*dp[2,2] + ddp[3,4]*dp[2,2]^2 - 2*ddp[6,4]*dp[1,3]*dp[2,3] + ddp[6,3]*dp[1,4]*dp[2,3] + ddp[3,4]*dp[2,3]^2 + ddp[6,1]*dp[1,1]*dp[2,4] + ddp[6,2]*dp[1,2]*dp[2,4] + ddp[6,3]*dp[1,3]*dp[2,4] - ddp[1,1]*dp[2,1]*dp[2,4] - ddp[3,1]*dp[2,1]*dp[2,4] - ddp[1,2]*dp[2,2]*dp[2,4] - ddp[3,2]*dp[2,2]*dp[2,4] - ddp[1,3]*dp[2,3]*dp[2,4] - ddp[3,3]*dp[2,3]*dp[2,4] - 2*ddp[5,4]*dp[1,1]*dp[3,1] + ddp[5,1]*dp[1,4]*dp[3,1] - 2*ddp[4,4]*dp[2,1]*dp[3,1] + ddp[4,1]*dp[2,4]*dp[3,1] - 2*ddp[5,4]*dp[1,2]*dp[3,2] + ddp[5,2]*dp[1,4]*dp[3,2] - 2*ddp[4,4]*dp[2,2]*dp[3,2] + ddp[4,2]*dp[2,4]*dp[3,2] - 2*ddp[5,4]*dp[1,3]*dp[3,3] + ddp[5,3]*dp[1,4]*dp[3,3] - 2*ddp[4,4]*dp[2,3]*dp[3,3] + ddp[4,3]*dp[2,4]*dp[3,3] + ddp[2,4]*(1 + dp[1,1]^2 + dp[1,2]^2 + dp[1,3]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2) + ddp[1,4]*(1 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2) + (ddp[5,1]*dp[1,1] + ddp[5,2]*dp[1,2] + ddp[5,3]*dp[1,3] + ddp[4,1]*dp[2,1] + ddp[4,2]*dp[2,2] + ddp[4,3]*dp[2,3] - (ddp[1,1] + ddp[2,1])*dp[3,1] - (ddp[1,2] + ddp[2,2])*dp[3,2] - (ddp[1,3] + ddp[2,3])*dp[3,3])*dp[3,4]
+function dedfpt4v(dp,ddp,mpisq)
+    return mpisq + ddp[3,4] + ddp[3,4]*dp[1,1]^2 + ddp[3,4]*dp[1,2]^2 + ddp[3,4]*dp[1,3]^2 - ddp[2,1]*dp[1,1]*dp[1,4] - ddp[3,1]*dp[1,1]*dp[1,4] - ddp[2,2]*dp[1,2]*dp[1,4] - ddp[3,2]*dp[1,2]*dp[1,4] - ddp[2,3]*dp[1,3]*dp[1,4] - ddp[3,3]*dp[1,3]*dp[1,4] - 2*ddp[6,4]*dp[1,1]*dp[2,1] + ddp[6,1]*dp[1,4]*dp[2,1] + ddp[3,4]*dp[2,1]^2 - 2*ddp[6,4]*dp[1,2]*dp[2,2] + ddp[6,2]*dp[1,4]*dp[2,2] + ddp[3,4]*dp[2,2]^2 - 2*ddp[6,4]*dp[1,3]*dp[2,3] + ddp[6,3]*dp[1,4]*dp[2,3] + ddp[3,4]*dp[2,3]^2 + ddp[6,1]*dp[1,1]*dp[2,4] + ddp[6,2]*dp[1,2]*dp[2,4] + ddp[6,3]*dp[1,3]*dp[2,4] - ddp[1,1]*dp[2,1]*dp[2,4] - ddp[3,1]*dp[2,1]*dp[2,4] - ddp[1,2]*dp[2,2]*dp[2,4] - ddp[3,2]*dp[2,2]*dp[2,4] - ddp[1,3]*dp[2,3]*dp[2,4] - ddp[3,3]*dp[2,3]*dp[2,4] - 2*ddp[5,4]*dp[1,1]*dp[3,1] + ddp[5,1]*dp[1,4]*dp[3,1] - 2*ddp[4,4]*dp[2,1]*dp[3,1] + ddp[4,1]*dp[2,4]*dp[3,1] - 2*ddp[5,4]*dp[1,2]*dp[3,2] + ddp[5,2]*dp[1,4]*dp[3,2] - 2*ddp[4,4]*dp[2,2]*dp[3,2] + ddp[4,2]*dp[2,4]*dp[3,2] - 2*ddp[5,4]*dp[1,3]*dp[3,3] + ddp[5,3]*dp[1,4]*dp[3,3] - 2*ddp[4,4]*dp[2,3]*dp[3,3] + ddp[4,3]*dp[2,4]*dp[3,3] + ddp[2,4]*(1 + dp[1,1]^2 + dp[1,2]^2 + dp[1,3]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2) + ddp[1,4]*(1 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2) + (ddp[5,1]*dp[1,1] + ddp[5,2]*dp[1,2] + ddp[5,3]*dp[1,3] + ddp[4,1]*dp[2,1] + ddp[4,2]*dp[2,2] + ddp[4,3]*dp[2,3] - (ddp[1,1] + ddp[2,1])*dp[3,1] - (ddp[1,2] + ddp[2,2])*dp[3,2] - (ddp[1,3] + ddp[2,3])*dp[3,3])*dp[3,4]
 end
 
 
 
+function gradvD_SAp!(sk, dEdp, dt)
+
+    mpisq = sk.mpi^2
+
+    #Threads.@threads for i in 1:sk.lp[1]
+    for i in 1:sk.lp[1]
+        for j in 1:sk.lp[2], k in 1:sk.lp[3]
+        
+            dp = getDXp(sk ,i, j, k )
+            ddp = getDDXp(sk, i, j, k)
+
+            @inbounds dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
+            @inbounds dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
+            @inbounds dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
+            @inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpisq)
+                    
+        end
+    end
+    
+    #Threads.@threads for i in 1:sk.lp[1]
+    for i in 1:sk.lp[1]
+         for j in 1:sk.lp[2], k in 1:sk.lp[3]
+            
+            DEdotPHI = Float64(0.0)
+            for a in 1:4
+                @inbounds DEdotPHI += dEdp[i,j,k,a]*sk.phi[i,j,k,a]
+            end
+
+            for a in 1:4
+                @inbounds sk.phi[i,j,k,a] += dt*(dEdp[i,j,k,a] - sk.phi[i,j,k,a]*DEdotPHI)
+            end
+
+            # reusing DEdotPHI as the normalising constant, to reduce allocations
+            @inbounds DEdotPHI = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			for a in 1:4
+				@inbounds sk.phi[i,j,k,a] *= DEdotPHI
+			end
+        end
+    end
+    
+
+   
+end 
+
+
 function gradvD_SA!(sk, dEdp, dt)
+
+
 
     Threads.@threads for i in 3:sk.lp[1]-2
         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
@@ -112,7 +159,7 @@ function gradvD_SA!(sk, dEdp, dt)
             @inbounds dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
             @inbounds dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
             @inbounds dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
-            @inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,sk.mpi)
+            @inbounds dEdp[i,j,k,4] = dedfpt4v(dp,ddp,sk.mpi^2)
                     
         end
     end
@@ -145,7 +192,7 @@ end
 
 function gradvD!(sk, dEdp, dt, dp, ddp)
 
-    mpi = sk.mpi
+    mpisq = sk.mpi^2
 
     @inbounds for i in 3:sk.lp[1]-2
         for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
@@ -156,7 +203,7 @@ function gradvD!(sk, dEdp, dt, dp, ddp)
             dEdp[i,j,k,1] = dedfpt1v(dp,ddp)
             dEdp[i,j,k,2] = dedfpt2v(dp,ddp)
             dEdp[i,j,k,3] = dedfpt3v(dp,ddp)
-            dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpi)
+            dEdp[i,j,k,4] = dedfpt4v(dp,ddp,mpisq)
                     
         end
     end
@@ -195,25 +242,33 @@ function flow!(ϕ, n; dt=0.0001)
 
     println("initial: ", Energy(ϕ) )
 
-    if Threads.nthreads() == 1
-        
-        dp = zeros(3,4)
-        ddp = zeros(6,4)
-        
-        for _ in 1:n
-            gradvD!(ϕ,dEdp,dt,dp,ddp)
-        end
+    if ϕ.periodic == false
 
+        if Threads.nthreads() == 1
+            
+            dp = zeros(3,4)
+            ddp = zeros(6,4)
+            
+            for _ in 1:n
+                gradvD!(ϕ,dEdp,dt,dp,ddp)
+            end
+
+        else
+            for _ in 1:n
+                gradvD_SA!(ϕ,dEdp,dt)
+            end
+        end
     else
+
+
         for _ in 1:n
-            gradvD_SA!(ϕ,dEdp,dt)
+            gradvD_SAp!(ϕ,dEdp,dt)
         end
     end
 
     println("  final: ", Energy(ϕ) )
+
 end
-
-
 
 
 function ANFflow!(ϕ,ϕd,dt,n)
@@ -257,6 +312,28 @@ function ANFflow!(ϕ,ϕd,dt,n)
 
 end
 
+
+
+function slow_dynamical_flow!(ϕ,ϕd,dt,n)
+
+    println("intial energy: ", Energy(ϕ))
+
+    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    ED = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3])
+
+    previous_phi = zeros(Float64, ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+
+    for _ in 1:n
+  
+        stepANF!(ϕ,ϕd,previous_phi,dEdp,dt)
+
+    end
+
+    println("Final energy: ", Energy(ϕ))
+
+    return arrestnumber
+
+end
 
 
 function stepANF!(sk, skd, previous_phi,dEdp, dt)

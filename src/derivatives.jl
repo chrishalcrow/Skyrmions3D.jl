@@ -32,37 +32,57 @@ end
 function dxdyD(phi, a, i, j, k, lsx, lsy)
     @inbounds 0.5*( dxdydiffD(phi, a, i, j, k, lsx, lsy) - d2xD(phi, a, i, j, k, lsx) - d2yD(phi, a, i, j, k, lsx) )
 end
-
 function dxdzD(phi, a, i, j, k, lsx, lsz)
     @inbounds 0.5*( dxdzdiffD(phi, a, i, j, k, lsx, lsz) - d2xD(phi, a, i, j, k, lsx) - d2zD(phi, a, i, j, k, lsz) )
 end
-
 function dydzD(phi, a, i, j, k, lsy, lsz)
     @inbounds 0.5*( dydzdiffD(phi, a, i, j, k, lsy, lsz) - d2yD(phi, a, i, j, k, lsy) - d2zD(phi, a, i, j, k, lsz) )
 end
 
 
-#=
-function d2xD(phi, a, i, j, k, lsx)
-    @inbounds (-phi[a,i+2,j,k] + 16.0*phi[a,i+1,j,k] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i-1,j,k] - phi[a,i-2,j,k])/(12.0*lsx^2)
+# periodic stuff
+
+function dxDp(phi, a, i, j, k, lsx, ig)
+    @inbounds (-phi[ig[i+2],j,k,a] + 8.0*phi[ig[i+1],j,k,a] - 8.0*phi[ig[i-1],j,k,a] + phi[ig[i-2],j,k,a])/(12.0*lsx)
 end
-function d2yD(phi, a, i, j, k, lsx)
-    @inbounds (-phi[a,i,j+2,k] + 16.0*phi[a,i,j+1,k] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i,j-1,k] - phi[a,i,j-2,k])/(12.0*lsx^2)
+function dyDp(phi, a, i, j, k, lsy, ig)
+    @inbounds (-phi[i,ig[j+2],k,a] + 8.0*phi[i,ig[j+1],k,a] - 8.0*phi[i,ig[j-1],k,a] + phi[i,ig[j-2],k,a])/(12.0*lsy)
 end
-function d2zD(phi, a, i, j, k, lsx)
-    @inbounds (-phi[a,i,j,k+2] + 16.0*phi[a,i,j,k+1] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i,j,k-1] - phi[a,i,j,k-2])/(12.0*lsx^2)
+function dzDp(phi, a, i, j, k, lsz, ig)
+    @inbounds (-phi[i,j,ig[k+2],a] + 8.0*phi[i,j,ig[k+1],a] - 8.0*phi[i,j,ig[k-1],a] + phi[i,j,ig[k-2],a])/(12.0*lsz)
 end
 
-function dxdydiffD(phi, a, i, j, k, lsx, lsy)
-    @inbounds (-phi[a,i+2,j+2,k] + 16.0*phi[a,i+1,j+1,k] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i-1,j-1,k] - phi[a,i-2,j-2,k])/(12.0*lsx*lsy)
+
+function d2xDp(phi, a, i, j, k, lsx, ig)
+    @inbounds (-phi[ig[i+2],j,k,a] + 16.0*phi[ig[i+1],j,k,a] - 30.0*phi[ig[i],j,k,a] + 16.0*phi[ig[i-1],j,k,a] - phi[ig[i-2],j,k,a])/(12.0*lsx^2)
 end
-function dxdzdiffD(phi, a, i, j, k, lsx, lsy)
-    @inbounds (-phi[a,i+2,j,k+2] + 16.0*phi[a,i+1,j,k+1] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i-1,j,k-1] - phi[a,i-2,j,k-2])/(12.0*lsx*lsy)
+function d2yDp(phi, a, i, j, k, lsx, ig)
+    @inbounds (-phi[i,ig[j+2],k,a] + 16.0*phi[i,ig[j+1],k,a] - 30.0*phi[i,ig[j],k,a] + 16.0*phi[i,ig[j-1],k,a] - phi[i,ig[j-2],k,a])/(12.0*lsx^2)
 end
-function dydzdiffD(phi, a, i, j, k, lsx, lsy)
-    @inbounds (-phi[a,i,j+2,k+2] + 16.0*phi[a,i,j+1,k+1] - 30.0*phi[a,i,j,k] + 16.0*phi[a,i,j-1,k-1] - phi[a,i,j-2,k-2])/(12.0*lsx*lsy)
+function d2zDp(phi, a, i, j, k, lsx, ig)
+    @inbounds (-phi[i,j,ig[k+2],a] + 16.0*phi[i,j,ig[k+1],a] - 30.0*phi[i,j,ig[k],a] + 16.0*phi[i,j,ig[k-1],a] - phi[i,j,ig[k-2],a])/(12.0*lsx^2)
 end
-=#
+
+function dxdydiffDp(phi, a, i, j, k, lsx, lsy, igx, igy)
+    @inbounds (-phi[igx[i+2],igy[j+2],k,a] + 16.0*phi[igx[i+1],igy[j+1],k,a] - 30.0*phi[igx[i],igy[j],k,a] + 16.0*phi[igx[i-1],igy[j-1],k,a] - phi[igx[i-2],igy[j-2],k,a])/(12.0*lsx*lsy)
+end
+function dxdzdiffDp(phi, a, i, j, k, lsx, lsy, igx, igz)
+    @inbounds (-phi[igx[i+2],j,igz[k+2],a] + 16.0*phi[igx[i+1],j,igz[k+1],a] - 30.0*phi[igx[i],j,igz[k],a] + 16.0*phi[igx[i-1],j,igz[k-1],a] - phi[igx[i-2],j,igz[k-2],a])/(12.0*lsx*lsy)
+end
+function dydzdiffDp(phi, a, i, j, k, lsx, lsy, igy, igz)
+    @inbounds (-phi[i,igy[j+2],igz[k+2],a] + 16.0*phi[i,igy[j+1],igz[k+1],a] - 30.0*phi[i,igy[j],igz[k],a] + 16.0*phi[i,igy[j-1],igz[k-1],a] - phi[i,igy[j-2],igz[k-2],a])/(12.0*lsx*lsy)
+end
+
+function dxdyDp(phi, a, i, j, k, lsx, lsy, igx, igy)
+    @inbounds 0.5*( dxdydiffDp(phi, a, i, j, k, lsx, lsy, igx, igy) - d2xDp(phi, a, i, j, k, lsx, igx) - d2yDp(phi, a, i, j, k, lsx, igy) )
+end
+function dxdzDp(phi, a, i, j, k, lsx, lsz, igx, igz)
+    @inbounds 0.5*( dxdzdiffDp(phi, a, i, j, k, lsx, lsz, igx, igz) - d2xDp(phi, a, i, j, k, lsx, igx) - d2zDp(phi, a, i, j, k, lsz, igz) )
+end
+function dydzDp(phi, a, i, j, k, lsy, lsz, igy, igz)
+    @inbounds 0.5*( dydzdiffDp(phi, a, i, j, k, lsy, lsz, igy, igz) - d2yDp(phi, a, i, j, k, lsy, igy) - d2zDp(phi, a, i, j, k, lsz, igz) )
+end
+
 
 
 function getDXf!(dp, phi,i,j,k,ls)
@@ -115,7 +135,6 @@ function getDX(ϕ,i,j,k)
 
 end
 
-
 function getDDX(ϕ,i,j,k)
 
     return SMatrix{6,4,Float64, 24}(
@@ -148,8 +167,65 @@ function getDDX(ϕ,i,j,k)
         dxdzD(ϕ.phi,4,i,j,k,ϕ.ls[1],ϕ.ls[3]),
         dxdyD(ϕ.phi,4,i,j,k,ϕ.ls[1],ϕ.ls[2])
     )
-    
+end
 
+
+
+function getDXp(ϕ,i,j,k)
+
+    return SMatrix{3,4,Float64, 12}(
+
+        dxDp(ϕ.phi,1,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        dyDp(ϕ.phi,1,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        dzDp(ϕ.phi,1,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+
+        dxDp(ϕ.phi,2,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        dyDp(ϕ.phi,2,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        dzDp(ϕ.phi,2,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+
+        dxDp(ϕ.phi,3,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        dyDp(ϕ.phi,3,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        dzDp(ϕ.phi,3,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+
+        dxDp(ϕ.phi,4,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        dyDp(ϕ.phi,4,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        dzDp(ϕ.phi,4,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z)
+    )
+    
+end
+
+function getDDXp(ϕ,i,j,k)
+
+    return SMatrix{6,4,Float64, 24}(
+
+        d2xDp(ϕ.phi,1,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        d2yDp(ϕ.phi,1,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        d2zDp(ϕ.phi,1,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+        dydzDp(ϕ.phi,1,i,j+2,k+2,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
+        dxdzDp(ϕ.phi,1,i+2,j,k+2,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
+        dxdyDp(ϕ.phi,1,i+2,j+2,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y),
+
+        d2xDp(ϕ.phi,2,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        d2yDp(ϕ.phi,2,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        d2zDp(ϕ.phi,2,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+        dydzDp(ϕ.phi,2,i,j+2,k+2,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
+        dxdzDp(ϕ.phi,2,i+2,j,k+2,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
+        dxdyDp(ϕ.phi,2,i+2,j+2,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y),
+
+        d2xDp(ϕ.phi,3,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        d2yDp(ϕ.phi,3,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        d2zDp(ϕ.phi,3,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+        dydzDp(ϕ.phi,3,i,j+2,k+2,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
+        dxdzDp(ϕ.phi,3,i+2,j,k+2,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
+        dxdyDp(ϕ.phi,3,i+2,j+2,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y),
+
+        d2xDp(ϕ.phi,4,i+2,j,k,ϕ.ls[1], ϕ.index_grid_x),
+        d2yDp(ϕ.phi,4,i,j+2,k,ϕ.ls[2], ϕ.index_grid_y),
+        d2zDp(ϕ.phi,4,i,j,k+2,ϕ.ls[3], ϕ.index_grid_z),
+        dydzDp(ϕ.phi,4,i,j+2,k+2,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
+        dxdzDp(ϕ.phi,4,i+2,j,k+2,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
+        dxdyDp(ϕ.phi,4,i+2,j+2,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y)
+    )
 end
 
 function getX(sk,i,j,k)

@@ -145,8 +145,17 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs
 	lp = skyrmion.lp
 
 	BD = Baryon(skyrmion,density=true)
+	bdmax = maximum(BD)
+    bdmin = minimum(BD)
+
+    if iso_value > bdmax || iso_value < bdmin
+        println("ERROR: Your iso_value is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
+        return
+    end
 
 	BDmesh = getmesh(BD, iso_value, x)
+	obBD = Observable(BDmesh)
+
 	if juggling == false
 		skcolormap = make_color_map(skyrmion, BDmesh)
 	else
@@ -171,5 +180,146 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs
 	return fig
 
 end
+
+
+function interactive_flow(my_skyrmion; iso_value=2.0, skd = 0.0 .* similar(my_skyrmion.phi))
+
+	juggling=false
+	x = my_skyrmion.x
+	lp = my_skyrmion.lp
+
+	BD = Baryon(my_skyrmion, density=true)
+
+	BDmesh = getmesh(BD, iso_value, x)
+	skcolormap = make_color_map(my_skyrmion, BDmesh)
+	#the_energy = Energy(my_skyrmion)
+	#the_baryon = Baryon(my_skyrmion)
+
+	obBD = Observable(BDmesh)
+	obCM = Observable(skcolormap)
+	#displayed_energy = Observable(the_energy)
+	#displayed_baryon = Observable(the_baryon)
+
+	obBD[] = BDmesh
+	obCM[] = skcolormap
+	#displayed_energy[] = the_energy
+	#displayed_baryon[] = the_baryon
+
+
+	fig = Figure(clear=true)
+
+
+	g_skyrmion = fig[1,1] =GridLayout()
+	g_info = fig[1,2] = GridLayout(tellwidth=false, tellheight=false, valign=:top)
+
+	#g_attributes = g_info[1,1] = GridLayout(tellwidth=false, tellheight=true, halign=:left)
+	g_plotting_options = g_info[2,1] = GridLayout(tellwidth=false, tellheight=true, halign=:left)
+	g_dynamics = g_info[3,1] = GridLayout(tellwidth=false, tellheight=true, halign=:left)
+
+	#=Label(g_attributes[1,1:2], text="Skyrmion attributes", font = :bold, halign=:left)
+
+	Label(g_attributes[2,1], text="Baryon: ",  halign=:left)
+	Label(g_attributes[2,2], text=string(round(to_value(displayed_baryon),digits=4)), halign=:left)
+
+	Label(g_attributes[3,1], text="Energy: ",  halign=:left)
+	Label(g_attributes[3,2], text=string(round(to_value(displayed_energy),digits=4)), halign=:left)
+
+	Label(g_attributes[3,2], text=string(round(to_value(displayed_energy),digits=4)), halign=:left, visible=false)
+	=#
+
+	Label(g_plotting_options[1,1:2], text="Plotting options", font = :bold, halign=:left)
+	Label(g_plotting_options[2,1], text="Isosurface:  ", halign=:left)
+	bd_tb = Textbox(g_plotting_options[2,2]; stored_string=string(iso_value),validator = Float64, tellwidth=false, halign=:left)
+
+	Label(g_dynamics[1,1:2], text="Dynamics", font = :bold, halign=:left)
+	menu1 = Menu(g_dynamics[2, 1:2], options = ["Gradient flow", "Arrested NF", "Time evolution"], prompt="Flow algorithm...")
+
+	Label(g_dynamics[3,1], text="Steps: ",halign=:right)
+	flow_tb = Textbox(g_dynamics[3,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
+
+	Label(g_dynamics[4,1], text="dt: ",halign=:right)
+	dt_tb = Textbox(g_dynamics[4,2]; placeholder="0.001",validator = Float64, tellwidth=false, halign=:left)
+
+	flow_button = Button(g_dynamics[5,1:2]; label="Flow!", tellwidth=false, halign=:center, font=:bold, width=180)
+
+
+	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
+	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
+
+	ax = Axis3(g_skyrmion[1,1], aspect = the_aspect, tellwidth=false)#, height=950, width=950 )
+
+
+	Makie.mesh!(ax,obBD,
+				color = obCM,
+				shading=false
+	)
+
+	#colgap!(fig.layout,1,0.0)
+	#rowgap!(g_info,0.0)
+	#colsize!(fig.layout, 1, Auto(1.5))
+	colsize!(fig.layout, 2, Fixed(180))
+
+	rowgap!(g_info,20.0)
+	rowgap!(g_dynamics,10.0)
+	rowgap!(g_plotting_options,10.0)
+	#rowgap!(g_attributes,10.0)
+
+	colgap!(g_dynamics,5.0)
+
+	
+
+	on(bd_tb.stored_string) do s
+
+		iso_val = parse(Float64,to_value(bd_tb.displayed_string))
+
+		BD = Baryon(my_skyrmion,density=true)
+		BDmesh = getmesh(BD, parse(Float64,s), x)
+		skcolormap = make_color_map(my_skyrmion, BDmesh)
+
+		obBD[] = BDmesh
+		obCM[] = skcolormap
+
+		sleep(0.001)
+	end
+
+	on(flow_button.clicks) do clicks
+
+		#flow_tb.stored_string = flow_tb.displayed_string
+		#bd_tb.stored_string = bd_tb.displayed_string
+
+		dt = parse(Float64,to_value(dt_tb.displayed_string))
+
+		total_runs = deepcopy(parse(Int64, to_value(flow_tb.displayed_string)))
+		iso_val = deepcopy(parse(Float64,to_value(bd_tb.displayed_string)))
+
+
+		if to_value(menu1.selection) == "Gradient flow"
+			flow!(my_skyrmion, total_runs )
+		elseif to_value(menu1.selection) == "Arrested NF"
+			ANFflow!(my_skyrmion,skd, dt, total_runs )
+		elseif to_value(menu1.selection) == "Dynamics"
+			slow_dynamical_flow!(my_skyrmion,skd, dt, total_runs )
+		end
+
+		BD = Baryon(my_skyrmion,density=true)
+		BDmesh = getmesh(BD, iso_val, x)
+		skcolormap = make_color_map(my_skyrmion, BDmesh)
+
+		#displayed_energy[] = Energy(my_skyrmion)
+		#displayed_baryon[] = sum(BD)
+		obBD[] = BDmesh
+		obCM[] = skcolormap
+
+		sleep(0.001)
+
+		return
+
+	end
+
+	display(GLMakie.Screen(),fig)
+
+end
+
+
 
 

@@ -8,7 +8,9 @@ using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
 export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!
 
-export gradvD_SA!, gradvD!
+export gradvD_SA!, gradvD!, interactive_flow
+
+export set_index_grid!
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
@@ -35,11 +37,28 @@ mutable struct Skyrmion
 	Fpi::Float64
 	ee::Float64
 	physical::Bool
+	periodic::Bool
+	index_grid_x::Vector{Int64}
+	index_grid_y::Vector{Int64}
+	index_grid_z::Vector{Int64}
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false)
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 ) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false)
+
+Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,zeros(lp+4), zeros(lp+4), zeros(lp+4) )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,zeros(lp[1]+4), zeros(lp[2]+4), zeros(lp+4) )
+
+
+function set_index_grid!(sk)
+
+	for i in 1:sk.lp[1]+4, j in 1:sk.lp[2]+4, k in 1:sk.lp[3]+4
+		sk.index_grid_x[i] = mod1(i-2,sk.lp[1])
+		sk.index_grid_y[j] = mod1(j-2,sk.lp[2])
+		sk.index_grid_z[k] = mod1(k-2,sk.lp[3])
+	end
+
+end
+
 
 """
 	turn_on_physical!(skyrmion)
