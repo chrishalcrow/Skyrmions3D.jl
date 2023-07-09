@@ -2,21 +2,44 @@ module Skyrmions
 
 using Makie
 using GLMakie, WGLMakie, CairoMakie
-using DifferentialEquations, DiffEqCallbacks
+
+#using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
 export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!
 
-export gradvD_SA!, gradvD!, interactive_flow
 
-export set_index_grid!
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
 
 include("properties.jl")
 export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon, Baryon_SA
+
+
+include("initialise.jl")
+export makeRM!, R_from_axis_angle
+
+export makeRM, SkyrIso, MakeProduct, SkyrShift, multicubes!
+export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
+
+
+export flow!
+export flowRAK!
+
+export imusingnotebook, interactive_plot, imusingJupyter
+
+
+include("plotting.jl")
+export plot_field, plot_baryon_density, interactive_flow
+ 
+include("derivatives.jl")
+
+
+include("diff.jl")
+
+
 
 """
     Skyrmion(lp::Int64, ls::Float64)
@@ -45,17 +68,19 @@ end
 
 
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,zeros(lp+4), zeros(lp+4), zeros(lp+4) )
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,zeros(lp[1]+4), zeros(lp[2]+4), zeros(lp+4) )
+Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp) )
 
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]+4), index_grid(lp[2]+4), index_grid(lp[3]+4) )
 
-function set_index_grid!(sk)
+function index_grid(lp)
 
-	for i in 1:sk.lp[1]+4, j in 1:sk.lp[2]+4, k in 1:sk.lp[3]+4
-		sk.index_grid_x[i] = mod1(i-2,sk.lp[1])
-		sk.index_grid_y[j] = mod1(j-2,sk.lp[2])
-		sk.index_grid_z[k] = mod1(k-2,sk.lp[3])
+	index_grid_array = zeros(lp+4)
+
+	for i in 1:lp+4
+		index_grid_array[i] = mod1(i-2,lp)
 	end
+
+	return index_grid_array
 
 end
 
@@ -82,41 +107,13 @@ function turn_off_physical!(skyrmion)
 end
 
 
-include("initialise.jl")
-export makeRM!, R_from_axis_angle
-
-export makeRM, SkyrIso, MakeProduct, SkyrShift, multicubes!
-export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
-
-
-export flow!
-export flowRAK!
-
-export imusingnotebook, interactive_plot, imusingJupyter
-
-
-include("plotting.jl")
-export plot_skyrmion, plot_field, plot_baryon_density, getmesh
-
-include("derivatives.jl")
-
-
-
-include("diff.jl")
-
-
-function imusingJupyter()
-	Makie.inline!(true) 
-	GLMakie.activate!()
-end
-
 
 """
     check_if_normalised(skyrmion)
 
 Check if skyrmion is normalised.
 
-Throws an error if *any* point is not normalised
+Throws an error if any point is not normalised
 
 """
 function check_if_normalised(skyrmion)
@@ -146,6 +143,7 @@ function setgrid(lp,ls)
 
 end
 
+
 """
     normer!(skyrmion)
 
@@ -155,29 +153,8 @@ See also [`normer`]
 """
 function normer!(sk)
 
-	for i in 3:sk.lp[1]-2
-		for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-			
-			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
-			for a in 1:4
-				@inbounds sk.phi[i,j,k,a] *= normer
-			end
-	
-		end
-	end
-end
-
-"""
-    normer_SA!(skyrmion)
-
-Normalise a skyrmion.
-
-See also [`normer`]
-"""
-function normer_SA!(sk)
-
-	Threads.@threads for i in 3:sk.lp[1]-2
-		for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+	Threads.@threads for i in 1:sk.lp[1]
+		for j in 1:sk.lp[2], k in 1:sk.lp[3]
 			
 			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
 			for a in 1:4
@@ -204,8 +181,8 @@ function normer(sk)
 
     sk_new = Skyrmion(lp,ls)
 
-	@simd for i in 3:lp[1]-2
-		for j in 3:lp[2]-2, k in 3:lp[3]-2
+	Threads.@threads for i in 1:sk.lp[1]
+		for j in 1:sk.lp[2], k in 1:sk.lp[3]
 			
 			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
 			for a in 1:4
@@ -220,3 +197,4 @@ function normer(sk)
 end
 
 end
+
