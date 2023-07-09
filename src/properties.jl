@@ -63,25 +63,31 @@ function Energy(sk; density=false, moment=0)
 
 end 
 
-
-
 function EnergyANF(sk, ED)
 
-    Threads.@threads for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-    
-            @inbounds dp = getDX(sk ,i, j, k )
-            @inbounds ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+    if sk.periodic == false
+        Threads.@threads for i in 3:sk.lp[1]-2
+            @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+        
+                dp = getDX(sk ,i, j, k )
+                ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
 
+            end
+        end
+    else
+        Threads.@threads for i in 1:sk.lp[1]
+            @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
+        
+                dp = getDXp(sk ,i, j, k )
+                ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+
+            end
         end
     end
         
     return sum(ED)
 
-
 end 
-
-
 
 
 function engpt(dp,p4,mpi)
@@ -102,19 +108,37 @@ function Baryon(sk; density=false, moment = 0)
 
     BD = zeros(sk.lp[1],sk.lp[2],sk.lp[3])
     
-    Threads.@threads for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-        
-            dp = getDX(sk ,i, j, k )
-            pp = getX(sk,i,j,k)
+    if sk.periodic == false
+        Threads.@threads for i in 3:sk.lp[1]-2
+            @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
             
-            if moment == 0
-                @inbounds BD[i,j,k] = barypt(dp,pp)
-            else
-                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                @inbounds BD[i,j,k] = barypt(dp,pp) * r^moment
+                dp = getDX(sk ,i, j, k )
+                pp = getX(sk,i,j,k)
+                
+                if moment == 0
+                    BD[i,j,k] = barypt(dp,pp)
+                else
+                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                    BD[i,j,k] = barypt(dp,pp) * r^moment
+                end
+            
             end
-           
+        end
+    else
+        Threads.@threads for i in 1:sk.lp[1]
+            @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
+            
+                dp = getDXp(sk ,i, j, k )
+                pp = getX(sk,i,j,k)
+                
+                if moment == 0
+                    BD[i,j,k] = barypt(dp,pp)
+                else
+                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                    BD[i,j,k] = barypt(dp,pp) * r^moment
+                end
+            
+            end
         end
     end
     
@@ -126,9 +150,6 @@ function Baryon(sk; density=false, moment = 0)
     end
     
 end 
-
-
-
 
 function barypt(dp,pp)
     return pp[4]*dp[1,3]*dp[2,2]*dp[3,1] - pp[3]*dp[1,4]*dp[2,2]*dp[3,1] - pp[4]*dp[1,2]*dp[2,3]*dp[3,1] + pp[2]*dp[1,4]*dp[2,3]*dp[3,1] + pp[3]*dp[1,2]*dp[2,4]*dp[3,1] - pp[2]*dp[1,3]*dp[2,4]*dp[3,1] - pp[4]*dp[1,3]*dp[2,1]*dp[3,2] + pp[3]*dp[1,4]*dp[2,1]*dp[3,2] + pp[4]*dp[1,1]*dp[2,3]*dp[3,2] - pp[1]*dp[1,4]*dp[2,3]*dp[3,2] - pp[3]*dp[1,1]*dp[2,4]*dp[3,2] + pp[1]*dp[1,3]*dp[2,4]*dp[3,2] + pp[4]*dp[1,2]*dp[2,1]*dp[3,3] - pp[2]*dp[1,4]*dp[2,1]*dp[3,3] - pp[4]*dp[1,1]*dp[2,2]*dp[3,3] + pp[1]*dp[1,4]*dp[2,2]*dp[3,3] + pp[2]*dp[1,1]*dp[2,4]*dp[3,3] - pp[1]*dp[1,2]*dp[2,4]*dp[3,3] - pp[3]*dp[1,2]*dp[2,1]*dp[3,4] + pp[2]*dp[1,3]*dp[2,1]*dp[3,4] + pp[3]*dp[1,1]*dp[2,2]*dp[3,4] - pp[1]*dp[1,3]*dp[2,2]*dp[3,4] - pp[2]*dp[1,1]*dp[2,3]*dp[3,4] + pp[1]*dp[1,2]*dp[2,3]*dp[3,4]
@@ -152,21 +173,15 @@ function getMOI(sk; density = false, moment=0)
     epsilon = make_levi_civita()
 
 	VV = zeros(6,6)
-	
-    mm = zeros(3,4)
-    po = zeros(4)
-
     GG = zeros(6,3)
     RR = zeros(3,3)
 	
-	xxx = zeros(3)
 
-	for i = 3:sk.lp[1]-2,  j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
+	@inbounds for i = 3:sk.lp[1]-2, j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
 
 	    xxx = [x[1][i], x[2][j], x[3][k]]
-		
-        getDX!(mm, sk ,i, j, k)
-		getX!(po, sk, i, j, k)
+        mm = getDX(sk ,i, j, k)
+		po = getX(sk, i, j, k)
 
 	    for a in 1:3, b in 1:3
 
@@ -260,25 +275,20 @@ function center_of_mass(sk)
     the_engpt = 0.0
     toteng = 0.0
 
-    dp = zeros(3,4)
-
-    @simd for i in 3:sk.lp[1]-2
-        for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    @inbounds for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
     
-            getDX!(dp, sk ,i, j, k )
+        dp = getDX(sk ,i, j, k )
 
-            the_engpt = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+        the_engpt = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
 
-            com[1] += the_engpt*sk.x[1][i]
-            com[2] += the_engpt*sk.x[2][j]
-            com[3] += the_engpt*sk.x[3][k]
+        com[1] += the_engpt*sk.x[1][i]
+        com[2] += the_engpt*sk.x[2][j]
+        com[3] += the_engpt*sk.x[3][k]
 
-            toteng += the_engpt
+        toteng += the_engpt
    
-        end
-        
     end
-
+        
     return com/toteng
 
 end 
@@ -300,3 +310,16 @@ function rms_baryon(sk)
 end
 
 
+
+
+function L2_err(A)
+
+    errtot = 0.0
+
+    for i in eachindex(A)
+        errtot += A[i]^2
+    end
+
+    return sqrt(errtot)
+
+end

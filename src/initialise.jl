@@ -1,29 +1,3 @@
-function R_from_axis_angle(th, n)
-
-    if th == 0.0
-        return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
-    end
-
-    if n == [0.0,0.0,0.0]
-        println("ERROR: your vector is zero.")
-    end
-
-    n1 = n[1]
-    n2 = n[2]
-    n3 = n[3]
-
-    normer = sqrt( n1^2 + n2^2 + n3^2 )
-
-    n1 /= normer
-    n2 /= normer
-    n3 /= normer
-
-     return [ n1^2 + (n2^2 + n3^2)*cos(th) 2*sin(th/2.0)*(-(n3*cos(th/2.0 + n1*n3*sin(th/2.0)))) 2*sin(th/2.0)*(n2*cos(th/2.0) + n1*n3*sin(th/2.0)) ;  2*sin(th/2.0)*(n3*cos(th/2.0) + n1*n2*sin(th/2.0)) n2^2 + (n1^2 + n3^2)*cos(th) n2*n3 - n2*n3*cos(th) - n1*sin(th) ; 2*n1*n3*sin(th/2.0)^2 - n2*sin(th) 2*sin(th/2.0)*(n1*cos(th/2.0) + n2*n3*sin(th/2.0)) n3^2 + (n1^2 + n2^2)*cos(th) ]
-        
-
-end
-
-
 """
     makeRM!(skyrmion, prof, pfn, qfn; kwargs... )
     
@@ -87,15 +61,30 @@ function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,
     
 end
 
+function R_from_axis_angle(th, n)
 
+    if th == 0.0
+        return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
+    end
 
+    if n == [0.0,0.0,0.0]
+        println("ERROR: your vector is zero.")
+    end
 
+    n1 = n[1]
+    n2 = n[2]
+    n3 = n[3]
 
+    normer = sqrt( n1^2 + n2^2 + n3^2 )
 
+    n1 /= normer
+    n2 /= normer
+    n3 /= normer
 
-# ADHM stuff
+     return [ n1^2 + (n2^2 + n3^2)*cos(th) 2*sin(th/2.0)*(-(n3*cos(th/2.0 + n1*n3*sin(th/2.0)))) 2*sin(th/2.0)*(n2*cos(th/2.0) + n1*n3*sin(th/2.0)) ;  2*sin(th/2.0)*(n3*cos(th/2.0) + n1*n2*sin(th/2.0)) n2^2 + (n1^2 + n3^2)*cos(th) n2*n3 - n2*n3*cos(th) - n1*sin(th) ; 2*n1*n3*sin(th/2.0)^2 - n2*sin(th) 2*sin(th/2.0)*(n1*cos(th/2.0) + n2*n3*sin(th/2.0)) n3^2 + (n1^2 + n2^2)*cos(th) ]
+        
 
-
+end
 
 """
     makeADHM!(skyrmion, L, M )
@@ -139,38 +128,6 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
             M_final[a,b,c] = M[a,b,c]
         end
     end
-
-    #=
-   if typeof(L[end]) == Quaternionic.QuaternionF64
-
-        for a in 1:B
-            L_final[a,1] = L[a].w
-            L_final[a,2] = L[a].x
-            L_final[a,3] = L[a].y
-            L_final[a,4] = L[a].z
-        end
-    else
-        for a in 1:B, c in 1:4
-            L_final[a,c] = L[a,c]
-        end
-    end
-
-    if typeof(M[end]) == QuaternionF64
-
-        for a in 1:B, b in 1:B
-            M_final[a,b,1] = M[a,b].w
-            M_final[a,b,2] = M[a,b].x
-            M_final[a,b,3] = M[a,b].y
-            M_final[a,b,4] = M[a,b].z
-        end
-    else
-
-        for a in 1:B, b in 1:B, c in 1:4
-            M_final[a,b,c] = M[a,b,c]
-        end
-    end
-    =#
-
 
     tsteps = 42
     lstime = pi/tsteps
@@ -535,9 +492,6 @@ function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct,Rnm,iRnm)
     
 
 end
-
-
-
 
 function makeRnm!(Rnm,L,M,B)
     @simd for a in 1:B

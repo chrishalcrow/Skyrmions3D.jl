@@ -4,7 +4,7 @@
     Sets the boundary of `skyrmion` equal to `vac`, with default value `[0.0, 0.0, 0.0, 1.0]`
 
 """
-function set_dirichlet!(sk;vac=[0.0,0.0,0.0,1.0])
+function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
 
     vac = [0.0,0.0,0.0,1.0]
 
