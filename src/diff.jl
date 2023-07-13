@@ -6,7 +6,7 @@ Applies a gradient flow to `skyrmion` with timestep `dt` for `n` steps.
 Within the code, an array which holds the variation is created. As such, it is significantly more efficient to use n=1000 than to loop the method 1000 times with `n=1`.
 
 """
-function flow!(ϕ; steps = 0, dt=ϕ.ls[1]*ϕ.ls[2]/80.0, tolerance = 0.0, frequency_of_checking_tolerance = 10, print_stuff = false)
+function flow!(ϕ; steps = 0, dt=ϕ.ls[1]*ϕ.ls[2]/80.0, tolerance = 0.0, frequency_of_checking_tolerance = 100, print_stuff = false)
 
     if steps == 0 && tolerance == 0.0
         println("ERROR: no `steps` or `tolerance` given. Please either set the number of steps you want to flow, or the tolerance required")
@@ -20,9 +20,16 @@ function flow!(ϕ; steps = 0, dt=ϕ.ls[1]*ϕ.ls[2]/80.0, tolerance = 0.0, freque
     println("initial: energy: ", Energy(ϕ) )
 
     if steps != 0
-        for _ in 1:steps
+        for i in 1:steps
             grad!(ϕ,dEdp,dt)
+            if print_stuff == true 
+                if i % frequency_of_checking_tolerance == 0
+                    error = L2_err(dEdp)
+                    println("error = ", error)
+                end
+            end
         end
+
     else
         while error > tolerance
             for _ in 1:frequency_of_checking_tolerance

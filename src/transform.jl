@@ -29,7 +29,43 @@ function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
         sk.phi[i,sk.lp[2]-1,k,:] .= vac
     end
     
+end
+
+"""
+    resize_lattice!(skyrmion, lp = [lpx, lpy, lpx], ls = [lsx, lsy, lsz])
+
+Resizes the underlying lattice to one with `lpx`x`lpy`x`lpz` points and `lsx`x`lsy`x`lsz` spacings, and reinterpolates `skyrmion` on the new grid.
+
+"""
+function resize_lattice!(skyrmion, lp = [lpx, lpy, lpx], ls = [lsx, lsy, lsz])
+
+    old_x = skyrmion.x
+    x = setgrid(lp,ls)
+
+    sky_temp = Skyrmion(lp, ls,  mpi = skyrmion.mpi , periodic = skyrmion.periodic)
+    println(size(sky_temp.phi))
+    vac = [0.0,0.0,0.0,1.0]
+
+    ϕinterp = [ linear_interpolation((old_x[1],old_x[2],old_x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:4 ]
+
+    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+
+        if old_x[1][1] < x[1][i] < old_x[1][end] && old_x[2][1] < x[2][j] < old_x[2][end] && old_x[3][1] < x[3][k] < old_x[3][end]
+            for a in 1:4
+                sky_temp.phi[i,j,k,a] = ϕinterp[a](x[1][i], x[2][j], x[3][k])
+            end
+        else
+            sky_temp.phi[i,j,k,:] .= vac
+        end
+        
+    end
     
+    skyrmion.lp = sky_temp.lp
+    skyrmion.ls = sky_temp.ls
+    skyrmion.x = sky_temp.x
+    skyrmion.phi = sky_temp.phi
+
+    normer!(skyrmion)
 
 end
 

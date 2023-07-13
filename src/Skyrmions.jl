@@ -7,7 +7,7 @@ using GLMakie, WGLMakie, CairoMakie
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!
+export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!
 
 
 
@@ -67,10 +67,21 @@ mutable struct Skyrmion
 end
 
 
+Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp) )
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(zeros(lp,lp,lp,4) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp) )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]+4), index_grid(lp[2]+4), index_grid(lp[3]+4) )
 
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(zeros(lp[1],lp[2],lp[3],4) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]+4), index_grid(lp[2]+4), index_grid(lp[3]+4) )
+function vacuum_skyrmion(lpx,lpy,lpz,vac)
+
+	vac_sk = zeros(lpx,lpy,lpz,4)
+
+	for i in 1:lpx, j in 1:lpy, k in 1:lpz
+		vac_sk[i,j,k,:] = vac
+	end
+
+	return vac_sk
+
+end
 
 function index_grid(lp)
 
