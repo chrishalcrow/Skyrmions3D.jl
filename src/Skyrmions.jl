@@ -7,7 +7,7 @@ using GLMakie, WGLMakie, CairoMakie
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!
+export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!
 
 
 

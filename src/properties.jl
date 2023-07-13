@@ -204,6 +204,10 @@ function getMOI(sk; density = false, moment=0)
             end
 	    end
 
+        if i==18 && j==22 && k == 17
+            println(GG[4:6,:])
+        end
+
         for a in 1:6, b in 1:6, c in 1:3
 
             if moment == 0
@@ -216,7 +220,7 @@ function getMOI(sk; density = false, moment=0)
             for d = 1:3, e = 1:3
 
                 if moment == 0
-                    MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])
+                    #MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])
                 else
                     r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
                     MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])* r^moment
@@ -323,3 +327,221 @@ function L2_err(A)
     return sqrt(errtot)
 
 end
+
+
+
+
+
+
+function compute_current(sk; label="uiso", indices=[0,0], density=true, moment=0  )
+
+    aindices = 1:3
+    bindices = 1:3
+
+    x = sk.x
+
+    if indices == [0,0]
+        current_density = zeros(3,3,sk.lp[1],sk.lp[2],sk.lp[3])
+        aindices = 1:3
+        bindices = 1:3
+    else
+        current_density = zeros(3,3,sk.lp[1],sk.lp[2],sk.lp[3])
+        aindices = indices[1]
+        bindices = indices[2]
+    end
+
+    Threads.@threads for i = 3:sk.lp[1]-2
+        for j = 3:sk.lp[2]-2
+            for k = 3:sk.lp[3]-2
+
+                xxx = SVector{3,Float64}(x[1][i], x[2][j], x[3][k] )
+                dp = getDX(sk ,i, j, k )
+                p = getX(sk,i,j,k)
+
+                if label == "uMOI"
+
+                    Tiam, Lia = getTiam(p), getLka(p,dp)
+
+                    for a in aindices, b in bindices
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiam,a,b)
+                        for c in 1:3
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiam,Lia,a,c,b,c)
+                        end
+                    end
+                elseif label == "wMOI"
+
+                    Tiam, Lia = getTiam(p), getLka(p,dp)
+                    Gia = -1.0.*getGia(Lia,xxx)
+
+                    for a in aindices, b in bindices
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Gia,a,b)
+                        for c in 1:3
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Gia,Lia,a,c,b,c)
+                        end
+                    end
+                elseif label == "vMOI"
+
+                    Lia = getLka(p,dp)
+                    Gia = -1.0.*getGia(Lia,xxx)
+
+                    for a in aindices, b in bindices
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Gia,a,b)
+                        for c in 1:3
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Gia,Lia,a,c,b,c)
+                        end
+                    end
+
+
+                elseif label == "uAxial"
+
+                    Tiam, Tiap, Lia = getTiam(p), getTiap(p), getLka(p,dp)
+
+                    for a in aindices, b in bindices
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiap,a,b)
+                        for c in 1:3
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiap,Lia,a,c,b,c)
+                        end
+                    end
+                elseif label == "wAxial"
+
+                    Tiap, Lia = getTiap(p), getLka(p,dp)
+                    Gia = -1.0.*getGia(Lia,xxx)
+
+                    for a in aindices, b in bindices
+                        current_density[a,b,i,j,k] = trace_su2_ij(Tiap,Gia,a,b)
+                        for c in 1:3
+                            current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)
+                        end
+                    end
+
+
+
+
+                elseif label == "energy"
+
+                    Ria = getRka(p,dp)
+                    
+                    for a in 1:3
+                        current_density[1,1,i,j,k] -= 0.5*trace_su2_ij(Ria,Ria,a,a)
+                        for b in 1:3
+                            current_density[1,1,i,j,k] -= 1.0/16.0*trace_su2_ijkl(Ria,Ria,Ria,Ria,a,b,a,b)
+                        end
+                    end
+                end
+
+
+
+            
+
+
+            end
+        end
+
+    end
+
+    tot_den = zeros(3,3)
+    for a in aindices, b in bindices
+        tot_den[a,b] = sum(current_density[a,b,:,:,:])*sk.ls[1]*sk.ls[2]*sk.ls[3]
+        #println(tot_den[a,b])
+    end
+    
+
+end
+
+function getGia(Lia,x)
+
+    return SMatrix{3,3,Float64, 9}(
+    Lia[3,1]*x[2] - Lia[2,1]*x[3],
+-Lia[3,1]*x[1] + Lia[1,1]*x[3],
+Lia[2,1]*x[1] - Lia[1,1]*x[2],
+Lia[3,2]*x[2] - Lia[2,2]*x[3],
+-Lia[3,2]*x[1] + Lia[1,2]*x[3],
+Lia[2,2]*x[1] - Lia[1,2]*x[2],
+Lia[3,3]*x[2] - Lia[2,3]*x[3],
+-Lia[3,3]*x[1] + Lia[1,3]*x[3],
+Lia[2,3]*x[1] - Lia[1,3]*x[2]
+
+    )
+
+end
+
+function getTiam(p)
+
+    # ASK ALBERTO - does U[tau,U] or [tau,U]U matter?
+    
+    return SMatrix{3,3,Float64, 9}(
+        -p[2]^2 - p[3]^2,
+        p[1]*p[2] - p[3]*p[4],
+        p[1]*p[3] + p[2]*p[4],
+        p[1]*p[2] + p[3]*p[4],
+        -p[1]^2 - p[3]^2,
+        p[2]*p[3] - p[1]*p[4],
+        p[1]*p[3] - p[2]*p[4],
+        p[2]*p[3] + p[1]*p[4],
+        -p[1]^2 - p[2]^2
+    ) 
+    
+end
+
+function getTiap(p)
+    
+    return SMatrix{3,3,Float64, 9}(
+        p[1]^2 + p[4]^2,
+        p[1]*p[2] - p[3]*p[4],
+        p[1]*p[3] + p[2]*p[4],
+        p[1]*p[2] + p[3]*p[4],
+        p[2]^2 + p[4]^2,
+        p[2]*p[3] - p[1]*p[4],
+        p[1]*p[3] - p[2]*p[4],
+        p[2]*p[3] + p[1]*p[4],
+        p[3]^2 + p[4]^2
+    ) 
+    
+end
+
+function getRka(p,dp)
+    
+    return SMatrix{3,3,Float64, 9}(
+
+        -(dp[1,4]*p[1]) - dp[1,3]*p[2] + dp[1,2]*p[3] + dp[1,1]*p[4],
+        -(dp[2,4]*p[1]) - dp[2,3]*p[2] + dp[2,2]*p[3] + dp[2,1]*p[4],
+        -(dp[3,4]*p[1]) - dp[3,3]*p[2] + dp[3,2]*p[3] + dp[3,1]*p[4],
+        dp[1,3]*p[1] - dp[1,4]*p[2] - dp[1,1]*p[3] + dp[1,2]*p[4],
+        dp[2,3]*p[1] - dp[2,4]*p[2] - dp[2,1]*p[3] + dp[2,2]*p[4],
+        dp[3,3]*p[1] - dp[3,4]*p[2] - dp[3,1]*p[3] + dp[3,2]*p[4],
+        -(dp[1,2]*p[1]) + dp[1,1]*p[2] - dp[1,4]*p[3] + dp[1,3]*p[4],
+        -(dp[2,2]*p[1]) + dp[2,1]*p[2] - dp[2,4]*p[3] + dp[2,3]*p[4],
+        -(dp[3,2]*p[1]) + dp[3,1]*p[2] - dp[3,4]*p[3] + dp[3,3]*p[4],
+    ) 
+    
+end
+
+function getLka(p,dp)
+
+    return SMatrix{3,3,Float64, 9}(
+
+    -(dp[1,4]*p[1]) + dp[1,3]*p[2] - dp[1,2]*p[3] + dp[1,1]*p[4],
+    -(dp[2,4]*p[1]) + dp[2,3]*p[2] - dp[2,2]*p[3] + dp[2,1]*p[4],
+    -(dp[3,4]*p[1]) + dp[3,3]*p[2] - dp[3,2]*p[3] + dp[3,1]*p[4],
+    -(dp[1,3]*p[1]) - dp[1,4]*p[2] + dp[1,1]*p[3] + dp[1,2]*p[4],
+    -(dp[2,3]*p[1]) - dp[2,4]*p[2] + dp[2,1]*p[3] + dp[2,2]*p[4],
+    -(dp[3,3]*p[1]) - dp[3,4]*p[2] + dp[3,1]*p[3] + dp[3,2]*p[4],
+    dp[1,2]*p[1] - dp[1,1]*p[2] - dp[1,4]*p[3] + dp[1,3]*p[4],
+    dp[2,2]*p[1] - dp[2,1]*p[2] - dp[2,4]*p[3] + dp[2,3]*p[4],
+    dp[3,2]*p[1] - dp[3,1]*p[2] - dp[3,4]*p[3] + dp[3,3]*p[4]
+
+    )
+
+end
+
+function trace_su2_ij(Lia,Lib,i,j)
+    #return 2.0*(Lia[i,1]*Lib[j,1] + Lia[i,2]*Lib[j,2] + Lia[i,3]*Lib[j,3])
+    return -2.0*(Lia[1,i]*Lib[1,j] + Lia[2,i]*Lib[2,j] + Lia[3,i]*Lib[3,j])
+end
+
+function trace_su2_ijkl(L1,L2,L3,L4,i,j,k,l)
+    return -8.0*(L1[i,1]*(L2[j,2]*(-(L3[k,2]*L4[l,1]) + L3[k,1]*L4[l,2]) + L2[j,3]*(-(L3[k,3]*L4[l,1]) + L3[k,1]*L4[l,3])) + L1[i,3]*(L2[j,1]*(L3[k,3]*L4[l,1] - L3[k,1]*L4[l,3]) + L2[j,2]*(L3[k,3]*L4[l,2] - L3[k,2]*L4[l,3])) + L1[i,2]*(L2[j,1]*(L3[k,2]*L4[l,1] - L3[k,1]*L4[l,2]) + L2[j,3]*(-(L3[k,3]*L4[l,2]) + L3[k,2]*L4[l,3])))
+end
+
+
+

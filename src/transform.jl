@@ -405,3 +405,23 @@ function rotate_sk(skyrmion,θ,n)
     return sky_temp
 
 end
+
+"""
+    center_skyrmion(my_skyrmion)
+
+Translates `skyrmion' so that the center of mass is `(0,0,0)'.
+
+"""
+function center_skyrmion!(sk)
+
+
+    for _ in 1:5
+        current_CoM = center_of_mass(sk)
+        translate_sk!(sk,-current_CoM)
+    end
+    
+end
+
+
+
+
