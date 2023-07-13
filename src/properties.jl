@@ -306,9 +306,9 @@ Compute root mean square charge radius of a skyrmion, using the baryon density.
 function rms_baryon(sk)
 
     if sk.physical == false
-        return sqrt(Baryon(sk; moment = 2))
+        return sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))
     else
-        return ( sqrt(Baryon(sk; moment = 2))*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
+        return ( sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
     end
 
 end
@@ -331,7 +331,7 @@ end
 
 
 """
-    compute_current(skyrmion; label="", indices=[0,0], density = false)
+    compute_current(skyrmion; label="uMOI", indices=[0,0], density = false, moment=0)
 
 Compute a variety of currents in the Skyrme model, based on a `skyrmion`. 
 
@@ -345,7 +345,7 @@ The possible currents are (currently):
 - `wAxial`: the w-axial moment of inertia.
 
 """
-function compute_current(sk; label="uMOI", indices=[0,0], density=false  )
+function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=0  )
 
     aindices = 1:3
     bindices = 1:3
@@ -367,6 +367,7 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false  )
             for k = 3:sk.lp[3]-2
 
                 xxx = SVector{3,Float64}(x[1][i], x[2][j], x[3][k] )
+                r = sqrt( xxx[1]^2 + xxx[2]^2 + xxx[3]^2 )
                 dp = getDX(sk ,i, j, k )
                 p = getX(sk,i,j,k)
 
@@ -375,59 +376,72 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false  )
                     Tiam, Lia = getTiam(p), getLka(p,dp)
 
                     for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiam,a,b)
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiam,a,b)*r^moment
                         for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiam,Lia,a,c,b,c)
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiam,Lia,a,c,b,c)*r^moment
                         end
                     end
+
                 elseif label == "wMOI"
 
                     Tiam, Lia = getTiam(p), getLka(p,dp)
                     Gia = -1.0.*getGia(Lia,xxx)
 
                     for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Gia,a,b)
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Tiam,a,b)*r^moment
                         for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Gia,Lia,a,c,b,c)
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Tiam,Lia,a,c,b,c)*r^moment
                         end
                     end
+
                 elseif label == "vMOI"
 
                     Lia = getLka(p,dp)
                     Gia = -1.0.*getGia(Lia,xxx)
 
                     for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Gia,a,b)
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Gia,a,b)*r^moment
                         for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Gia,Lia,a,c,b,c)
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Gia,Lia,a,c,b,c)*r^moment
                         end
                     end
-
 
                 elseif label == "uAxial"
 
                     Tiam, Tiap, Lia = getTiam(p), getTiap(p), getLka(p,dp)
 
                     for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiap,a,b)
+                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiap,a,b)*r^moment
                         for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiap,Lia,a,c,b,c)
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiap,Lia,a,c,b,c)*r^moment
                         end
                     end
+
                 elseif label == "wAxial"
 
                     Tiap, Lia = getTiap(p), getLka(p,dp)
                     Gia = -1.0.*getGia(Lia,xxx)
 
                     for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = trace_su2_ij(Tiap,Gia,a,b)
+                        current_density[a,b,i,j,k] = trace_su2_ij(Tiap,Gia,a,b) *r^moment
+                        for c in 1:3
+                            current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)*r^moment
+                        end
+                    end
+
+                #=elseif label = "stress"
+
+                    Lia = getLka(p,dp)
+
+                    for a in aindices, b in bindices
+                        current_density[a,b,i,j,k] = -2.0*trace_su2_ij(Lia,Lia,a,b)
+
                         for c in 1:3
                             current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)
                         end
                     end
 
-
-
+                end=#
 
                 elseif label == "energy"
 
@@ -445,9 +459,6 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false  )
         end
 
     end
-
-    
-    
 
     if density == false
         tot_den = zeros(3,3)
@@ -489,8 +500,6 @@ end
 
 function getTiam(p)
 
-    # ASK ALBERTO - does U[tau,U] or [tau,U]U matter?
-    
     return SMatrix{3,3,Float64, 9}(
         -p[2]^2 - p[3]^2,
         p[1]*p[2] - p[3]*p[4],
@@ -557,7 +566,6 @@ function getLka(p,dp)
 end
 
 function trace_su2_ij(Lia,Lib,i,j)
-    #return 2.0*(Lia[i,1]*Lib[j,1] + Lia[i,2]*Lib[j,2] + Lia[i,3]*Lib[j,3])
     return -2.0*(Lia[1,i]*Lib[1,j] + Lia[2,i]*Lib[2,j] + Lia[3,i]*Lib[3,j])
 end
 
