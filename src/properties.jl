@@ -330,10 +330,22 @@ end
 
 
 
+"""
+    compute_current(skyrmion; label="", indices=[0,0], density = false)
 
+Compute a variety of currents in the Skyrme model, based on a `skyrmion`. 
 
+You can calculate specific indices using e.g. `indices = [1,2]`. If `indices = [0,0]`, the function will calculate all indices. If `density = false`, the function will return the integrated densities, while `density = true` it will return the densities. 
 
-function compute_current(sk; label="uiso", indices=[0,0], density=true, moment=0  )
+The possible currents are (currently):
+- `uMOI`: the isospin moment of inertia.
+- `wMOI`: the mixed moment of inertia.
+- `vMOI`: the spin moment of inertia.
+- `uAxial`: the u-axial moment of inertia.
+- `wAxial`: the w-axial moment of inertia.
+
+"""
+function compute_current(sk; label="uMOI", indices=[0,0], density=false  )
 
     aindices = 1:3
     bindices = 1:3
@@ -429,20 +441,30 @@ function compute_current(sk; label="uiso", indices=[0,0], density=true, moment=0
                     end
                 end
 
-
-
-            
-
-
             end
         end
 
     end
 
-    tot_den = zeros(3,3)
-    for a in aindices, b in bindices
-        tot_den[a,b] = sum(current_density[a,b,:,:,:])*sk.ls[1]*sk.ls[2]*sk.ls[3]
-        #println(tot_den[a,b])
+    
+    
+
+    if density == false
+        tot_den = zeros(3,3)
+        for a in aindices, b in bindices
+            tot_den[a,b] = sum(current_density[a,b,:,:,:])*sk.ls[1]*sk.ls[2]*sk.ls[3]
+        end
+        if indices == [0,0]
+            return tot_den
+        else
+            return tot_den[aindices,bindices]
+        end
+    else
+        if indices == [0,0]
+            return current_density
+        else
+            return current_density[aindices,bindices,:,:,:]
+        end
     end
     
 
