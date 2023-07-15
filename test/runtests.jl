@@ -1,6 +1,4 @@
 using Skyrmions
 using Test
 
-@testset "Skyrmions.jl" begin
-    # Write your tests here.
-end
+@testset "Differentiation tests" begin include("do_differentiation_tests.jl") end

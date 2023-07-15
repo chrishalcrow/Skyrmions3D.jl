@@ -1,5 +1,5 @@
 """
-    makeRM!(skyrmion, prof, pfn, qfn; kwargs... )
+    makeRationalMap!(skyrmion, prof, pfn, qfn; kwargs... )
     
 Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
 
@@ -11,7 +11,7 @@ Writes a rational map skyrmion in to `skyrmion`. The rational map is given by th
 -  `j_n = 0.0`: isorotate initial skyrmion around `j_n`
 
 """
-function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+function makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
     
     lp, x = skyrmion.lp, skyrmion.x
 
@@ -48,15 +48,19 @@ function makeRM!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,
 
         den = real( qRM*conj(qRM) + pRM*conj(pRM) )
 
-        skyrmion.phi[i,j,k,1] = (sine_of_prof_r/den)*real( pRM*conj(qRM) + qRM*conj(pRM) )
-        skyrmion.phi[i,j,k,2] = (sine_of_prof_r/den)*imag( pRM*conj(qRM) - qRM*conj(pRM) )
-        skyrmion.phi[i,j,k,3] = (sine_of_prof_r/den)*real( qRM*conj(qRM) - pRM*conj(pRM) )
-        skyrmion.phi[i,j,k,4] = cos(prof(r))
+        skyrmion.pion_field[i,j,k,1] = (sine_of_prof_r/den)*real( pRM*conj(qRM) + qRM*conj(pRM) )
+        skyrmion.pion_field[i,j,k,2] = (sine_of_prof_r/den)*imag( pRM*conj(qRM) - qRM*conj(pRM) )
+        skyrmion.pion_field[i,j,k,3] = (sine_of_prof_r/den)*real( qRM*conj(qRM) - pRM*conj(pRM) )
+        skyrmion.pion_field[i,j,k,4] = cos(prof(r))
 
         if iTH != 0.0
-            skyrmion.phi[i,j,k,1:3] = RI*skyrmion.phi[i,j,k,1:3]
+            skyrmion.pion_field[i,j,k,1:3] = RI*skyrmion.pion_field[i,j,k,1:3]
         end
 
+    end
+
+    if skyrmion.periodic == false
+        set_dirichlet!(skyrmion)
     end
     
 end
@@ -143,7 +147,7 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
 
     Threads.@threads for i in 1:lp[1]
         for j in 1:lp[2], k in 1:lp[3]
-            @inbounds an_ADHM_skyrmion.phi[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
+            @inbounds an_ADHM_skyrmion.pion_field[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
         end
     end
 

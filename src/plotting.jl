@@ -21,7 +21,7 @@ function plot_field(skyrmion; component=3, iso_value = 0.5)
     	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
     	)
 
-	volume!(ax, skyrmion.phi[:,:,:,component], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+	volume!(ax, skyrmion.pion_field[:,:,:,component], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
 
 	return fig
 
@@ -104,9 +104,9 @@ function make_color_map_juggle(skyrmion, BDmesh)
 
 	x = skyrmion.x
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:3 ]
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:3 ]
     Npts = size(coordinates(BDmesh))[1]
-    phi_on_mesh = zeros(3, Npts)
+    pion_field_on_mesh = zeros(3, Npts)
 
 	the_color_function = zeros(RGB{Float64}, Npts)
 
@@ -119,13 +119,13 @@ function make_color_map_juggle(skyrmion, BDmesh)
 	for vertex in coordinates(BDmesh)
 
 	    for b in 1:3
-	        phi_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
+	        pion_field_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
 	    end
 
 		for c in 1:6
 			distances[c] = 0.0
 			for b in 1:3
-				distances[c] += (phi_on_mesh[b,a] - cube_faces[c][b])^2
+				distances[c] += (pion_field_on_mesh[b,a] - cube_faces[c][b])^2
 			end
 		end
 
@@ -155,24 +155,24 @@ function make_color_map(skyrmion, BDmesh)
 
 	x = skyrmion.x
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:3 ]
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:3 ]
     Npts = size(coordinates(BDmesh))[1]
-    phi_on_mesh = zeros(3, Npts)
+    pion_field_on_mesh = zeros(3, Npts)
 
     a=1
 	for vertex in coordinates(BDmesh)
 	    for b in 1:3
-	        phi_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
+	        pion_field_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
 	    end
 	    a += 1
 	end
 
-	maxp = maximum(phi_on_mesh[3,:])
-	minp = minimum(phi_on_mesh[3,:])
+	maxp = maximum(pion_field_on_mesh[3,:])
+	minp = minimum(pion_field_on_mesh[3,:])
 
-   p3color = (phi_on_mesh[3,:] .- minp)./(maxp - minp)
+   p3color = (pion_field_on_mesh[3,:] .- minp)./(maxp - minp)
 
-	return [ Colors.HSL( 360*(atan.(phi_on_mesh[1,a], -phi_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ];
+	return [ Colors.HSL( 360*(atan.(pion_field_on_mesh[1,a], -pion_field_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ];
 
 end
 
@@ -185,7 +185,7 @@ Initialises a interface, used for dynamics. Requires GLMakie to be active. Once 
 """
 function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 
-	skd = 0.0 .* similar(my_skyrmion.phi)
+	skd = 0.0 .* similar(my_skyrmion.pion_field)
 
 	juggling=false
 	x = my_skyrmion.x
@@ -303,9 +303,9 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 
 
 		if to_value(menu1.selection) == "Gradient flow"
-			flow!(my_skyrmion; steps=total_runs, dt=dt )
+			gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
 		elseif to_value(menu1.selection) == "Arrested NF"
-			ANFflow!(my_skyrmion,skd, dt, total_runs )
+			arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
 		end
 
 		BD = Baryon(my_skyrmion,density=true)

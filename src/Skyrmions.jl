@@ -3,11 +3,13 @@ module Skyrmions
 using Makie
 using GLMakie, WGLMakie, CairoMakie
 
-#using DifferentialEquations, DiffEqCallbacks
+using DifferentialEquations, DiffEqCallbacks
 
-using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays
+using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!
+export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!, flowDE!
+
+export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD
 
 
 
@@ -19,16 +21,15 @@ export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon, Bar
 
 
 include("initialise.jl")
-export makeRM!, R_from_axis_angle
+export makeRationalMap!, R_from_axis_angle
 
 export makeRM, SkyrIso, MakeProduct, SkyrShift, multicubes!
 export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
 
 
-export flow!
-export flowRAK!
+export gradient_flow!, arrested_newton_flow!
 
-export imusingnotebook, interactive_plot, imusingJupyter
+
 
 
 include("plotting.jl")
@@ -52,7 +53,7 @@ Create a skyrme field with `lp` lattice points and `ls` lattice spacing.
 
 """
 mutable struct Skyrmion
-	phi::Array{Float64, 4}
+	pion_field::Array{Float64, 4}
 	lp::Vector{Int64}
 	ls::Vector{Float64}
 	x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
@@ -69,7 +70,7 @@ end
 
 Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp) )
 
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]+4), index_grid(lp[2]+4), index_grid(lp[3]+4) )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]) )
 
 function vacuum_skyrmion(lpx,lpy,lpz,vac)
 
@@ -129,7 +130,7 @@ Throws an error if any point is not normalised
 """
 function check_if_normalised(skyrmion)
 	for i in 1:skyrmion.lp[1], j in 1:skyrmion.lp[2], k in 1:skyrmion.lp[3]
-		@assert  skyrmion.phi[i,j,k,1]^2 + skyrmion.phi[i,j,k,2]^2 + skyrmion.phi[i,j,k,3]^2 + skyrmion.phi[i,j,k,4]^2 ≈ 1.0 "nooo"
+		@assert  skyrmion.pion_field[i,j,k,1]^2 + skyrmion.pion_field[i,j,k,2]^2 + skyrmion.pion_field[i,j,k,3]^2 + skyrmion.pion_field[i,j,k,4]^2 ≈ 1.0 "nooo"
 	end
 end
 
@@ -167,14 +168,32 @@ function normer!(sk)
 	Threads.@threads for i in 1:sk.lp[1]
 		for j in 1:sk.lp[2], k in 1:sk.lp[3]
 			
-			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			@inbounds normer = 1.0/sqrt( sk.pion_field[i,j,k,1]^2 + sk.pion_field[i,j,k,2]^2 + sk.pion_field[i,j,k,3]^2 + sk.pion_field[i,j,k,4]^2 )
 			for a in 1:4
-				@inbounds sk.phi[i,j,k,a] *= normer
+				@inbounds sk.pion_field[i,j,k,a] *= normer
 			end
 	
 		end
 	end
 end
+
+
+function normer!(pion_field::Array{Float64, 4})
+
+	lp = size(pion_field)[1:3]
+
+	Threads.@threads for i in 1:lp[1]
+		for j in 1:lp[2], k in 1:lp[3]
+			
+			@inbounds normer = 1.0/sqrt( pion_field[i,j,k,1]^2 + pion_field[i,j,k,2]^2 + pion_field[i,j,k,3]^2 + pion_field[i,j,k,4]^2 )
+			for a in 1:4
+				@inbounds pion_field[i,j,k,a] *= normer
+			end
+	
+		end
+	end
+end
+
 
 
 """
@@ -195,9 +214,9 @@ function normer(sk)
 	Threads.@threads for i in 1:sk.lp[1]
 		for j in 1:sk.lp[2], k in 1:sk.lp[3]
 			
-			@inbounds normer = 1.0/sqrt( sk.phi[i,j,k,1]^2 + sk.phi[i,j,k,2]^2 + sk.phi[i,j,k,3]^2 + sk.phi[i,j,k,4]^2 )
+			@inbounds normer = 1.0/sqrt( sk.pion_field[i,j,k,1]^2 + sk.pion_field[i,j,k,2]^2 + sk.pion_field[i,j,k,3]^2 + sk.pion_field[i,j,k,4]^2 )
 			for a in 1:4
-				@inbounds sk_new.phi[i,j,k,a] = sk.phi[i,j,k,a]*normer
+				@inbounds sk_new.pion_field[i,j,k,a] = sk.pion_field[i,j,k,a]*normer
 			end
 	
 		end

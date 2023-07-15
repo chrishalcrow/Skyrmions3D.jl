@@ -9,24 +9,24 @@ function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
     vac = [0.0,0.0,0.0,1.0]
 
     for i in 1:sk.lp[1], j in 1:sk.lp[2]
-        sk.phi[i,j,1,:] .= vac
-        sk.phi[i,j,2,:] .= vac
-        sk.phi[i,j,sk.lp[3],:] .= vac
-        sk.phi[i,j,sk.lp[3]-1,:] .= vac
+        sk.pion_field[i,j,1,:] .= vac
+        sk.pion_field[i,j,2,:] .= vac
+        sk.pion_field[i,j,sk.lp[3],:] .= vac
+        sk.pion_field[i,j,sk.lp[3]-1,:] .= vac
     end
     
     for k in 1:sk.lp[3], j in 1:sk.lp[2]
-        sk.phi[1,j,k,:] .= vac
-        sk.phi[2,j,k,:] .= vac
-        sk.phi[sk.lp[1],j,k,:] .= vac
-        sk.phi[sk.lp[1]-1,j,k,:] .= vac
+        sk.pion_field[1,j,k,:] .= vac
+        sk.pion_field[2,j,k,:] .= vac
+        sk.pion_field[sk.lp[1],j,k,:] .= vac
+        sk.pion_field[sk.lp[1]-1,j,k,:] .= vac
     end
     
     for k in 1:sk.lp[3], i in 1:sk.lp[1]
-        sk.phi[i,1,k,:] .= vac
-        sk.phi[i,2,k,:] .= vac
-        sk.phi[i,sk.lp[2],k,:] .= vac
-        sk.phi[i,sk.lp[2]-1,k,:] .= vac
+        sk.pion_field[i,1,k,:] .= vac
+        sk.pion_field[i,2,k,:] .= vac
+        sk.pion_field[i,sk.lp[2],k,:] .= vac
+        sk.pion_field[i,sk.lp[2]-1,k,:] .= vac
     end
     
 end
@@ -37,25 +37,25 @@ end
 Resizes the underlying lattice to one with `lpx`x`lpy`x`lpz` points and `lsx`x`lsy`x`lsz` spacings, and reinterpolates `skyrmion` on the new grid.
 
 """
-function resize_lattice!(skyrmion, lp = [lpx, lpy, lpx], ls = [lsx, lsy, lsz])
+function resize_lattice!(skyrmion, lp, ls)
 
     old_x = skyrmion.x
     x = setgrid(lp,ls)
 
     sky_temp = Skyrmion(lp, ls,  mpi = skyrmion.mpi , periodic = skyrmion.periodic)
-    println(size(sky_temp.phi))
+    println(size(sky_temp.pion_field))
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((old_x[1],old_x[2],old_x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ linear_interpolation((old_x[1],old_x[2],old_x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
         if old_x[1][1] < x[1][i] < old_x[1][end] && old_x[2][1] < x[2][j] < old_x[2][end] && old_x[3][1] < x[3][k] < old_x[3][end]
             for a in 1:4
-                sky_temp.phi[i,j,k,a] = ϕinterp[a](x[1][i], x[2][j], x[3][k])
+                sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i], x[2][j], x[3][k])
             end
         else
-            sky_temp.phi[i,j,k,:] .= vac
+            sky_temp.pion_field[i,j,k,:] .= vac
         end
         
     end
@@ -63,10 +63,17 @@ function resize_lattice!(skyrmion, lp = [lpx, lpy, lpx], ls = [lsx, lsy, lsz])
     skyrmion.lp = sky_temp.lp
     skyrmion.ls = sky_temp.ls
     skyrmion.x = sky_temp.x
-    skyrmion.phi = sky_temp.phi
+    skyrmion.pion_field = zeros(lp[1],lp[2],lp[3],4)
+    skyrmion.pion_field .= sky_temp.pion_field
 
+    skyrmion.index_grid_x = index_grid(lp[1])
+    skyrmion.index_grid_y = index_grid(lp[2])
+    skyrmion.index_grid_z = index_grid(lp[3])
+    
     normer!(skyrmion)
-
+    if skyrmion.periodic == false
+        set_dirichlet!(skyrmion)
+    end
 end
 
 """
@@ -135,16 +142,16 @@ function product_approx!(sk1, sk2)
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
-        tempsk.phi[i,j,k,4] = sk1.phi[i,j,k,4]*sk2.phi[i,j,k,4] 
+        tempsk.pion_field[i,j,k,4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
         for a in 1:3
-            tempsk.phi[i,j,k,a] = sk1.phi[i,j,k,a]*sk2.phi[i,j,k,4] + sk1.phi[i,j,k,4]*sk2.phi[i,j,k,a]
-            tempsk.phi[i,j,k,4] -= sk1.phi[i,j,k,a]*sk2.phi[i,j,k,a] 
+            tempsk.pion_field[i,j,k,a] = sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,4] + sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,a]
+            tempsk.pion_field[i,j,k,4] -= sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,a] 
         end
 
     end
 
     normer!(tempsk)
-    sk1.phi .= tempsk.phi
+    sk1.pion_field .= tempsk.pion_field
 
 end
 
@@ -170,10 +177,10 @@ function product_approx(sk1, sk2)
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
-        tempsk.phi[i,j,k,4] = sk1.phi[i,j,k,4]*sk2.phi[i,j,k,4] 
+        tempsk.pion_field[i,j,k,4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
         for a in 1:3
-            tempsk.phi[i,j,k,a] = sk1.phi[i,j,k,a]*sk2.phi[i,j,k,4] + sk1.phi[i,j,k,4]*sk2.phi[i,j,k,a]
-            tempsk.phi[i,j,k,4] -= sk1.phi[i,j,k,a]*sk2.phi[i,j,k,a] 
+            tempsk.pion_field[i,j,k,a] = sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,4] + sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,a]
+            tempsk.pion_field[i,j,k,4] -= sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,a] 
         end
 
     end
@@ -201,13 +208,13 @@ function translate_sk(skyrmion,X)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
 
     for a in 1:4, i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
         if x[1][i] > x[1][1] + X[1] && x[1][i] < x[1][end] + X[1] && x[2][j] > x[2][1] + X[2] && x[2][j] < x[2][end] + X[2] && x[3][k] > x[3][1] + X[3] && x[3][k] < x[3][end] + X[3]
-            sky_temp.phi[i,j,k,a] = ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
+            sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
         else
-            sky_temp.phi[i,j,k,a] = vac[a]
+            sky_temp.pion_field[i,j,k,a] = vac[a]
         end
     end
 
@@ -234,18 +241,18 @@ function translate_sk!(skyrmion,X)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
 
     for a in 1:4, i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
         if x[1][i] > x[1][1] + X[1] && x[1][i] < x[1][end] + X[1] && x[2][j] > x[2][1] + X[2] && x[2][j] < x[2][end] + X[2] && x[3][k] > x[3][1] + X[3] && x[3][k] < x[3][end] + X[3]
-            sky_temp.phi[i,j,k,a] = ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
+            sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
         else
-            sky_temp.phi[i,j,k,a] = vac[a]
+            sky_temp.pion_field[i,j,k,a] = vac[a]
         end
     end
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:4
-        skyrmion.phi[i,j,k,a] = sky_temp.phi[i,j,k,a]
+        skyrmion.pion_field[i,j,k,a] = sky_temp.pion_field[i,j,k,a]
     end
 
     normer!(skyrmion)
@@ -278,21 +285,21 @@ function isorotate_sk!(skyrmion,θ,n)
     tempsk = Skyrmion(lp,ls)
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:3
-        tempsk.phi[i,j,k,a] = 0.0
+        tempsk.pion_field[i,j,k,a] = 0.0
     end
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
         for a in 1:3, b in 1:3
-            tempsk.phi[i,j,k,a] += rotation_matrix[a,b]*skyrmion.phi[i,j,k,b]
+            tempsk.pion_field[i,j,k,a] += rotation_matrix[a,b]*skyrmion.pion_field[i,j,k,b]
         end
 
-        tempsk.phi[i,j,k,4] = skyrmion.phi[i,j,k,4]
+        tempsk.pion_field[i,j,k,4] = skyrmion.pion_field[i,j,k,4]
 
     end
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:4
-        skyrmion.phi[i,j,k,a] = tempsk.phi[i,j,k,a]
+        skyrmion.pion_field[i,j,k,a] = tempsk.pion_field[i,j,k,a]
     end
 
     normer!(skyrmion)
@@ -322,16 +329,16 @@ function isorotate_sk(skyrmion,θ,n)
     tempsk = Skyrmion(lp,ls)
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:3
-        tempsk.phi[i,j,k,a] = 0.0
+        tempsk.pion_field[i,j,k,a] = 0.0
     end
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
         for a in 1:3, b in 1:3
-            tempsk.phi[i,j,k,a] += rotation_matrix[a,b]*skyrmion.phi[i,j,k,b]
+            tempsk.pion_field[i,j,k,a] += rotation_matrix[a,b]*skyrmion.pion_field[i,j,k,b]
         end
 
-        tempsk.phi[i,j,k,4] = skyrmion.phi[i,j,k,4]
+        tempsk.pion_field[i,j,k,4] = skyrmion.pion_field[i,j,k,4]
 
     end
 
@@ -367,7 +374,7 @@ function rotate_sk!(skyrmion,θ,n)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
 
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
@@ -376,17 +383,17 @@ function rotate_sk!(skyrmion,θ,n)
 
         if x[1][1] < newx[1] < x[1][end] && x[2][1] < newx[2] < x[2][end] && x[3][1] < newx[3] < x[3][end] 
             for a in 1:4    
-                    sky_temp.phi[i,j,k,a] = ϕinterp[a](newx[1], newx[2], newx[3])
+                    sky_temp.pion_field[i,j,k,a] = ϕinterp[a](newx[1], newx[2], newx[3])
             end
         else 
             for a in 1:4    
-                sky_temp.phi[i,j,k,a] = vac[a]
+                sky_temp.pion_field[i,j,k,a] = vac[a]
             end
         end
     end
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:4
-        skyrmion.phi[i,j,k,a] = sky_temp.phi[i,j,k,a]
+        skyrmion.pion_field[i,j,k,a] = sky_temp.pion_field[i,j,k,a]
     end
 
     normer!(skyrmion)
@@ -418,7 +425,7 @@ function rotate_sk(skyrmion,θ,n)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.phi[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
 
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
@@ -427,11 +434,11 @@ function rotate_sk(skyrmion,θ,n)
 
         if x[1][1] < newx[1] < x[1][end] && x[2][1] < newx[2] < x[2][end] && x[3][1] < newx[3] < x[3][end] 
             for a in 1:4    
-                    sky_temp.phi[i,j,k,a] = ϕinterp[a](newx[1], newx[2], newx[3])
+                    sky_temp.pion_field[i,j,k,a] = ϕinterp[a](newx[1], newx[2], newx[3])
             end
         else 
             for a in 1:4    
-                sky_temp.phi[i,j,k,a] = vac[a]
+                sky_temp.pion_field[i,j,k,a] = vac[a]
             end
         end
     end

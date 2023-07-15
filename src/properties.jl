@@ -18,10 +18,10 @@ function Energy(sk; density=false, moment=0)
                     dp = getDX(sk ,i, j, k )
 
                     if moment == 0
-                        @inbounds ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
                     else
                         r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                        @inbounds ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi) * r^moment
+                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
                     end
 
                 end
@@ -35,10 +35,10 @@ function Energy(sk; density=false, moment=0)
                     dp = getDXp(sk ,i, j, k )
 
                     if moment == 0
-                        @inbounds ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
                     else
                         r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                        @inbounds ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi) * r^moment
+                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
                     end
 
                 end
@@ -70,7 +70,7 @@ function EnergyANF(sk, ED)
             @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
         
                 dp = getDX(sk ,i, j, k )
-                ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+                ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
 
             end
         end
@@ -79,7 +79,7 @@ function EnergyANF(sk, ED)
             @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
         
                 dp = getDXp(sk ,i, j, k )
-                ED[i,j,k] = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+                ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
 
             end
         end
@@ -283,7 +283,7 @@ function center_of_mass(sk)
     
         dp = getDX(sk ,i, j, k )
 
-        the_engpt = engpt(dp,sk.phi[i,j,k,4],sk.mpi)
+        the_engpt = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
 
         com[1] += the_engpt*sk.x[1][i]
         com[2] += the_engpt*sk.x[2][j]
@@ -343,12 +343,21 @@ The possible currents are (currently):
 - `vMOI`: the spin moment of inertia.
 - `uAxial`: the u-axial moment of inertia.
 - `wAxial`: the w-axial moment of inertia.
+- `NoetherIso`: the Noether vector current.
+- `NoetherAxial`: the Noether axial current.
 
 """
 function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=0  )
 
+    if label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial"
+        println("ERROR: Current label '", label, "' unknown. Type '?compute_current' for help.")
+        return
+    end
+
     aindices = 1:3
     bindices = 1:3
+
+    KD = diagm([1.0,1.0,1.0])
 
     x = sk.x
 
@@ -429,30 +438,54 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
                         end
                     end
 
-                #=elseif label = "stress"
+                elseif label == "stress"
 
                     Lia = getLka(p,dp)
 
                     for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -2.0*trace_su2_ij(Lia,Lia,a,b)
+                       
+                        current_density[a,b,i,j,k] -= (1.0 - p[4])*KD[a,b]*r^moment
+                        current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*r^moment
+                        
+                        for c in 1:3
+
+                            current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,c,c)*KD[a,b]*r^moment
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*r^moment
+
+                            for d in 1:3
+                                current_density[a,b,i,j,k] += 0.0625*trace_su2_ijkl(Lia,Lia,Lia,Lia,c,d,c,d)*KD[a,b]*r^moment
+                            end
+                        end
+                        
+                    end
+
+                elseif label == "NoetherIso"
+
+                    Lia, Tiam = getLka(p,dp), getTiam(p)
+
+                    for a in aindices, b in bindices
+
+                        current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Tiam,b,a)*r^moment
 
                         for c in 1:3
-                            current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Tiam,c,b,a,c)*r^moment
                         end
+
                     end
+                elseif label == "NoetherAxial"
 
-                end=#
+                    Lia, Tiap = getLka(p,dp), getTiap(p)
 
-                elseif label == "energy"
+                    for a in aindices, b in bindices
 
-                    Ria = getRka(p,dp)
-                    
-                    for a in 1:3
-                        current_density[1,1,i,j,k] -= 0.5*trace_su2_ij(Ria,Ria,a,a)
-                        for b in 1:3
-                            current_density[1,1,i,j,k] -= 1.0/16.0*trace_su2_ijkl(Ria,Ria,Ria,Ria,a,b,a,b)
+                        current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Tiap,b,a)*r^moment
+
+                        for c in 1:3
+                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Tiap,c,b,a,c)*r^moment
                         end
+
                     end
+                
                 end
 
             end
