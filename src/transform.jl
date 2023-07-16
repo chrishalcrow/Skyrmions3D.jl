@@ -46,7 +46,8 @@ function resize_lattice!(skyrmion, lp, ls)
     println(size(sky_temp.pion_field))
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((old_x[1],old_x[2],old_x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
+
+    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (old_x[1],old_x[2],old_x[3]) ), Throw()) for a in 1:4 ]
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
@@ -113,7 +114,7 @@ function make_RM_product!(sk, Xs)
     
     for a in 2:size(Xs)[1]
 
-        makeRM!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+        makeRationalMap!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
         product_approx!(sk, temp_sk)
     end
 
@@ -208,7 +209,7 @@ function translate_sk(skyrmion,X)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
 
     for a in 1:4, i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
         if x[1][i] > x[1][1] + X[1] && x[1][i] < x[1][end] + X[1] && x[2][j] > x[2][1] + X[2] && x[2][j] < x[2][end] + X[2] && x[3][k] > x[3][1] + X[3] && x[3][k] < x[3][end] + X[3]
@@ -241,7 +242,7 @@ function translate_sk!(skyrmion,X)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
+    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
 
     for a in 1:4, i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
         if x[1][i] > x[1][1] + X[1] && x[1][i] < x[1][end] + X[1] && x[2][j] > x[2][1] + X[2] && x[2][j] < x[2][end] + X[2] && x[3][k] > x[3][1] + X[3] && x[3][k] < x[3][end] + X[3]
@@ -271,7 +272,7 @@ See also [`isorotate_sk!`]
 function isorotate_sk!(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
-        println("ERROR: your vector is zero.")
+        error("Your vector is zero.")
         return
     end
 
@@ -316,7 +317,7 @@ See also [`isorotate_sk!`]
 function isorotate_sk(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
-        println("ERROR: your vector is zero.")
+        error("Your vector is zero.")
         return
     end
 
@@ -360,7 +361,7 @@ See also [`rotate_sk`]
 function rotate_sk!(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
-        println("ERROR: your vector is zero.")
+        error("Your vector is zero.")
         return
     end
 
@@ -374,8 +375,7 @@ function rotate_sk!(skyrmion,θ,n)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
-
+    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
@@ -411,7 +411,7 @@ See also [`rotate_sk!`]
 function rotate_sk(skyrmion,θ,n)
 
     if n == [0.0, 0.0, 0.0]
-        println("ERROR: your vector is zero.")
+        error("Your vector is zero.")
         return
     end
 
@@ -425,8 +425,7 @@ function rotate_sk(skyrmion,θ,n)
 
     vac = [0.0,0.0,0.0,1.0]
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:4 ]
-
+    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
 
@@ -456,7 +455,6 @@ Translates `skyrmion' so that the center of mass is `(0,0,0)'.
 
 """
 function center_skyrmion!(sk)
-
 
     for _ in 1:5
         current_CoM = center_of_mass(sk)

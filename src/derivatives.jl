@@ -126,7 +126,8 @@ function getDDXp(ϕ,i,j,k)
 end
 
 
-#same functions but just for 
+
+# The same functions, but going directly to the pion field ()
 function getX(pion_field::Array{Float64, 4},i,j,k)
 
     return SVector{4,Float64}(
@@ -195,65 +196,7 @@ function getDDX(pion_field::Array{Float64, 4},i,j,k,ls)
     )
 end
 
-#= 
-function getDXp(ϕ::Skyrmion,i,j,k)
-
-    return SMatrix{3,4,Float64, 12}(
-
-        dxDp(ϕ.pion_field,1,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field,1,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field,1,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-
-        dxDp(ϕ.pion_field,2,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field,2,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field,2,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-
-        dxDp(ϕ.pion_field,3,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field,3,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field,3,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-
-        dxDp(ϕ.pion_field,4,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field,4,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field,4,i,j,k,ϕ.ls[3], ϕ.index_grid_z)
-    )
-    
-end
-
-function getDDXp(ϕ::Skyrmion,i,j,k)
-
-    return SMatrix{6,4,Float64, 24}(
-
-        d2xDp(ϕ.pion_field,1,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        d2yDp(ϕ.pion_field,1,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        d2zDp(ϕ.pion_field,1,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-        dydzDp(ϕ.pion_field,1,i,j,k,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
-        dxdzDp(ϕ.pion_field,1,i,j,k,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
-        dxdyDp(ϕ.pion_field,1,i,j,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y),
-
-        d2xDp(ϕ.pion_field,2,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        d2yDp(ϕ.pion_field,2,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        d2zDp(ϕ.pion_field,2,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-        dydzDp(ϕ.pion_field,2,i,j,k,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
-        dxdzDp(ϕ.pion_field,2,i,j,k,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
-        dxdyDp(ϕ.pion_field,2,i,j,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y),
-
-        d2xDp(ϕ.pion_field,3,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        d2yDp(ϕ.pion_field,3,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        d2zDp(ϕ.pion_field,3,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-        dydzDp(ϕ.pion_field,3,i,j,k,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
-        dxdzDp(ϕ.pion_field,3,i,j,k,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
-        dxdyDp(ϕ.pion_field,3,i,j,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y),
-
-        d2xDp(ϕ.pion_field,4,i,j,k,ϕ.ls[1], ϕ.index_grid_x),
-        d2yDp(ϕ.pion_field,4,i,j,k,ϕ.ls[2], ϕ.index_grid_y),
-        d2zDp(ϕ.pion_field,4,i,j,k,ϕ.ls[3], ϕ.index_grid_z),
-        dydzDp(ϕ.pion_field,4,i,j,k,ϕ.ls[2],ϕ.ls[3], ϕ.index_grid_y, ϕ.index_grid_z),
-        dxdzDp(ϕ.pion_field,4,i,j,k,ϕ.ls[1],ϕ.ls[3], ϕ.index_grid_x, ϕ.index_grid_z),
-        dxdyDp(ϕ.pion_field,4,i,j,k,ϕ.ls[1],ϕ.ls[2], ϕ.index_grid_x, ϕ.index_grid_y)
-    )
-end
-=#
-
+# The actual derivatives
 
 function dxD(pion_field, a, i, j, k, lsx)
     @inbounds (-pion_field[i+2,j,k,a] + 8.0*pion_field[i+1,j,k,a] - 8.0*pion_field[i-1,j,k,a] + pion_field[i-2,j,k,a])/(12.0*lsx)
@@ -338,31 +281,3 @@ end
 function dydzDp(pion_field, a, i, j, k, lsy, lsz, igy, igz)
     @inbounds 0.5*( dydzdiffDp(pion_field, a, i, j, k, lsy, lsz, igy, igz) - d2yDp(pion_field, a, i, j, k, lsy, igy) - d2zDp(pion_field, a, i, j, k, lsz, igz) )
 end
-
-
-
-function getDXf!(dp, pion_field,i,j,k,ls)
-    @simd for a in 1:4
-        @inbounds dp[1,a] = dxD(pion_field,a,i,j,k,ls[1])
-        @inbounds dp[2,a] = dyD(pion_field,a,i,j,k,ls[2])
-        @inbounds dp[3,a] = dzD(pion_field,a,i,j,k,ls[3]) 
-    end
-end
-
-function getDDXf!(ddp, pion_field ,i,j,k,ls)
-    
-    for a in 1:4
-            
-        @inbounds ddp[1,a] = d2xD(pion_field,a,i,j,k,ls[1])
-        @inbounds ddp[2,a] = d2yD(pion_field,a,i,j,k,ls[2])
-        @inbounds ddp[3,a] = d2zD(pion_field,a,i,j,k,ls[3]) 
-
-        @inbounds ddp[6,a] = (dxdydiffD(pion_field, a, i, j, k, ls[1], ls[2]) - ddp[1,a] - ddp[2,a])/2.0
-        @inbounds ddp[5,a] = (dxdzdiffD(pion_field, a, i, j, k, ls[1], ls[3]) - ddp[1,a] - ddp[3,a])/2.0
-        @inbounds ddp[4,a] = (dydzdiffD(pion_field, a, i, j, k, ls[2], ls[3]) - ddp[2,a] - ddp[3,a])/2.0
-
-    end
-end
-
-
-
