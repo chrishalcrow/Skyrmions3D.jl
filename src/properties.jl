@@ -11,39 +11,9 @@ function Energy(sk; density=false, moment=0)
     ED = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
 
     if sk.periodic == false
-        Threads.@threads for i in 3:sk.lp[1]-2
-            for j in 3:sk.lp[2]-2
-                for k in 3:sk.lp[3]-2
-        
-                    dp = getDX(sk ,i, j, k )
-
-                    if moment == 0
-                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
-                    else
-                        r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
-                    end
-
-                end
-            end   
-        end
+        get_energy_density!(ED,sk,moment=moment)
     else
-        Threads.@threads for i in 1:sk.lp[1]
-            for j in 1:sk.lp[2]
-                for k in 1:sk.lp[3]
-        
-                    dp = getDXp(sk ,i, j, k )
-
-                    if moment == 0
-                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
-                    else
-                        r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                        @inbounds ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
-                    end
-
-                end
-            end   
-        end
+        get_energy_density_periodic!(ED,sk,moment=moment)
     end
 
     if density == false
@@ -63,31 +33,44 @@ function Energy(sk; density=false, moment=0)
 
 end 
 
-function EnergyANF(sk, ED)
+function get_energy_density!(density, sk ;moment=0)
 
-    if sk.periodic == false
-        Threads.@threads for i in 3:sk.lp[1]-2
-            @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    Threads.@threads for i in 3:sk.lp[1]-2
+        @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
         
-                dp = getDX(sk ,i, j, k )
-                ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
-
+            dp = getDX(sk ,i, j, k )
+            
+            if moment == 0
+                density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
+            else
+                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
             end
-        end
-    else
-        Threads.@threads for i in 1:sk.lp[1]
-            @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
         
-                dp = getDXp(sk ,i, j, k )
-                ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
-
-            end
         end
     end
-        
-    return sum(ED)
 
-end 
+end
+
+function get_energy_density_periodic!(density, sk ;moment=0)
+
+    Threads.@threads for i in 1:sk.lp[1]
+        @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
+        
+            dp = getDXp(sk ,i, j, k )
+            
+            if moment == 0
+                density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
+            else
+                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
+            end
+        
+        end
+    end
+
+end
+
 
 
 function engpt(dp,p4,mpi)
@@ -109,37 +92,9 @@ function Baryon(sk; density=false, moment = 0)
     BD = zeros(sk.lp[1],sk.lp[2],sk.lp[3])
     
     if sk.periodic == false
-        Threads.@threads for i in 3:sk.lp[1]-2
-            @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-            
-                dp = getDX(sk ,i, j, k )
-                pp = getX(sk,i,j,k)
-                
-                if moment == 0
-                    BD[i,j,k] = barypt(dp,pp)
-                else
-                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                    BD[i,j,k] = barypt(dp,pp) * r^moment
-                end
-            
-            end
-        end
+        get_baryon_density!(BD,sk,moment=moment)
     else
-        Threads.@threads for i in 1:sk.lp[1]
-            @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
-            
-                dp = getDXp(sk ,i, j, k )
-                pp = getX(sk,i,j,k)
-                
-                if moment == 0
-                    BD[i,j,k] = barypt(dp,pp)
-                else
-                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                    BD[i,j,k] = barypt(dp,pp) * r^moment
-                end
-            
-            end
-        end
+        get_baryon_density_periodic!(BD,sk,moment=moment)
     end
     
     if density == false
@@ -151,181 +106,48 @@ function Baryon(sk; density=false, moment = 0)
     
 end 
 
-function barypt(dp,pp)
-    return pp[4]*dp[1,3]*dp[2,2]*dp[3,1] - pp[3]*dp[1,4]*dp[2,2]*dp[3,1] - pp[4]*dp[1,2]*dp[2,3]*dp[3,1] + pp[2]*dp[1,4]*dp[2,3]*dp[3,1] + pp[3]*dp[1,2]*dp[2,4]*dp[3,1] - pp[2]*dp[1,3]*dp[2,4]*dp[3,1] - pp[4]*dp[1,3]*dp[2,1]*dp[3,2] + pp[3]*dp[1,4]*dp[2,1]*dp[3,2] + pp[4]*dp[1,1]*dp[2,3]*dp[3,2] - pp[1]*dp[1,4]*dp[2,3]*dp[3,2] - pp[3]*dp[1,1]*dp[2,4]*dp[3,2] + pp[1]*dp[1,3]*dp[2,4]*dp[3,2] + pp[4]*dp[1,2]*dp[2,1]*dp[3,3] - pp[2]*dp[1,4]*dp[2,1]*dp[3,3] - pp[4]*dp[1,1]*dp[2,2]*dp[3,3] + pp[1]*dp[1,4]*dp[2,2]*dp[3,3] + pp[2]*dp[1,1]*dp[2,4]*dp[3,3] - pp[1]*dp[1,2]*dp[2,4]*dp[3,3] - pp[3]*dp[1,2]*dp[2,1]*dp[3,4] + pp[2]*dp[1,3]*dp[2,1]*dp[3,4] + pp[3]*dp[1,1]*dp[2,2]*dp[3,4] - pp[1]*dp[1,3]*dp[2,2]*dp[3,4] - pp[2]*dp[1,1]*dp[2,3]*dp[3,4] + pp[1]*dp[1,2]*dp[2,3]*dp[3,4]
-end
+function get_baryon_density!(baryon_density, sk ;moment=0)
 
-
-"""
-    getMOI(skyrmion; density=false, moment=0)
-
-Compute the moments of inertia of `skyrmion`.
-
-Set 'density = true' to output the MOI densities and moment to `n` to calculate the nth moment of the MOI.
-
-"""
-function getMOI(sk; density = false, moment=0)
-	
-    x = sk.x
-
-    MOI_D = zeros(6,6,sk.lp[1],sk.lp[2],sk.lp[3])
-
-    epsilon = make_levi_civita()
-
-	VV = zeros(6,6)
-    GG = zeros(6,3)
-    RR = zeros(3,3)
-	
-
-	@inbounds for i = 3:sk.lp[1]-2, j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
-
-	    xxx = [x[1][i], x[2][j], x[3][k]]
-        mm = getDX(sk ,i, j, k)
-		po = getX(sk, i, j, k)
-
-	    for a in 1:3, b in 1:3
-
-	        RR[a,b] = po[4]*mm[a,b] - mm[a,4]*po[b]
-	        GG[a+3,b] = -po[a]*po[b]
-	        GG[a+3,a] += po[b]*po[b]
-
-	        for c in 1:3
-	            GG[a+3,b] -= po[4]*po[c]*epsilon[a,c,b]
-	            for d in 1:3
-	                RR[a,b] += epsilon[b,c,d]*mm[a,c]*po[d]
-	            end
-	        end
-	    end
-
-	    for a in 1:3, d in 1:3
-            GG[a,d] = 0.0
-            for b in 1:3, c in 1:3
-	    	    GG[a,d] += epsilon[a,b,c]*xxx[b]*RR[c,d]
-            end
-	    end
-
-        if i==18 && j==22 && k == 17
-            println(GG[4:6,:])
-        end
-
-        for a in 1:6, b in 1:6, c in 1:3
-
+    Threads.@threads for i in 3:sk.lp[1]-2
+        @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+        
+            dp = getDX(sk ,i, j, k )
+            pp = getX(sk,i,j,k)
+            
             if moment == 0
-                MOI_D[a,b,i,j,k] += GG[a,c]*GG[b,c]
+                baryon_density[i,j,k] = barypt(dp,pp)
             else
                 r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                MOI_D[a,b,i,j,k] += GG[a,c]*GG[b,c] * r^moment
+                baryon_density[i,j,k] = barypt(dp,pp) * r^moment
             end
-
-            for d = 1:3, e = 1:3
-
-                if moment == 0
-                    #MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])
-                else
-                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                    MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])* r^moment
-                end
-
-            end
-		end
-		
-	end
-
-    if density == false
-        for a in 1:6, b in 1:6
-            for i = 3:sk.lp[1]-2,  j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
-                VV[a,b] += MOI_D[a,b,i,j,k]*sk.ls[1]*sk.ls[2]*sk.ls[3]
-            end
-        end
-        if sk.physical == false
-            return VV
-        else
-            return (VV*sk.Fpi/(4.0*sk.ee)*(197.327*2.0/(sk.ee*sk.Fpi))^2*(197.327*2.0/(sk.ee*sk.Fpi))^moment, "MeV fm^"*string(2+moment))
-        end
-    else
-        return MOI_D
-    end
-	
-	return VV
-	
-end
-
-function make_levi_civita()
-
-    epsilon = zeros(3,3,3)
-	
-	epsilon[1,2,3] = 1.0
-	epsilon[1,3,2] = -1.0
-	epsilon[2,3,1] = 1.0
-	epsilon[2,1,3] = -1.0
-	epsilon[3,1,2] = 1.0
-	epsilon[3,2,1] = -1.0
-
-    return epsilon
-
-end
-
-"""
-    center_of_mass(skyrmion; density=false, moment=0)
-
-Compute the center of mass of `skyrmion`, based on the energy density.
-
-
-"""
-function center_of_mass(sk)
-
-    com = zeros(3)
-
-    the_engpt = 0.0
-    toteng = 0.0
-
-    @inbounds for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
-    
-        dp = getDX(sk ,i, j, k )
-
-        the_engpt = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
-
-        com[1] += the_engpt*sk.x[1][i]
-        com[2] += the_engpt*sk.x[2][j]
-        com[3] += the_engpt*sk.x[3][k]
-
-        toteng += the_engpt
-   
-    end
         
-    return com/toteng
-
-end 
-
-
-"""
-    rms_baryon(skyrmion)
-
-Compute root mean square charge radius of a skyrmion, using the baryon density.
-"""
-function rms_baryon(sk)
-
-    if sk.physical == false
-        return sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))
-    else
-        return ( sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
+        end
     end
 
 end
 
+function get_baryon_density_periodic!(baryon_density, sk ;moment=0)
 
-
-
-function L2_err(A)
-
-    errtot = 0.0
-
-    for i in eachindex(A)
-        errtot += A[i]^2
+    Threads.@threads for i in 1:sk.lp[1]
+        @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
+        
+            dp = getDXp(sk ,i, j, k )
+            pp = getX(sk,i,j,k)
+            
+            if moment == 0
+                baryon_density[i,j,k] = barypt(dp,pp)
+            else
+                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                baryon_density[i,j,k] = barypt(dp,pp) * r^moment
+            end
+        
+        end
     end
 
-    return sqrt(errtot)
+end
 
+function barypt(dp,pp)
+    return pp[4]*dp[1,3]*dp[2,2]*dp[3,1] - pp[3]*dp[1,4]*dp[2,2]*dp[3,1] - pp[4]*dp[1,2]*dp[2,3]*dp[3,1] + pp[2]*dp[1,4]*dp[2,3]*dp[3,1] + pp[3]*dp[1,2]*dp[2,4]*dp[3,1] - pp[2]*dp[1,3]*dp[2,4]*dp[3,1] - pp[4]*dp[1,3]*dp[2,1]*dp[3,2] + pp[3]*dp[1,4]*dp[2,1]*dp[3,2] + pp[4]*dp[1,1]*dp[2,3]*dp[3,2] - pp[1]*dp[1,4]*dp[2,3]*dp[3,2] - pp[3]*dp[1,1]*dp[2,4]*dp[3,2] + pp[1]*dp[1,3]*dp[2,4]*dp[3,2] + pp[4]*dp[1,2]*dp[2,1]*dp[3,3] - pp[2]*dp[1,4]*dp[2,1]*dp[3,3] - pp[4]*dp[1,1]*dp[2,2]*dp[3,3] + pp[1]*dp[1,4]*dp[2,2]*dp[3,3] + pp[2]*dp[1,1]*dp[2,4]*dp[3,3] - pp[1]*dp[1,2]*dp[2,4]*dp[3,3] - pp[3]*dp[1,2]*dp[2,1]*dp[3,4] + pp[2]*dp[1,3]*dp[2,1]*dp[3,4] + pp[3]*dp[1,1]*dp[2,2]*dp[3,4] - pp[1]*dp[1,3]*dp[2,2]*dp[3,4] - pp[2]*dp[1,1]*dp[2,3]*dp[3,4] + pp[1]*dp[1,2]*dp[2,3]*dp[3,4]
 end
 
 
@@ -513,6 +335,166 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
     
 
 end
+
+
+"""
+    getMOI(skyrmion; density=false, moment=0)
+
+Compute the moments of inertia of `skyrmion`.
+
+Set 'density = true' to output the MOI densities and moment to `n` to calculate the nth moment of the MOI.
+
+"""
+function getMOI(sk; density = false, moment=0)
+	
+    x = sk.x
+
+    MOI_D = zeros(6,6,sk.lp[1],sk.lp[2],sk.lp[3])
+
+    epsilon = make_levi_civita()
+
+	VV = zeros(6,6)
+    GG = zeros(6,3)
+    RR = zeros(3,3)
+	
+
+	@inbounds for i = 3:sk.lp[1]-2, j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
+
+	    xxx = [x[1][i], x[2][j], x[3][k]]
+        mm = getDX(sk ,i, j, k)
+		po = getX(sk, i, j, k)
+
+	    for a in 1:3, b in 1:3
+
+	        RR[a,b] = po[4]*mm[a,b] - mm[a,4]*po[b]
+	        GG[a+3,b] = -po[a]*po[b]
+	        GG[a+3,a] += po[b]*po[b]
+
+	        for c in 1:3
+	            GG[a+3,b] -= po[4]*po[c]*epsilon[a,c,b]
+	            for d in 1:3
+	                RR[a,b] += epsilon[b,c,d]*mm[a,c]*po[d]
+	            end
+	        end
+	    end
+
+	    for a in 1:3, d in 1:3
+            GG[a,d] = 0.0
+            for b in 1:3, c in 1:3
+	    	    GG[a,d] += epsilon[a,b,c]*xxx[b]*RR[c,d]
+            end
+	    end
+
+        if i==18 && j==22 && k == 17
+            println(GG[4:6,:])
+        end
+
+        for a in 1:6, b in 1:6, c in 1:3
+
+            if moment == 0
+                MOI_D[a,b,i,j,k] += GG[a,c]*GG[b,c]
+            else
+                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                MOI_D[a,b,i,j,k] += GG[a,c]*GG[b,c] * r^moment
+            end
+
+            for d = 1:3, e = 1:3
+
+                if moment == 0
+                    #MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])
+                else
+                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
+                    MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])* r^moment
+                end
+
+            end
+		end
+		
+	end
+
+    if density == false
+        for a in 1:6, b in 1:6
+            for i = 3:sk.lp[1]-2,  j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
+                VV[a,b] += MOI_D[a,b,i,j,k]*sk.ls[1]*sk.ls[2]*sk.ls[3]
+            end
+        end
+        if sk.physical == false
+            return VV
+        else
+            return (VV*sk.Fpi/(4.0*sk.ee)*(197.327*2.0/(sk.ee*sk.Fpi))^2*(197.327*2.0/(sk.ee*sk.Fpi))^moment, "MeV fm^"*string(2+moment))
+        end
+    else
+        return MOI_D
+    end
+	
+	return VV
+	
+end
+
+function make_levi_civita()
+
+    epsilon = zeros(3,3,3)
+	
+	epsilon[1,2,3] = 1.0
+	epsilon[1,3,2] = -1.0
+	epsilon[2,3,1] = 1.0
+	epsilon[2,1,3] = -1.0
+	epsilon[3,1,2] = 1.0
+	epsilon[3,2,1] = -1.0
+
+    return epsilon
+
+end
+
+"""
+    center_of_mass(skyrmion; density=false, moment=0)
+
+Compute the center of mass of `skyrmion`, based on the energy density.
+
+
+"""
+function center_of_mass(sk)
+
+    com = zeros(3)
+
+    the_engpt = 0.0
+    toteng = 0.0
+
+    @inbounds for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    
+        dp = getDX(sk ,i, j, k )
+
+        the_engpt = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
+
+        com[1] += the_engpt*sk.x[1][i]
+        com[2] += the_engpt*sk.x[2][j]
+        com[3] += the_engpt*sk.x[3][k]
+
+        toteng += the_engpt
+   
+    end
+        
+    return com/toteng
+
+end 
+
+
+"""
+    rms_baryon(skyrmion)
+
+Compute root mean square charge radius of a skyrmion, using the baryon density.
+"""
+function rms_baryon(sk)
+
+    if sk.physical == false
+        return sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))
+    else
+        return ( sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
+    end
+
+end
+
+
 
 function getGia(Lia,x)
 

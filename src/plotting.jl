@@ -1,11 +1,3 @@
-function imusingCairo()
-	CairoMakie.activate!()
-end
-
-function imusingGL()
-	GLMakie.activate!()
-end
-
 """
     plot_field!(skyrmion; component=3, iso_value=0.5 )
     
@@ -29,7 +21,7 @@ end
 
 
 """
-    plot_baryon_density(skyrmion; iso_value = 0.5, juggling = false, kwargs...)
+    plot_baryon_density(skyrmion; iso_value = 0.5*(max(BD) - min(BD)), juggling = false, kwargs...)
     
 Plots an isosurface of constant baryon density, with value `iso_value`, coloured to reveal the pion field structure, originally described in [].
 
@@ -40,7 +32,7 @@ Can use a _juggling ball_ colouring scheme by setting `juggling = true`.
 Can accept any arguments used in `Axis3` from the `Makie` package. See more: [].
 
 """
-function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs...)
+function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs...)
     
 	x = skyrmion.x
 	lp = skyrmion.lp
@@ -48,9 +40,12 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.5, kwargs
 	BD = Baryon(skyrmion,density=true)
 	bdmax = maximum(BD)
     bdmin = minimum(BD)
+	if iso_value == 0.0
+		iso_value = (bdmax - bdmin)/2.0
+	end
 
     if iso_value > bdmax || iso_value < bdmin
-        println("ERROR: Your iso_value is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
+        error("Your iso_value is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
         return
     end
 
@@ -185,11 +180,19 @@ Initialises a interface, used for dynamics. Requires GLMakie to be active. Once 
 """
 function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 
+	which_flow = 1
+
 	skd = 0.0 .* similar(my_skyrmion.pion_field)
 
 	juggling=false
 	x = my_skyrmion.x
 	lp = my_skyrmion.lp
+
+	active_button_color = :white
+	active_button_strokecolor = :red
+
+	not_active_button_color = :lightgray
+	not_active_button_strokecolor = :gray
 
 	BD = Baryon(my_skyrmion, density=true)
 
@@ -213,11 +216,12 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 
 
 	g_skyrmion = fig[1,1] =GridLayout()
-	g_info = fig[1,2] = GridLayout(tellwidth=false, tellheight=false, valign=:top)
+	g_info = fig[1,2] = GridLayout(tellwidth=true, tellheight=true, valign=:top)
 
 	#g_attributes = g_info[1,1] = GridLayout(tellwidth=false, tellheight=true, halign=:left)
-	g_plotting_options = g_info[2,1] = GridLayout(tellwidth=false, tellheight=true, halign=:left)
-	g_dynamics = g_info[3,1] = GridLayout(tellwidth=false, tellheight=true, halign=:left)
+	g_plotting_options = g_info[1,1] = GridLayout(tellwidth=false, tellheight=false, halign=:left, valign=:top)
+	g_dynamics = g_info[2,1] = GridLayout(tellwidth=false, tellheight=false, halign=:left, valign=:center)
+	g_export = g_info[3,1] = GridLayout(tellwidth=false, tellheight=false, halign=:left, valign=:bottom)
 
 	#=Label(g_attributes[1,1:2], text="Skyrmion attributes", font = :bold, halign=:left)
 
@@ -235,21 +239,42 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 	bd_tb = Textbox(g_plotting_options[2,2]; stored_string=string(iso_value),validator = Float64, tellwidth=false, halign=:left)
 
 	Label(g_dynamics[1,1:2], text="Dynamics", font = :bold, halign=:left)
-	menu1 = Menu(g_dynamics[2, 1:2], options = ["Gradient flow", "Arrested NF"], prompt="Flow algorithm...")
+	#menu1 = Menu(g_dynamics[2, 1:2], options = ["Gradient flow", "Arrested NF"])
+	gf_button = Button(g_dynamics[2,1]; label="Grad flow", tellwidth=true, halign=:left, font="Courier")
+	an_button = Button(g_dynamics[2,2]; label="Ar N flow", tellwidth=true, halign=:left, font="Courier")
+	newt_button = Button(g_dynamics[3,1]; label="Newt flow", tellwidth=true, halign=:left, font="Courier")
+	full_button = Button(g_dynamics[3,2]; label="no  no no", tellwidth=true, halign=:left, font="Courier")
+	
+	gf_button.strokecolor = active_button_strokecolor
+	gf_button.buttoncolor = active_button_color
 
-	Label(g_dynamics[3,1], text="Steps: ",halign=:right)
-	flow_tb = Textbox(g_dynamics[3,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
+	an_button.strokecolor = not_active_button_strokecolor
+	an_button.buttoncolor = not_active_button_color
 
-	Label(g_dynamics[4,1], text="dt: ",halign=:right)
-	dt_tb = Textbox(g_dynamics[4,2]; placeholder=string(my_skyrmion.ls[1]*my_skyrmion.ls[2]/80.0),validator = Float64, tellwidth=false, halign=:left)
+	newt_button.strokecolor = not_active_button_strokecolor
+	newt_button.buttoncolor = not_active_button_color
 
-	flow_button = Button(g_dynamics[5,1:2]; label="Flow!", tellwidth=false, halign=:center, font=:bold, width=180)
+	full_button.strokecolor = not_active_button_strokecolor
+	full_button.buttoncolor = not_active_button_color
+
+	Label(g_dynamics[4,1], text="Steps: ",halign=:right)
+	flow_tb = Textbox(g_dynamics[4,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
+
+	Label(g_dynamics[5,1], text="dt: ",halign=:right)
+	dt_tb = Textbox(g_dynamics[5,2]; placeholder=string(round(my_skyrmion.ls[1]*my_skyrmion.ls[2]/80.0;digits=5)),validator = Float64, tellwidth=false, halign=:left)
+
+	flow_button = Button(g_dynamics[6,1:2]; label="Flow!", tellwidth=false, halign=:center, font=:bold, width=220)
+
+
+	export_tb = Textbox(g_export[1,1]; stored_string="image_1.png", tellwidth=false, halign=:left)
+	export_button = Button(g_export[1,2]; label="Picture", tellwidth=false, halign=:right, font=:bold)
+
 
 
 	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
 	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
 
-	ax = Axis3(g_skyrmion[1,1], aspect = the_aspect, tellwidth=false; kwargs...)#, height=950, width=950 )
+	ax = Axis3(g_skyrmion[1,1], aspect = the_aspect, tellwidth=true; kwargs...)#, height=950, width=950 )
 
 
 	Makie.mesh!(ax,obBD,
@@ -258,12 +283,15 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 	)	#colgap!(fig.layout,1,0.0)
 	#rowgap!(g_info,0.0)
 	#colsize!(fig.layout, 1, Auto(1.5))
-	colsize!(fig.layout, 2, Fixed(180))
 
-	rowgap!(g_info,20.0)
+	colsize!(fig.layout, 2, Fixed(220))
+
+	#rowgap!(g_info,20.0)
 	rowgap!(g_dynamics,10.0)
 	rowgap!(g_plotting_options,10.0)
 	#rowgap!(g_attributes,10.0)
+
+	#rowsize!(g_info, 2, Auto(1))
 
 	colgap!(g_dynamics,5.0)
 
@@ -290,6 +318,85 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		#end	
 	#end
 
+	
+
+
+	on(gf_button.clicks) do clicks
+		
+		which_flow = 1
+
+		gf_button.strokecolor = active_button_strokecolor
+		gf_button.buttoncolor = active_button_color
+
+		an_button.strokecolor = not_active_button_strokecolor
+		an_button.buttoncolor = not_active_button_color
+
+		newt_button.strokecolor = not_active_button_strokecolor
+		newt_button.buttoncolor = not_active_button_color
+
+		full_button.strokecolor = not_active_button_strokecolor
+		full_button.buttoncolor = not_active_button_color
+
+	end
+	on(an_button.clicks) do clicks
+		
+		which_flow = 2
+
+		an_button.strokecolor = active_button_strokecolor
+		an_button.buttoncolor = active_button_color
+
+		gf_button.strokecolor = not_active_button_strokecolor
+		gf_button.buttoncolor = not_active_button_color
+
+		newt_button.strokecolor = not_active_button_strokecolor
+		newt_button.buttoncolor = not_active_button_color
+
+		full_button.strokecolor = not_active_button_strokecolor
+		full_button.buttoncolor = not_active_button_color
+
+	end
+	on(newt_button.clicks) do clicks
+		
+		which_flow = 3
+
+		newt_button.strokecolor = active_button_strokecolor
+		newt_button.buttoncolor = active_button_color
+
+		gf_button.strokecolor = not_active_button_strokecolor
+		gf_button.buttoncolor = not_active_button_color
+
+		an_button.strokecolor = not_active_button_strokecolor
+		an_button.buttoncolor = not_active_button_color
+
+		full_button.strokecolor = not_active_button_strokecolor
+		full_button.buttoncolor = not_active_button_color
+
+	end
+	on(full_button.clicks) do clicks
+		
+		which_flow = 4
+
+		full_button.strokecolor = active_button_strokecolor
+		full_button.buttoncolor = active_button_color
+
+		gf_button.strokecolor = not_active_button_strokecolor
+		gf_button.buttoncolor = not_active_button_color
+
+		an_button.strokecolor = not_active_button_strokecolor
+		an_button.buttoncolor = not_active_button_color
+
+		newt_button.strokecolor = not_active_button_strokecolor
+		newt_button.buttoncolor = not_active_button_color
+
+	end
+
+	on(export_button.clicks) do clicks
+
+		save( to_value(export_tb.displayed_string), fig)
+
+	end
+
+
 	on(flow_button.clicks) do clicks
 
 		#flow_tb.stored_string = flow_tb.displayed_string
@@ -301,12 +408,19 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		total_runs = deepcopy(parse(Int64, to_value(flow_tb.displayed_string)))
 		iso_val = deepcopy(parse(Float64,to_value(bd_tb.displayed_string)))
 
-
-		if to_value(menu1.selection) == "Gradient flow"
+		if which_flow == 1
 			gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
-		elseif to_value(menu1.selection) == "Arrested NF"
+		elseif which_flow == 2
 			arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
+		elseif which_flow == 3
+			newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
 		end
+
+		#if to_value(menu1.selection) == "Gradient flow"
+		#	gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
+		#elseif to_value(menu1.selection) == "Arrested NF"
+		#	arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
+		#end
 
 		BD = Baryon(my_skyrmion,density=true)
 		BDmesh = getmesh(BD, iso_val, x)

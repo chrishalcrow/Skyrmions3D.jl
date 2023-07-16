@@ -7,7 +7,7 @@ using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!, flowDE!
+export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!, flowDE!, an_flow!
 
 export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD
 
@@ -39,7 +39,7 @@ include("derivatives.jl")
 
 
 include("diff.jl")
-
+export newton_flow!
 
 
 """
