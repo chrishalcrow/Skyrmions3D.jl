@@ -10,11 +10,7 @@ function Energy(sk; density=false, moment=0)
 
     ED = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
 
-    if sk.periodic == false
-        get_energy_density!(ED,sk,moment=moment)
-    else
-        get_energy_density_periodic!(ED,sk,moment=moment)
-    end
+    get_energy_density!(ED,sk,moment=moment)
 
     if density == false
         engtot = sum(ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]
@@ -35,11 +31,15 @@ end
 
 function get_energy_density!(density, sk ;moment=0)
 
-    Threads.@threads for i in 3:sk.lp[1]-2
-        @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    Threads.@threads for i in sk.sum_grid[1]
+        @inbounds for j in sk.sum_grid[2], k in sk.sum_grid[3]
         
-            dp = getDX(sk ,i, j, k )
-            
+            if sk.periodic == false
+                dp = getDX(sk ,i, j, k )
+            else
+                dp = getDXp(sk ,i, j, k )
+            end
+
             if moment == 0
                 density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
             else
@@ -51,30 +51,12 @@ function get_energy_density!(density, sk ;moment=0)
     end
 
 end
-
-function get_energy_density_periodic!(density, sk ;moment=0)
-
-    Threads.@threads for i in 1:sk.lp[1]
-        @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
-        
-            dp = getDXp(sk ,i, j, k )
-            
-            if moment == 0
-                density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
-            else
-                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi) * r^moment
-            end
-        
-        end
-    end
-
-end
-
 
 
 function engpt(dp,p4,mpi)
-    return 2.0*mpi^2*(1.0 - p4) + (dp[1,1]^2 + dp[1,2]^2 + dp[1,3]^2 + dp[1,4]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2 + dp[3,4]^2) + (dp[1,4]^2*dp[2,1]^2 + dp[1,4]^2*dp[2,2]^2 + dp[1,4]^2*dp[2,3]^2 + dp[1,1]^2*(dp[2,2]^2 + dp[2,3]^2) - 2*dp[1,1]*dp[1,4]*dp[2,1]*dp[2,4] + dp[1,1]^2*dp[2,4]^2 + dp[1,4]^2*dp[3,1]^2 + dp[2,2]^2*dp[3,1]^2 + dp[2,3]^2*dp[3,1]^2 + dp[2,4]^2*dp[3,1]^2 - 2*dp[2,1]*dp[2,2]*dp[3,1]*dp[3,2] + dp[1,1]^2*dp[3,2]^2 + dp[1,4]^2*dp[3,2]^2 + dp[2,1]^2*dp[3,2]^2 + dp[2,3]^2*dp[3,2]^2 + dp[2,4]^2*dp[3,2]^2 - 2*dp[2,1]*dp[2,3]*dp[3,1]*dp[3,3] - 2*dp[2,2]*dp[2,3]*dp[3,2]*dp[3,3] + dp[1,1]^2*dp[3,3]^2 + dp[1,4]^2*dp[3,3]^2 + dp[2,1]^2*dp[3,3]^2 + dp[2,2]^2*dp[3,3]^2 + dp[2,4]^2*dp[3,3]^2 - 2*(dp[1,1]*dp[1,4]*dp[3,1] + dp[2,4]*(dp[2,1]*dp[3,1] + dp[2,2]*dp[3,2] + dp[2,3]*dp[3,3]))*dp[3,4] + (dp[1,1]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2)*dp[3,4]^2 + dp[1,3]^2*(dp[2,1]^2 + dp[2,2]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,4]^2) + dp[1,2]^2*(dp[2,1]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,3]^2 + dp[3,4]^2) - 2*dp[1,2]*(dp[1,1]*(dp[2,1]*dp[2,2] + dp[3,1]*dp[3,2]) + dp[1,3]*(dp[2,2]*dp[2,3] + dp[3,2]*dp[3,3]) + dp[1,4]*(dp[2,2]*dp[2,4] + dp[3,2]*dp[3,4])) - 2*dp[1,3]*(dp[1,1]*(dp[2,1]*dp[2,3] + dp[3,1]*dp[3,3]) + dp[1,4]*(dp[2,3]*dp[2,4] + dp[3,3]*dp[3,4])))
+
+    return 2*mpi^2*(1 - p4) + (dp[1,1]^2 + dp[1,2]^2 + dp[1,3]^2 + dp[1,4]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2 + dp[3,4]^2) + (dp[1,4]^2*dp[2,1]^2 + dp[1,4]^2*dp[2,2]^2 + dp[1,4]^2*dp[2,3]^2 + dp[1,1]^2*(dp[2,2]^2 + dp[2,3]^2) - 2*dp[1,1]*dp[1,4]*dp[2,1]*dp[2,4] + dp[1,1]^2*dp[2,4]^2 + dp[1,4]^2*dp[3,1]^2 + dp[2,2]^2*dp[3,1]^2 + dp[2,3]^2*dp[3,1]^2 + dp[2,4]^2*dp[3,1]^2 - 2*dp[2,1]*dp[2,2]*dp[3,1]*dp[3,2] + dp[1,1]^2*dp[3,2]^2 + dp[1,4]^2*dp[3,2]^2 + dp[2,1]^2*dp[3,2]^2 + dp[2,3]^2*dp[3,2]^2 + dp[2,4]^2*dp[3,2]^2 - 2*dp[2,1]*dp[2,3]*dp[3,1]*dp[3,3] - 2*dp[2,2]*dp[2,3]*dp[3,2]*dp[3,3] + dp[1,1]^2*dp[3,3]^2 + dp[1,4]^2*dp[3,3]^2 + dp[2,1]^2*dp[3,3]^2 + dp[2,2]^2*dp[3,3]^2 + dp[2,4]^2*dp[3,3]^2 - 2*(dp[1,1]*dp[1,4]*dp[3,1] + dp[2,4]*(dp[2,1]*dp[3,1] + dp[2,2]*dp[3,2] + dp[2,3]*dp[3,3]))*dp[3,4] + (dp[1,1]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2)*dp[3,4]^2 + dp[1,3]^2*(dp[2,1]^2 + dp[2,2]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,4]^2) + dp[1,2]^2*(dp[2,1]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,3]^2 + dp[3,4]^2) - 2*dp[1,2]*(dp[1,1]*(dp[2,1]*dp[2,2] + dp[3,1]*dp[3,2]) + dp[1,3]*(dp[2,2]*dp[2,3] + dp[3,2]*dp[3,3]) + dp[1,4]*(dp[2,2]*dp[2,4] + dp[3,2]*dp[3,4])) - 2*dp[1,3]*(dp[1,1]*(dp[2,1]*dp[2,3] + dp[3,1]*dp[3,3]) + dp[1,4]*(dp[2,3]*dp[2,4] + dp[3,3]*dp[3,4])))
+
 end
 
 
@@ -91,12 +73,8 @@ function Baryon(sk; density=false, moment = 0)
 
     BD = zeros(sk.lp[1],sk.lp[2],sk.lp[3])
     
-    if sk.periodic == false
-        get_baryon_density!(BD,sk,moment=moment)
-    else
-        get_baryon_density_periodic!(BD,sk,moment=moment)
-    end
-    
+    get_baryon_density!(BD,sk,moment=moment)
+
     if density == false
         bartot = sum(BD)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(2.0*pi^2)
         return bartot
@@ -108,32 +86,16 @@ end
 
 function get_baryon_density!(baryon_density, sk ;moment=0)
 
-    Threads.@threads for i in 3:sk.lp[1]-2
-        @inbounds for j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
+    Threads.@threads for i in sk.sum_grid[1]
+        @inbounds for j in sk.sum_grid[2], k in sk.sum_grid[3]
         
-            dp = getDX(sk ,i, j, k )
             pp = getX(sk,i,j,k)
-            
-            if moment == 0
-                baryon_density[i,j,k] = barypt(dp,pp)
+            if sk.periodic == false
+                dp = getDX(sk ,i, j, k )
             else
-                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                baryon_density[i,j,k] = barypt(dp,pp) * r^moment
+                dp = getDXp(sk ,i, j, k )
             end
-        
-        end
-    end
 
-end
-
-function get_baryon_density_periodic!(baryon_density, sk ;moment=0)
-
-    Threads.@threads for i in 1:sk.lp[1]
-        @inbounds for j in 1:sk.lp[2], k in 1:sk.lp[3]
-        
-            dp = getDXp(sk ,i, j, k )
-            pp = getX(sk,i,j,k)
-            
             if moment == 0
                 baryon_density[i,j,k] = barypt(dp,pp)
             else
@@ -171,7 +133,7 @@ The possible currents are (currently):
 """
 function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=0  )
 
-    if label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial"
+    if label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial" && label != "stress"
         println("ERROR: Current label '", label, "' unknown. Type '?compute_current' for help.")
         return
     end
@@ -193,124 +155,130 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
         bindices = indices[2]
     end
 
-    Threads.@threads for i = 3:sk.lp[1]-2
-        for j = 3:sk.lp[2]-2
-            for k = 3:sk.lp[3]-2
+    Threads.@threads for i in sk.sum_grid[1]
+        @inbounds for j in sk.sum_grid[2], k in sk.sum_grid[3]
 
-                xxx = SVector{3,Float64}(x[1][i], x[2][j], x[3][k] )
-                r = sqrt( xxx[1]^2 + xxx[2]^2 + xxx[3]^2 )
+            xxx = SVector{3,Float64}(x[1][i], x[2][j], x[3][k] )
+            r = sqrt( xxx[1]^2 + xxx[2]^2 + xxx[3]^2 )
+            p = getX(sk,i,j,k)
+
+            if sk.periodic == false
                 dp = getDX(sk ,i, j, k )
-                p = getX(sk,i,j,k)
+            else
+                dp = getDXp(sk ,i, j, k )
+            end
 
-                if label == "uMOI"
+            if label == "uMOI"
 
-                    Tiam, Lia = getTiam(p), getLka(p,dp)
+                Tiam, Lia = getTiam(p), getLka(p,dp)
 
-                    for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiam,a,b)*r^moment
-                        for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiam,Lia,a,c,b,c)*r^moment
-                        end
+                for a in aindices, b in bindices
+                    current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiam,a,b)*r^moment
+                    for c in 1:3
+                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiam,Lia,a,c,b,c)*r^moment
                     end
-
-                elseif label == "wMOI"
-
-                    Tiam, Lia = getTiam(p), getLka(p,dp)
-                    Gia = -1.0.*getGia(Lia,xxx)
-
-                    for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Tiam,a,b)*r^moment
-                        for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Tiam,Lia,a,c,b,c)*r^moment
-                        end
-                    end
-
-                elseif label == "vMOI"
-
-                    Lia = getLka(p,dp)
-                    Gia = -1.0.*getGia(Lia,xxx)
-
-                    for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Gia,a,b)*r^moment
-                        for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Gia,Lia,a,c,b,c)*r^moment
-                        end
-                    end
-
-                elseif label == "uAxial"
-
-                    Tiam, Tiap, Lia = getTiam(p), getTiap(p), getLka(p,dp)
-
-                    for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiap,a,b)*r^moment
-                        for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiap,Lia,a,c,b,c)*r^moment
-                        end
-                    end
-
-                elseif label == "wAxial"
-
-                    Tiap, Lia = getTiap(p), getLka(p,dp)
-                    Gia = -1.0.*getGia(Lia,xxx)
-
-                    for a in aindices, b in bindices
-                        current_density[a,b,i,j,k] = trace_su2_ij(Tiap,Gia,a,b) *r^moment
-                        for c in 1:3
-                            current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)*r^moment
-                        end
-                    end
-
-                elseif label == "stress"
-
-                    Lia = getLka(p,dp)
-
-                    for a in aindices, b in bindices
-                       
-                        current_density[a,b,i,j,k] -= (1.0 - p[4])*KD[a,b]*r^moment
-                        current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*r^moment
-                        
-                        for c in 1:3
-
-                            current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,c,c)*KD[a,b]*r^moment
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*r^moment
-
-                            for d in 1:3
-                                current_density[a,b,i,j,k] += 0.0625*trace_su2_ijkl(Lia,Lia,Lia,Lia,c,d,c,d)*KD[a,b]*r^moment
-                            end
-                        end
-                        
-                    end
-
-                elseif label == "NoetherIso"
-
-                    Lia, Tiam = getLka(p,dp), getTiam(p)
-
-                    for a in aindices, b in bindices
-
-                        current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Tiam,b,a)*r^moment
-
-                        for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Tiam,c,b,a,c)*r^moment
-                        end
-
-                    end
-                elseif label == "NoetherAxial"
-
-                    Lia, Tiap = getLka(p,dp), getTiap(p)
-
-                    for a in aindices, b in bindices
-
-                        current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Tiap,b,a)*r^moment
-
-                        for c in 1:3
-                            current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Tiap,c,b,a,c)*r^moment
-                        end
-
-                    end
-                
                 end
 
+            elseif label == "wMOI"
+
+                Tiam, Lia = getTiam(p), getLka(p,dp)
+                Gia = -1.0.*getGia(Lia,xxx)
+
+                for a in aindices, b in bindices
+                    current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Tiam,a,b)*r^moment
+                    for c in 1:3
+                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Tiam,Lia,a,c,b,c)*r^moment
+                    end
+                end
+
+            elseif label == "vMOI"
+
+                Lia = getLka(p,dp)
+                Gia = -1.0.*getGia(Lia,xxx)
+
+                for a in aindices, b in bindices
+                    current_density[a,b,i,j,k] = -trace_su2_ij(Gia,Gia,a,b)*r^moment
+                    for c in 1:3
+                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Gia,Lia,Gia,Lia,a,c,b,c)*r^moment
+                    end
+                end
+
+            elseif label == "uAxial"
+
+                Tiam, Tiap, Lia = getTiam(p), getTiap(p), getRka(p,dp)
+
+                for a in aindices, b in bindices
+                    current_density[a,b,i,j,k] = -trace_su2_ij(Tiam,Tiap,a,b)*r^moment
+                    for c in 1:3
+                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Tiam,Lia,Tiap,Lia,a,c,b,c)*r^moment
+                    end
+                end
+
+            elseif label == "wAxial"
+
+                Tiap, Lia = getTiap(p), getLka(p,dp)
+                Gia = -1.0.*getGia(Lia,xxx)
+
+                for a in aindices, b in bindices
+                    current_density[a,b,i,j,k] = trace_su2_ij(Tiap,Gia,a,b) *r^moment
+                    for c in 1:3
+                        current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)*r^moment
+                    end
+                end
+
+            elseif label == "stress"
+
+                Lia = getLka(p,dp)
+
+                for a in aindices, b in bindices
+                    
+                    current_density[a,b,i,j,k] -= (sk.mpi^2/2.0)*(1.0 - p[4])*KD[a,b]*r^moment
+                    current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*r^moment
+                    
+                    for c in 1:3
+
+                        current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,c,c)*KD[a,b]*r^moment
+                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*r^moment
+
+                        for d in 1:3
+                            current_density[a,b,i,j,k] += 0.0625*trace_su2_ijkl(Lia,Lia,Lia,Lia,c,d,c,d)*KD[a,b]*r^moment
+                        end
+                    end
+                    
+                end
+
+            elseif label == "NoetherIso"
+
+                Lia, Tiam = getLka(p,dp), getTiam(p)
+
+                for a in aindices, b in bindices
+
+                    current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Tiam,b,a)*r^moment
+
+                    for c in 1:3
+                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Tiam,c,b,a,c)*r^moment
+                    end
+
+                end
+            elseif label == "NoetherAxial"
+
+                # DOWN
+
+                Lia, Tiap = getLka(p,dp), getTiap(p)
+
+                for a in aindices, b in bindices
+
+                    current_density[a,b,i,j,k] += trace_su2_ij(Lia,Tiap,b,a)*r^moment
+
+                    for c in 1:3
+                        current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Lia,Lia,Lia,Tiap,c,b,a,c)*r^moment
+                    end
+
+                end
+            
             end
+
+        
         end
 
     end
@@ -333,6 +301,90 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
         end
     end
     
+
+end
+
+
+function getGia(Lia,x)
+
+    return SMatrix{3,3,Float64, 9}(
+        Lia[3,1]*x[2] - Lia[2,1]*x[3],
+        -Lia[3,1]*x[1] + Lia[1,1]*x[3],
+        Lia[2,1]*x[1] - Lia[1,1]*x[2],
+        Lia[3,2]*x[2] - Lia[2,2]*x[3],
+        -Lia[3,2]*x[1] + Lia[1,2]*x[3],
+        Lia[2,2]*x[1] - Lia[1,2]*x[2],
+        Lia[3,3]*x[2] - Lia[2,3]*x[3],
+        -Lia[3,3]*x[1] + Lia[1,3]*x[3],
+        Lia[2,3]*x[1] - Lia[1,3]*x[2]
+    )
+
+end
+
+function getTiam(p)
+
+    return SMatrix{3,3,Float64, 9}(
+        -p[2]^2 - p[3]^2,
+        p[1]*p[2] - p[3]*p[4],
+        p[1]*p[3] + p[2]*p[4],
+        p[1]*p[2] + p[3]*p[4],
+        -p[1]^2 - p[3]^2,
+        p[2]*p[3] - p[1]*p[4],
+        p[1]*p[3] - p[2]*p[4],
+        p[2]*p[3] + p[1]*p[4],
+        -p[1]^2 - p[2]^2
+    ) 
+    
+end
+
+function getTiap(p)
+    
+    return SMatrix{3,3,Float64, 9}(
+        p[1]^2 + p[4]^2,
+        p[1]*p[2] - p[3]*p[4],
+        p[1]*p[3] + p[2]*p[4],
+        p[1]*p[2] + p[3]*p[4],
+        p[2]^2 + p[4]^2,
+        p[2]*p[3] - p[1]*p[4],
+        p[1]*p[3] - p[2]*p[4],
+        p[2]*p[3] + p[1]*p[4],
+        p[3]^2 + p[4]^2
+    ) 
+    
+end
+
+function getRka(p,dp)
+    
+    return SMatrix{3,3,Float64, 9}(
+
+        -(dp[1,4]*p[1]) - dp[1,3]*p[2] + dp[1,2]*p[3] + dp[1,1]*p[4],
+        -(dp[2,4]*p[1]) - dp[2,3]*p[2] + dp[2,2]*p[3] + dp[2,1]*p[4],
+        -(dp[3,4]*p[1]) - dp[3,3]*p[2] + dp[3,2]*p[3] + dp[3,1]*p[4],
+        dp[1,3]*p[1] - dp[1,4]*p[2] - dp[1,1]*p[3] + dp[1,2]*p[4],
+        dp[2,3]*p[1] - dp[2,4]*p[2] - dp[2,1]*p[3] + dp[2,2]*p[4],
+        dp[3,3]*p[1] - dp[3,4]*p[2] - dp[3,1]*p[3] + dp[3,2]*p[4],
+        -(dp[1,2]*p[1]) + dp[1,1]*p[2] - dp[1,4]*p[3] + dp[1,3]*p[4],
+        -(dp[2,2]*p[1]) + dp[2,1]*p[2] - dp[2,4]*p[3] + dp[2,3]*p[4],
+        -(dp[3,2]*p[1]) + dp[3,1]*p[2] - dp[3,4]*p[3] + dp[3,3]*p[4],
+    ) 
+    
+end
+
+function getLka(p,dp)
+
+    return SMatrix{3,3,Float64, 9}(
+
+    -(dp[1,4]*p[1]) + dp[1,3]*p[2] - dp[1,2]*p[3] + dp[1,1]*p[4],
+    -(dp[2,4]*p[1]) + dp[2,3]*p[2] - dp[2,2]*p[3] + dp[2,1]*p[4],
+    -(dp[3,4]*p[1]) + dp[3,3]*p[2] - dp[3,2]*p[3] + dp[3,1]*p[4],
+    -(dp[1,3]*p[1]) - dp[1,4]*p[2] + dp[1,1]*p[3] + dp[1,2]*p[4],
+    -(dp[2,3]*p[1]) - dp[2,4]*p[2] + dp[2,1]*p[3] + dp[2,2]*p[4],
+    -(dp[3,3]*p[1]) - dp[3,4]*p[2] + dp[3,1]*p[3] + dp[3,2]*p[4],
+    dp[1,2]*p[1] - dp[1,1]*p[2] - dp[1,4]*p[3] + dp[1,3]*p[4],
+    dp[2,2]*p[1] - dp[2,1]*p[2] - dp[2,4]*p[3] + dp[2,3]*p[4],
+    dp[3,2]*p[1] - dp[3,1]*p[2] - dp[3,4]*p[3] + dp[3,3]*p[4]
+
+    )
 
 end
 
@@ -451,7 +503,6 @@ end
 
 Compute the center of mass of `skyrmion`, based on the energy density.
 
-
 """
 function center_of_mass(sk)
 
@@ -496,89 +547,6 @@ end
 
 
 
-function getGia(Lia,x)
-
-    return SMatrix{3,3,Float64, 9}(
-    Lia[3,1]*x[2] - Lia[2,1]*x[3],
--Lia[3,1]*x[1] + Lia[1,1]*x[3],
-Lia[2,1]*x[1] - Lia[1,1]*x[2],
-Lia[3,2]*x[2] - Lia[2,2]*x[3],
--Lia[3,2]*x[1] + Lia[1,2]*x[3],
-Lia[2,2]*x[1] - Lia[1,2]*x[2],
-Lia[3,3]*x[2] - Lia[2,3]*x[3],
--Lia[3,3]*x[1] + Lia[1,3]*x[3],
-Lia[2,3]*x[1] - Lia[1,3]*x[2]
-
-    )
-
-end
-
-function getTiam(p)
-
-    return SMatrix{3,3,Float64, 9}(
-        -p[2]^2 - p[3]^2,
-        p[1]*p[2] - p[3]*p[4],
-        p[1]*p[3] + p[2]*p[4],
-        p[1]*p[2] + p[3]*p[4],
-        -p[1]^2 - p[3]^2,
-        p[2]*p[3] - p[1]*p[4],
-        p[1]*p[3] - p[2]*p[4],
-        p[2]*p[3] + p[1]*p[4],
-        -p[1]^2 - p[2]^2
-    ) 
-    
-end
-
-function getTiap(p)
-    
-    return SMatrix{3,3,Float64, 9}(
-        p[1]^2 + p[4]^2,
-        p[1]*p[2] - p[3]*p[4],
-        p[1]*p[3] + p[2]*p[4],
-        p[1]*p[2] + p[3]*p[4],
-        p[2]^2 + p[4]^2,
-        p[2]*p[3] - p[1]*p[4],
-        p[1]*p[3] - p[2]*p[4],
-        p[2]*p[3] + p[1]*p[4],
-        p[3]^2 + p[4]^2
-    ) 
-    
-end
-
-function getRka(p,dp)
-    
-    return SMatrix{3,3,Float64, 9}(
-
-        -(dp[1,4]*p[1]) - dp[1,3]*p[2] + dp[1,2]*p[3] + dp[1,1]*p[4],
-        -(dp[2,4]*p[1]) - dp[2,3]*p[2] + dp[2,2]*p[3] + dp[2,1]*p[4],
-        -(dp[3,4]*p[1]) - dp[3,3]*p[2] + dp[3,2]*p[3] + dp[3,1]*p[4],
-        dp[1,3]*p[1] - dp[1,4]*p[2] - dp[1,1]*p[3] + dp[1,2]*p[4],
-        dp[2,3]*p[1] - dp[2,4]*p[2] - dp[2,1]*p[3] + dp[2,2]*p[4],
-        dp[3,3]*p[1] - dp[3,4]*p[2] - dp[3,1]*p[3] + dp[3,2]*p[4],
-        -(dp[1,2]*p[1]) + dp[1,1]*p[2] - dp[1,4]*p[3] + dp[1,3]*p[4],
-        -(dp[2,2]*p[1]) + dp[2,1]*p[2] - dp[2,4]*p[3] + dp[2,3]*p[4],
-        -(dp[3,2]*p[1]) + dp[3,1]*p[2] - dp[3,4]*p[3] + dp[3,3]*p[4],
-    ) 
-    
-end
-
-function getLka(p,dp)
-
-    return SMatrix{3,3,Float64, 9}(
-
-    -(dp[1,4]*p[1]) + dp[1,3]*p[2] - dp[1,2]*p[3] + dp[1,1]*p[4],
-    -(dp[2,4]*p[1]) + dp[2,3]*p[2] - dp[2,2]*p[3] + dp[2,1]*p[4],
-    -(dp[3,4]*p[1]) + dp[3,3]*p[2] - dp[3,2]*p[3] + dp[3,1]*p[4],
-    -(dp[1,3]*p[1]) - dp[1,4]*p[2] + dp[1,1]*p[3] + dp[1,2]*p[4],
-    -(dp[2,3]*p[1]) - dp[2,4]*p[2] + dp[2,1]*p[3] + dp[2,2]*p[4],
-    -(dp[3,3]*p[1]) - dp[3,4]*p[2] + dp[3,1]*p[3] + dp[3,2]*p[4],
-    dp[1,2]*p[1] - dp[1,1]*p[2] - dp[1,4]*p[3] + dp[1,3]*p[4],
-    dp[2,2]*p[1] - dp[2,1]*p[2] - dp[2,4]*p[3] + dp[2,3]*p[4],
-    dp[3,2]*p[1] - dp[3,1]*p[2] - dp[3,4]*p[3] + dp[3,3]*p[4]
-
-    )
-
-end
 
 function trace_su2_ij(Lia,Lib,i,j)
     return -2.0*(Lia[1,i]*Lib[1,j] + Lia[2,i]*Lib[2,j] + Lia[3,i]*Lib[3,j])
