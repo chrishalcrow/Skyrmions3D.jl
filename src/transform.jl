@@ -6,8 +6,6 @@
 """
 function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
 
-    vac = [0.0,0.0,0.0,1.0]
-
     for i in 1:sk.lp[1], j in 1:sk.lp[2]
         sk.pion_field[i,j,1,:] .= vac
         sk.pion_field[i,j,2,:] .= vac

@@ -9,9 +9,9 @@ using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgeb
 
 export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!, flowDE!, an_flow!
 
-export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD
+export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD, engpt
 
-
+export make_periodic, make_non_periodic, gradient_flow_heun!, arrested_newton_flow_yuen!
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
@@ -28,9 +28,6 @@ export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
 
 
 export gradient_flow!, arrested_newton_flow!
-
-
-
 
 include("plotting.jl")
 export plot_field, plot_baryon_density, interactive_flow
@@ -65,12 +62,24 @@ mutable struct Skyrmion
 	index_grid_x::Vector{Int64}
 	index_grid_y::Vector{Int64}
 	index_grid_z::Vector{Int64}
+	sum_grid::Vector{UnitRange{Int64}}
+	derivative_functions::Vector{Function}
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp) )
+Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp), sum_grid(lp, periodic), [getDX, getDDX] )
 
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]) )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic), [getDX, getDDX] )
+
+function make_periodic(skyrmion::Skyrmion)
+	skyrmion.periodic = true
+	skyrmion.sum_grid = sum_grid(skyrmion.lp, skyrmion.periodic)
+end
+
+function make_non_periodic(skyrmion::Skyrmion)
+	skyrmion.periodic = false
+	skyrmion.sum_grid = sum_grid(skyrmion.lp, skyrmion.periodic)
+end
 
 function vacuum_skyrmion(lpx,lpy,lpz,vac)
 
@@ -83,6 +92,27 @@ function vacuum_skyrmion(lpx,lpy,lpz,vac)
 	return vac_sk
 
 end
+
+function sum_grid(lp::Integer,periodic::Bool)
+
+	if periodic == true
+		return [ 1:lp, 1:lp, 1:lp ]
+	else
+		return [ 3:lp-2, 3:lp-2, 3:lp-2]
+	end
+
+end
+
+function sum_grid(lp::Vector{Int64},periodic::Bool)
+
+	if periodic == true
+		return [ 1:lp[1], 1:lp[2], 1:lp[3] ]
+	else
+		return [ 3:lp[1]-2, 3:lp[2]-2, 3:lp[3]-2]
+	end
+	
+end
+
 
 function index_grid(lp)
 
