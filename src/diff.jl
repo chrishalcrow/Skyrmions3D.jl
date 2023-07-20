@@ -263,7 +263,7 @@ Applies an arrested newton flow to `skyrmion` whose initial time derivative fiel
 
 See also [`gradient_flow!`, `newton_flow!`]
 """
-function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),error_function::Function=L2_err, step_algorithm="Euler")
+function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),error_function::Function=L2_err, step_algorithm="RK4")
 
     println(dt)
 
@@ -278,16 +278,18 @@ function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0
         println("intial energy: ", Energy(ϕ))
     end
 
+
+
     counter = 0
     while counter < steps
 
         arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,frequency_of_checking_tolerance,step_algorithm)
-        error = max_abs_err(dEdp)
+        #error = max_abs_err(dEdp)
         counter += frequency_of_checking_tolerance
 
-        if print_stuff == true 
-            println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
-        end
+        #if print_stuff == true 
+        #    println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
+        #end
 
         if tolerance != 0.0    # => we are in tol mode
             if error < tolerance
@@ -308,7 +310,7 @@ function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_
     new_energy = EnergyANF(ϕ,energy_density)
     
     #if step_algorithm == "Euler"
-    #dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+        dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     if step_algorithm == "Heun"
         dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
         dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
@@ -338,8 +340,8 @@ function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_
 
             #println("ARREST!")
 
-            ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-            #fill!(ϕd, 0.0);
+            #ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+            fill!(ϕd, 0.0);
             ϕ.pion_field .= old_pion_field;
             #gradient_flow!(ϕ,steps=10,print_stuff=false,dEdp=dEdp)
             #new_energy = EnergyANF(ϕ,energy_density)
@@ -348,8 +350,8 @@ function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_
 
     end
 
-   #error = max_abs_err(dEdp1)
-    #println(" error = ", round(error, sigdigits=4))
+    error = max_abs_err(dEdp1)
+    println(" error = ", round(error, sigdigits=4), "energy = ", Energy(ϕ) )
     
 end
 
@@ -391,21 +393,13 @@ function newton_flow_for_1_step_RK4!(sk, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
     sk.pion_field .+= (0.5*dt)^2 .*dEdp1
     getdEdp!(sk, dEdp3)
 
-    sk.pion_field .+= (0.5*dt).*skd + (0.5*dt)^2 .*(dEdp2 - dEdp1)
+    sk.pion_field .+= (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
     getdEdp!(sk, dEdp4)
 
-    sk.pion_field .-= (0.5*dt).*skd + (0.5*dt)^2 *(dEdp2 - dEdp1) + (0.5*dt)^2 .*dEdp1 + (0.5*dt).*skd
-    #skd .-= dt.*dEdp1
-
-    # dEdp2 is f(y+1)
+    #RESET field to original value: sk.pion_field .-= (0.5*dt).*skd + (0.5*dt)^2 *(4.0 .* dEdp2 - dEdp1) + (0.5*dt)^2 .*dEdp1 + (0.5*dt).*skd
+    #Then update: sk.pion_field .+= dt.*(skd + dt/6.0 .*( dEdp1 .+ dEdp2 .+ dEdp3 ) ), combined into:
+    sk.pion_field .-=  dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )
     
-    # skd2 = (skd -  dt*dEdp1)
-
-    # reset
-    #skd .+= dt.*dEdp1
-    sk.pion_field .+= dt.*(skd + dt/6.0 .*( dEdp1 .+ dEdp2 .+ dEdp3 ) )
-
-    #sk.pion_field .+= (0.5*dt).*(2.0.*skd .+  dt.*(dEdp1))
     skd .+= (dt/6.0).*(dEdp1 .+ 2.0.*dEdp2 .+ 2.0.*dEdp3 .+ dEdp4)
    
     orthog_skd_and_sk!(skd,sk)
