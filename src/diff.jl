@@ -16,8 +16,6 @@ function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/8
         println("initial: energy: ", Energy(ϕ) )
     end
 
-
-
     counter = 0
 
     while counter < steps
@@ -49,8 +47,8 @@ function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/8
     return
 
 end
-
-function gradient_flow_heun!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/80.0, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true , error_function::Function=L2_err)
+#=
+function gradient_flow_heun!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/80.0, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true , error_function::Function=L2_err, step_algorithm="Euler")
 
     dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
@@ -67,7 +65,8 @@ function gradient_flow_heun!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/
 
     while counter < steps
         
-        gradient_flow_heun_for_n_steps!(ϕ,dEdp1,dEdp2,frequency_of_checking_tolerance,dt)
+
+        gradient_flow_for_n_steps!(ϕ,dEdp1,dEdp2,frequency_of_checking_tolerance,dt,step_algorithm)
         counter += frequency_of_checking_tolerance
         error = error_function(dEdp1)
         
@@ -111,10 +110,10 @@ function gradient_flow_heun_1_step!(sk, dEdp1, dEdp2, dt)
     sk.pion_field .+= (0.5*dt).*(dEdp2 .- dEdp1)
     normer!(sk)
    
-end 
+end =#
 
 
-function gradient_flow_for_n_steps!(ϕ,dEdp,n,dt)
+function gradient_flow_for_n_steps!(ϕ,dEdp,n,dt,)
     
     for _ in 1:n
         gradient_flow_1_step!(ϕ,dEdp,dt)
@@ -166,7 +165,7 @@ function getdEdp_pt!(dEdp, p, dp, ddp, mpi, i, j, k)
     end
 
 end
-
+#=
 """
     arrested_newton_flow!(skyrmion, skyrmion_dot; steps = n, tolerance = tol, dt=ls^2/80.0, frequency_of_checking_tolerance = freq, print_stuff = true)
     
@@ -247,15 +246,10 @@ function newton_flow_for_n_steps!(ϕ,ϕd,dEdp,dt,n)
 
 
 end
+=#
 
-function newton_flow_for_1_step!(sk, skd ,dEdp, dt)
 
-    getdEdp!(sk, dEdp)
-    sk.pion_field .-= dt.*skd
-    skd .-= dt.*dEdp
-    normer!(sk)
-   
-end
+
 
 
 
@@ -269,7 +263,7 @@ Applies an arrested newton flow to `skyrmion` whose initial time derivative fiel
 
 See also [`gradient_flow!`, `newton_flow!`]
 """
-function arrested_newton_flow_yuen!(ϕ,ϕd; dt=ϕ.ls[1]/24.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),error_function::Function=L2_err)
+function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),error_function::Function=L2_err, step_algorithm="Euler")
 
     println(dt)
 
@@ -287,7 +281,7 @@ function arrested_newton_flow_yuen!(ϕ,ϕd; dt=ϕ.ls[1]/24.0, steps=1, tolerance
     counter = 0
     while counter < steps
 
-        arrested_newton_flow_for_n_steps_yuen!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,frequency_of_checking_tolerance)
+        arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,frequency_of_checking_tolerance,step_algorithm)
         error = max_abs_err(dEdp)
         counter += frequency_of_checking_tolerance
 
@@ -309,77 +303,158 @@ function arrested_newton_flow_yuen!(ϕ,ϕd; dt=ϕ.ls[1]/24.0, steps=1, tolerance
 
 end
 
-function arrested_newton_flow_for_n_steps_yuen!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,n)
+function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,n,step_algorithm::String)
 
     new_energy = EnergyANF(ϕ,energy_density)
-    dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    
+    #if step_algorithm == "Euler"
+    #dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    if step_algorithm == "Heun"
+        dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+        dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    end
+    if step_algorithm == "RK4"
+        dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+        dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+        dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+        dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    end
 
     for _ in 1:n
 
         old_energy = new_energy
         old_pion_field .= ϕ.pion_field
 
-        newton_flow_for_1_step_yuen!(ϕ,ϕd,dEdp,dEdp2,dt)
+        if step_algorithm == "Euler"
+            newton_flow_for_1_step!(ϕ,ϕd,dEdp,dt)
+        elseif step_algorithm == "Heun"
+            newton_flow_for_1_step_heun!(ϕ,ϕd,dEdp1,dEdp2,dt)
+        elseif step_algorithm == "RK4"
+            newton_flow_for_1_step_RK4!(ϕ,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
+        end
         new_energy = EnergyANF(ϕ,energy_density)
 
         if new_energy > old_energy
-            
-            fill!(ϕd, 0.0);
-            #ϕ.pion_field .= old_pion_field;
-            #gradient_flow!(ϕ,steps=20,print_stuff=false,dEdp=dEdp)
+
+            #println("ARREST!")
+
+            ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+            #fill!(ϕd, 0.0);
+            ϕ.pion_field .= old_pion_field;
+            #gradient_flow!(ϕ,steps=10,print_stuff=false,dEdp=dEdp)
             #new_energy = EnergyANF(ϕ,energy_density)
     
         end
 
     end
+
+   #error = max_abs_err(dEdp1)
+    #println(" error = ", round(error, sigdigits=4))
     
 end
 
 
-function newton_flow_for_1_step_yuen!(sk, skd ,dEdp,dEdp2, dt)
+function newton_flow_for_1_step_heun!(sk, skd ,dEdp1, dEdp2, dt)
 
-    getdEdp!(sk, dEdp)
-    
-    sk.pion_field .-= (0.5*dt).*dEdp
+    getdEdp!(sk, dEdp1)
+
+    sk.pion_field .+= dt.*skd
+    #skd .-= dt.*dEdp1
+
+    # dEdp2 is f(y+1)
     getdEdp!(sk, dEdp2)
-    sk.pion_field .+= (0.5*dt).*dEdp
+    # skd2 = (skd -  dt*dEdp1)
 
-    skd .-= (0.5*dt).*(dEdp2 .+ dEdp)
-#=
-    trial = 0.0
-
-    Threads.@threads for i in sk.sum_grid[1]
-        @inbounds for j in sk.sum_grid[2], k in sk.sum_grid[3]
-
-            dotty = 0.0
-            for a in 1:4
-                dotty += dEdp[i,j,k,a]*sk.pion_field[i,j,k,a]
-            end
-
-            skd[i,j,k,a] -= dt*(dEdp[i,j,k,a] - dotty*skd[i,j,k,a])
-
-        end
-    end
-=#
-    
-
-    
-    #skd .-= (0.5*dt).*(dEdp2 .- dEdp)
-    #skd .-= dt.*dEdp
+    # reset
+    #skd .+= dt.*dEdp1
     sk.pion_field .-= dt.*skd
+
+    sk.pion_field .+= (0.5*dt).*(2.0.*skd .+  dt.*(dEdp1))
+    skd .+= (0.5*dt).*(dEdp1 + dEdp2)
+   
+    orthog_skd_and_sk!(skd,sk)
     normer!(sk)
 
-    #getdEdp!(sk, dEdp)
-    #sk.pion_field .-= dt.*skd
-    #skd .-= dt.*dEdp
-    #normer!(sk)
+
+   
+end
+
+
+
+function newton_flow_for_1_step_RK4!(sk, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
+
+    getdEdp!(sk, dEdp1)
+
+    sk.pion_field .+= (0.5*dt).*skd
+    getdEdp!(sk, dEdp2)
+
+    sk.pion_field .+= (0.5*dt)^2 .*dEdp1
+    getdEdp!(sk, dEdp3)
+
+    sk.pion_field .+= (0.5*dt).*skd + (0.5*dt)^2 .*(dEdp2 - dEdp1)
+    getdEdp!(sk, dEdp4)
+
+    sk.pion_field .-= (0.5*dt).*skd + (0.5*dt)^2 *(dEdp2 - dEdp1) + (0.5*dt)^2 .*dEdp1 + (0.5*dt).*skd
+    #skd .-= dt.*dEdp1
+
+    # dEdp2 is f(y+1)
+    
+    # skd2 = (skd -  dt*dEdp1)
+
+    # reset
+    #skd .+= dt.*dEdp1
+    sk.pion_field .+= dt.*(skd + dt/6.0 .*( dEdp1 .+ dEdp2 .+ dEdp3 ) )
+
+    #sk.pion_field .+= (0.5*dt).*(2.0.*skd .+  dt.*(dEdp1))
+    skd .+= (dt/6.0).*(dEdp1 .+ 2.0.*dEdp2 .+ 2.0.*dEdp3 .+ dEdp4)
+   
+    orthog_skd_and_sk!(skd,sk)
+    normer!(sk)
+
+
+   
+end
+
+
+function newton_flow_for_1_step!(sk, skd ,dEdp, dt)
+
+    getdEdp!(sk, dEdp)
+    sk.pion_field .+= dt.*skd
+    skd .+= dt.*dEdp
+    #orthog_skd_and_sk!(skd,sk)
+    normer!(sk)
    
 end
 
 
 
 
+function orthog_skd_and_sk!(skd,sk)
 
+    tot_check = 0.0
+
+    for i in sk.sum_grid[1]
+        @inbounds for j in sk.sum_grid[2], k in sk.sum_grid[3]
+
+            skd_dot_sk = 0.0
+            for a in 1:4
+                skd_dot_sk += skd[i,j,k,a]*sk.pion_field[i,j,k,a]
+            end
+
+            for a in 1:4
+                skd[i,j,k,a] -=  skd_dot_sk*sk.pion_field[i,j,k,a]
+            end
+
+            for a in 1:4
+                tot_check = skd[i,j,k,a]*sk.pion_field[i,j,k,a]
+            end
+
+        end
+    end
+
+    #println(tot_check)
+
+end
 
 
 
