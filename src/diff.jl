@@ -122,7 +122,7 @@ end
 """
     arrested_newton_flow!(skyrmion, skyrmion_dot; steps = n, tolerance = tol, dt=ls^2/80.0, frequency_of_checking_tolerance = freq, print_stuff = true)
     
-Applies an arrested newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `freq` steps.
+Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `freq` steps.
 
 See also [`gradient_flow!`, `newton_flow!`]
 """
@@ -148,7 +148,7 @@ function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0
         end
 
         if tolerance != 0.0    # => we are in tol mode
-            if error < tolerance
+            if error < tolerance 
                 counter = steps + 1    # => end the while loop
             else
                 steps += frequency_of_checking_tolerance
@@ -160,7 +160,7 @@ function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0
     return
 
 end
-
+ 
 function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp1,dt,energy_density,n,step_algorithm::String; initial_energy)
 
     new_energy = initial_energy
