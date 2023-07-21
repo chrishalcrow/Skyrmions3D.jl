@@ -15,48 +15,36 @@ function makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_
     
     lp, x = skyrmion.lp, skyrmion.x
 
-    r = zeros(lp[1],lp[2],lp[3])
-
-    zRM = complex(0.0,0.0)  
-    pRM = complex(0.0,0.0)
-    qRM = complex(0.0,0.0) 
-    den = complex(0.0,0.0)
-
     RI = R_from_axis_angle(iTH, i_n)
     RJ = R_from_axis_angle(jTH, j_n)
 
-    sine_of_prof_r = 0.0
+    Threads.@threads for k in 1:lp[3]
+        @inbounds for j in 1:lp[2], i in 1:lp[1]
 
-    Xt = zeros(3)
+            Xto = SVector{3,Float64}( x[1][i]-X[1], x[2][j]-X[2], x[3][k]-X[3] )
+            Xt = RJ*Xto;
 
-    @inbounds for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+            r = sqrt( Xt[1]^2 + Xt[2]^2 + Xt[3]^2 )
 
-        Xt[1] = x[1][i]-X[1];
-        Xt[2] = x[2][j]-X[2];
-        Xt[3] = x[3][k]-X[3];
+            sine_of_prof_r = sin(prof(r))
 
-        Xt = RJ*Xt;
+            zRM = ( Xt[1] + 1.0im*Xt[2] )/(r + Xt[3])
 
-        r = sqrt( Xt[1]^2 + Xt[2]^2 + Xt[3]^2 )
+            pRM = pfn(zRM)
+            qRM = qfn(zRM)
 
-        sine_of_prof_r = sin(prof(r))
+            den = real( qRM*conj(qRM) + pRM*conj(pRM) )
 
-        zRM = ( Xt[1] + 1.0im*Xt[2] )/(r + Xt[3])
+            skyrmion.pion_field[i,j,k,1] = (sine_of_prof_r/den)*real( pRM*conj(qRM) + qRM*conj(pRM) )
+            skyrmion.pion_field[i,j,k,2] = (sine_of_prof_r/den)*imag( pRM*conj(qRM) - qRM*conj(pRM) )
+            skyrmion.pion_field[i,j,k,3] = (sine_of_prof_r/den)*real( qRM*conj(qRM) - pRM*conj(pRM) )
+            skyrmion.pion_field[i,j,k,4] = cos(prof(r))
 
-        pRM = pfn(zRM)
-        qRM = qfn(zRM)
+            if iTH != 0.0
+                skyrmion.pion_field[i,j,k,1:3] = RI*skyrmion.pion_field[i,j,k,1:3]
+            end
 
-        den = real( qRM*conj(qRM) + pRM*conj(pRM) )
-
-        skyrmion.pion_field[i,j,k,1] = (sine_of_prof_r/den)*real( pRM*conj(qRM) + qRM*conj(pRM) )
-        skyrmion.pion_field[i,j,k,2] = (sine_of_prof_r/den)*imag( pRM*conj(qRM) - qRM*conj(pRM) )
-        skyrmion.pion_field[i,j,k,3] = (sine_of_prof_r/den)*real( qRM*conj(qRM) - pRM*conj(pRM) )
-        skyrmion.pion_field[i,j,k,4] = cos(prof(r))
-
-        if iTH != 0.0
-            skyrmion.pion_field[i,j,k,1:3] = RI*skyrmion.pion_field[i,j,k,1:3]
         end
-
     end
 
     if skyrmion.periodic == false
@@ -64,6 +52,7 @@ function makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_
     end
     
 end
+
 
 function R_from_axis_angle(th, n)
 
@@ -145,8 +134,8 @@ function makeADHM!(an_ADHM_skyrmion, L, M)
     x = an_ADHM_skyrmion.x
     lp = an_ADHM_skyrmion.lp
 
-    Threads.@threads for i in 1:lp[1]
-        for j in 1:lp[2], k in 1:lp[3]
+    Threads.@threads for k in 1:lp[3]
+        for j in 1:lp[2], i in 1:lp[1]
             @inbounds an_ADHM_skyrmion.pion_field[i,j,k,:] = ADHMpt2(L_final,M_final,[x[1][i],x[2][j],x[3][k]], B, tsteps,ctL,stL)
         end
     end

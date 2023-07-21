@@ -10,6 +10,14 @@ function getX(sk,i,j,k)
     
 end
 
+function getDP(sk,i,j,k)
+    if sk.periodic == false
+        return getDX(sk ,i, j, k )
+    else
+        return getDXp(sk ,i, j, k )
+    end
+end
+
 function getDX(ϕ,i,j,k)
 
     return SMatrix{3,4,Float64, 12}(
@@ -31,6 +39,14 @@ function getDX(ϕ,i,j,k)
     )
     
 
+end
+
+function getDDP(sk,i,j,k)
+    if sk.periodic == false
+        return getDDX(sk ,i, j, k )
+    else
+        return getDDXp(sk ,i, j, k )
+    end
 end
 
 function getDDX(ϕ,i,j,k)
@@ -66,6 +82,51 @@ function getDDX(ϕ,i,j,k)
         dxdyD(ϕ.pion_field,4,i,j,k,ϕ.ls[1],ϕ.ls[2])
     )
 end
+
+function getDDX1(ϕ,i,j,k)
+
+    return SMatrix{3,4,Float64, 12}(
+
+        d2xD(ϕ.pion_field,1,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.pion_field,1,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.pion_field,1,i,j,k,ϕ.ls[3]),
+
+        d2xD(ϕ.pion_field,2,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.pion_field,2,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.pion_field,2,i,j,k,ϕ.ls[3]),
+
+        d2xD(ϕ.pion_field,3,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.pion_field,3,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.pion_field,3,i,j,k,ϕ.ls[3]),
+
+        d2xD(ϕ.pion_field,4,i,j,k,ϕ.ls[1]),
+        d2yD(ϕ.pion_field,4,i,j,k,ϕ.ls[2]),
+        d2zD(ϕ.pion_field,4,i,j,k,ϕ.ls[3])
+    )
+end
+
+function getDDX2(ϕ,i,j,k,DDX1::SMatrix{3, 4, Float64, 12})
+
+    return SMatrix{3,4,Float64, 12}(
+
+        0.5*( dydzdiffD(ϕ.pion_field, 1, i, j, k, ϕ.ls[2], ϕ.ls[3] ) - DDX1[2,1] - DDX1[3,1] ),
+        0.5*( dxdzdiffD(ϕ.pion_field, 1, i, j, k, ϕ.ls[1], ϕ.ls[3] ) - DDX1[1,1] - DDX1[3,1] ),
+        0.5*( dxdydiffD(ϕ.pion_field, 1, i, j, k, ϕ.ls[1], ϕ.ls[2] ) - DDX1[1,1] - DDX1[2,1] ),
+
+        0.5*( dydzdiffD(ϕ.pion_field, 2, i, j, k, ϕ.ls[2], ϕ.ls[3] ) - DDX1[2,2] - DDX1[3,2] ),
+        0.5*( dxdzdiffD(ϕ.pion_field, 2, i, j, k, ϕ.ls[1], ϕ.ls[3] ) - DDX1[1,2] - DDX1[3,2] ),
+        0.5*( dxdydiffD(ϕ.pion_field, 2, i, j, k, ϕ.ls[1], ϕ.ls[2] ) - DDX1[1,2] - DDX1[2,2] ),
+
+        0.5*( dydzdiffD(ϕ.pion_field, 3, i, j, k, ϕ.ls[2], ϕ.ls[3] ) - DDX1[2,3] - DDX1[3,3] ),
+        0.5*( dxdzdiffD(ϕ.pion_field, 3, i, j, k, ϕ.ls[1], ϕ.ls[3] ) - DDX1[1,3] - DDX1[3,3] ),
+        0.5*( dxdydiffD(ϕ.pion_field, 3, i, j, k, ϕ.ls[1], ϕ.ls[2] ) - DDX1[1,3] - DDX1[2,3] ),
+
+        0.5*( dydzdiffD(ϕ.pion_field, 4, i, j, k, ϕ.ls[2], ϕ.ls[3] ) - DDX1[2,4] - DDX1[3,4] ),
+        0.5*( dxdzdiffD(ϕ.pion_field, 4, i, j, k, ϕ.ls[1], ϕ.ls[3] ) - DDX1[1,4] - DDX1[3,4] ),
+        0.5*( dxdydiffD(ϕ.pion_field, 4, i, j, k, ϕ.ls[1], ϕ.ls[2] ) - DDX1[1,4] - DDX1[2,4] )
+    )
+end
+
 
 
 function getDXp(ϕ,i,j,k)
@@ -195,6 +256,8 @@ function getDDX(pion_field::Array{Float64, 4},i,j,k,ls)
         dxdyD(pion_field,4,i,j,k,ls[1],ls[2])
     )
 end
+
+
 
 # The actual derivatives
 

@@ -13,6 +13,12 @@ export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD, engpt
 
 export make_periodic, make_non_periodic, gradient_flow_heun!, arrested_newton_flow_yuen!
 
+
+# For developing fast dedp
+export dedfpt1v,dedfpt2v, getAj, getBj, getdEdp!, getdEdp2!
+
+export getDDX1, getDDX2, getDDX
+
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
 
@@ -195,8 +201,8 @@ See also [`normer`]
 """
 function normer!(sk)
 
-	Threads.@threads for i in 1:sk.lp[1]
-		for j in 1:sk.lp[2], k in 1:sk.lp[3]
+	Threads.@threads for k in 1:sk.lp[3]
+		for j in 1:sk.lp[2], i in 1:sk.lp[1]
 			
 			@inbounds normer = 1.0/sqrt( sk.pion_field[i,j,k,1]^2 + sk.pion_field[i,j,k,2]^2 + sk.pion_field[i,j,k,3]^2 + sk.pion_field[i,j,k,4]^2 )
 			for a in 1:4
@@ -212,8 +218,8 @@ function normer!(pion_field::Array{Float64, 4})
 
 	lp = size(pion_field)[1:3]
 
-	Threads.@threads for i in 1:lp[1]
-		for j in 1:lp[2], k in 1:lp[3]
+	Threads.@threads for k in 1:lp[3]
+		for j in 1:lp[2], i in 1:lp[1]
 			
 			@inbounds normer = 1.0/sqrt( pion_field[i,j,k,1]^2 + pion_field[i,j,k,2]^2 + pion_field[i,j,k,3]^2 + pion_field[i,j,k,4]^2 )
 			for a in 1:4
@@ -241,8 +247,8 @@ function normer(sk)
 
     sk_new = Skyrmion(lp,ls)
 
-	Threads.@threads for i in 1:sk.lp[1]
-		for j in 1:sk.lp[2], k in 1:sk.lp[3]
+	Threads.@threads for k in 1:sk.lp[3]
+		for j in 1:sk.lp[2], i in 1:sk.lp[1]
 			
 			@inbounds normer = 1.0/sqrt( sk.pion_field[i,j,k,1]^2 + sk.pion_field[i,j,k,2]^2 + sk.pion_field[i,j,k,3]^2 + sk.pion_field[i,j,k,4]^2 )
 			for a in 1:4

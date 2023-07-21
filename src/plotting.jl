@@ -261,7 +261,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 	flow_tb = Textbox(g_dynamics[4,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
 
 	Label(g_dynamics[5,1], text="dt: ",halign=:right)
-	dt_tb = Textbox(g_dynamics[5,2]; placeholder=string(round(my_skyrmion.ls[1]*my_skyrmion.ls[2]/80.0;digits=5)),validator = Float64, tellwidth=false, halign=:left)
+	dt_tb = Textbox(g_dynamics[5,2]; placeholder=string(0.0),validator = Float64, tellwidth=false, halign=:left)
 
 	flow_button = Button(g_dynamics[6,1:2]; label="Flow!", tellwidth=false, halign=:center, font=:bold, width=220)
 
@@ -403,17 +403,30 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		#bd_tb.stored_string = bd_tb.displayed_string
 
 		dt = parse(Float64,to_value(dt_tb.displayed_string))
-		println("dt = ", dt)
+		#println("dt = ", dt)
 
 		total_runs = deepcopy(parse(Int64, to_value(flow_tb.displayed_string)))
 		iso_val = deepcopy(parse(Float64,to_value(bd_tb.displayed_string)))
 
 		if which_flow == 1
-			gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
+			if dt == 0.0
+				gradient_flow!(my_skyrmion; steps=total_runs)
+			else
+				gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
+			end
 		elseif which_flow == 2
-			arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
+			if dt == 0.0
+				arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, step_algorithm="RK4" )
+			else
+				arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt, step_algorithm="RK4" )
+			end
+			
 		elseif which_flow == 3
-			newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
+			if dt == 0.0
+				newton_flow!(my_skyrmion, skd; steps=total_runs, step_algorithm="RK4"  )
+			else
+				newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt, step_algorithm="RK4"  )
+			end
 		end
 
 		#if to_value(menu1.selection) == "Gradient flow"
@@ -425,6 +438,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		BD = Baryon(my_skyrmion,density=true)
 		BDmesh = getmesh(BD, iso_val, x)
 		skcolormap = make_color_map(my_skyrmion, BDmesh)
+
 
 		#displayed_energy[] = Energy(my_skyrmion)
 		#displayed_baryon[] = sum(BD)

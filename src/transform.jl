@@ -47,7 +47,7 @@ function resize_lattice!(skyrmion, lp, ls)
 
     ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (old_x[1],old_x[2],old_x[3]) ), Throw()) for a in 1:4 ]
 
-    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+    for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
 
         if old_x[1][1] < x[1][i] < old_x[1][end] && old_x[2][1] < x[2][j] < old_x[2][end] && old_x[3][1] < x[3][k] < old_x[3][end]
             for a in 1:4
@@ -139,7 +139,7 @@ function product_approx!(sk1, sk2)
 
     tempsk = Skyrmion(lp,ls)
 
-    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+    for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
 
         tempsk.pion_field[i,j,k,4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
         for a in 1:3
@@ -174,7 +174,7 @@ function product_approx(sk1, sk2)
 
     tempsk = Skyrmion(lp,ls)
 
-    for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+    for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1] 
 
         tempsk.pion_field[i,j,k,4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
         for a in 1:3
@@ -209,7 +209,7 @@ function translate_sk(skyrmion,X)
 
     ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
 
-    for a in 1:4, i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+    for a in 1:4, k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
         if x[1][i] > x[1][1] + X[1] && x[1][i] < x[1][end] + X[1] && x[2][j] > x[2][1] + X[2] && x[2][j] < x[2][end] + X[2] && x[3][k] > x[3][1] + X[3] && x[3][k] < x[3][end] + X[3]
             sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
         else
@@ -242,7 +242,7 @@ function translate_sk!(skyrmion,X)
 
     ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
 
-    for a in 1:4, i in 1:lp[1], j in 1:lp[2], k in 1:lp[3]
+    for a in 1:4, k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
         if x[1][i] > x[1][1] + X[1] && x[1][i] < x[1][end] + X[1] && x[2][j] > x[2][1] + X[2] && x[2][j] < x[2][end] + X[2] && x[3][k] > x[3][1] + X[3] && x[3][k] < x[3][end] + X[3]
             sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
         else
@@ -460,7 +460,4 @@ function center_skyrmion!(sk)
     end
     
 end
-
-
-
 
