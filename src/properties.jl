@@ -168,35 +168,29 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
         return
     end
 
+    current_density = zeros(3,3,sk.lp[1],sk.lp[2],sk.lp[3])
+
     aindices = 1:3
     bindices = 1:3
 
-    KD = diagm([1.0,1.0,1.0])
-
-    x = sk.x
-
-    if indices == [0,0]
-        current_density = zeros(3,3,sk.lp[1],sk.lp[2],sk.lp[3])
-        aindices = 1:3
-        bindices = 1:3
-    else
-        current_density = zeros(3,3,sk.lp[1],sk.lp[2],sk.lp[3])
-        aindices = indices[1]
-        bindices = indices[2]
+    if indices != [0,0]
+        aindices = indices[1]:indices[1]
+        bindices = indices[2]:indices[2]
     end
+    
 
-    Threads.@threads for k in sk.sum_grid[3]
+   for k in sk.sum_grid[3]
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
 
-            xxx = SVector{3,Float64}(x[1][i], x[2][j], x[3][k] )
-            rm = sqrt( xxx[1]^2 + xxx[2]^2 + xxx[3]^2 )^moment
-            p = getX(sk,i,j,k)
+            
 
-            if sk.periodic == false
-                dp = getDX(sk ,i, j, k )
-            else
-                dp = getDXp(sk ,i, j, k )
-            end
+            KD = diagm([1.0,1.0,1.0])
+
+            xxx = SVector{3,Float64}(sk.x[1][i], sk.x[2][j], sk.x[3][k] )
+            rm = sqrt( xxx[1]^2 + xxx[2]^2 + xxx[3]^2 )^moment
+
+            p = getX(sk,i,j,k)
+            dp = getDP(sk,i,j,k)
 
             if label == "uMOI"
 

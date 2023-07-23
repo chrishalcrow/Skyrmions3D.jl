@@ -22,10 +22,11 @@ function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/8
         
         gradient_flow_for_n_steps!(ϕ,dEdp,frequency_of_checking_tolerance,dt)
         counter += frequency_of_checking_tolerance
-        error = L2_err(dEdp)
+        error = max_abs_err(dEdp)
         
         if print_stuff == true
-            println("after ", counter, " steps, error = ", round(error, sigdigits=4))
+            #println("after ", counter, " steps, error = ", round(error, sigdigits=4))
+            println( round(error, sigdigits=8), "," )
         end
 
         if tolerance != 0.0    # => we are in tol mode    
@@ -141,7 +142,7 @@ function arrested_newton_flow!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0
     while counter < steps
 
         arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,frequency_of_checking_tolerance,step_algorithm,initial_energy=EnergyANF(ϕ,energy_density))
-        error = L2_err(dEdp)
+        error = max_abs_err(dEdp)
         counter += frequency_of_checking_tolerance
 
         if print_stuff == true 
@@ -202,23 +203,22 @@ function newton_flow_for_1_step_RK4!(sk, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
 
     getdEdp!(sk, dEdp1)
     # sk2 = sk + (0.5*dt).*skd
-
     sk.pion_field .+= (0.5*dt).*skd
+
     getdEdp!(sk, dEdp2)
     #getdEdp!(sk2, dEdp2), sk = sk2 + (0.5*dt)^2 .*dEdp1
-
     sk.pion_field .+= (0.5*dt)^2 .*dEdp1
+
     getdEdp!(sk, dEdp3)
     #getdEdp!(sk, dEdp2), sk2 = sk + (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
-
     sk.pion_field .+= (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
+
+
     getdEdp!(sk, dEdp4)
     # #getdEdp!(sk2, dEdp2), sk +=  dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )
-
     #RESET field to original value: sk.pion_field .-= (0.5*dt).*skd + (0.5*dt)^2 *(4.0 .* dEdp2 - dEdp1) + (0.5*dt)^2 .*dEdp1 + (0.5*dt).*skd
     #Then update: sk.pion_field .+= dt.*(skd + dt/6.0 .*( dEdp1 .+ dEdp2 .+ dEdp3 ) ), combined into:
     sk.pion_field .-=  dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )
-    
     skd .+= (dt/6.0).*(dEdp1 .+ 2.0.*dEdp2 .+ 2.0.*dEdp3 .+ dEdp4)
    
     #orthog_skd_and_sk!(skd,sk)
@@ -307,25 +307,34 @@ end
 
 
 
-function arrested_newton_flow_juggle!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, step_algorithm="RK4")
+function arrested_newton_flow_juggle!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true)
+
+
 
     if tolerance == 0 && frequency_of_checking_tolerance > steps
         frequency_of_checking_tolerance = steps
     end
 
     energy_density = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3])
-    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     old_pion_field = deepcopy(ϕ.pion_field);
+
+    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    sk2 = Skyrmion(ϕ.lp, ϕ.ls);
+
 
     counter = 0
     while counter < steps
 
-        arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,frequency_of_checking_tolerance,step_algorithm,initial_energy=EnergyANF(ϕ,energy_density))
-        error = L2_err(dEdp)
+        arrested_newton_flow_for_n_steps_juggle!(ϕ,sk2,ϕd,old_pion_field,dEdp,dEdp2,dEdp3,dEdp4,dt,energy_density,frequency_of_checking_tolerance, EnergyANF(ϕ,energy_density))
+        error = max_abs_err(dEdp)
         counter += frequency_of_checking_tolerance
 
         if print_stuff == true 
-            println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
+            #println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
+            println( round(error, sigdigits=8), "," )
         end
 
         if tolerance != 0.0    # => we are in tol mode
@@ -342,27 +351,16 @@ function arrested_newton_flow_juggle!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, toleranc
 
 end
  
-function arrested_newton_flow_for_n_steps_juggle!(ϕ,ϕd,old_pion_field,dEdp1,dt,energy_density,n,step_algorithm::String; initial_energy)
+function arrested_newton_flow_for_n_steps_juggle!(ϕ,sk2,ϕd,old_pion_field,dEdp1,dEdp2,dEdp3,dEdp4,dt,energy_density,n, initial_energy)
 
     new_energy = initial_energy
     
-    if step_algorithm == "RK4"
-        dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    end
-
     for _ in 1:n
 
         old_energy = new_energy
         old_pion_field .= ϕ.pion_field
 
-        if step_algorithm == "Euler"
-            newton_flow_for_1_step!(ϕ,ϕd,dEdp,dt)
-        elseif step_algorithm == "RK4"
-            newton_flow_for_1_step_RK4!(ϕ,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
-        end
-
+        newton_flow_for_1_step_juggle!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
         new_energy = EnergyANF(ϕ,energy_density)
 
         if new_energy > old_energy
@@ -376,79 +374,7 @@ function arrested_newton_flow_for_n_steps_juggle!(ϕ,ϕd,old_pion_field,dEdp1,dt
 
 end
 
-
-function getdEdp1!(sk, dEdp, sk2, skd, dt)
-
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-        
-            p, dp, ddp1, ddp2 = getders_local(sk,i,j,k)
-
-            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
-
-            for a in 1:4
-                sk2.pion_field[i,j,k,a] = sk.pion_field[i,j,k,a] + (0.5*dt)*skd[i,j,k,a]
-            end
-
-        end
-    end
-
-end
-
-function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
-
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-        
-            p, dp, ddp1, ddp2 = getders_local(sk2,i,j,k)
-
-            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
-
-            for a in 1:4
-                sk.pion_field[i,j,k,a] = sk2.pion_field[i,j,k,a] + (0.5*dt)^2*dEdp1[i,j,k,a]
-            end
-
-        end
-    end
-
-end
-
-function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
-
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-        
-            p, dp, ddp1, ddp2 = getders_local(sk,i,j,k)
-
-            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
-
-            for a in 1:4
-                sk2.pion_field[i,j,k,a] = sk.pion_field[i,j,k,a] + (0.5*dt).*skd[i,j,k,a] + (0.5*dt)^2*(4.0*dEdp2[i,j,k,a] - dEdp1[i,j,k,a])
-            end
-
-        end
-    end
-
-end
-
-function getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, dt)
-
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-        
-            p, dp, ddp1, ddp2 = getders_local(sk2,i,j,k)
-            getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
-
-            for a in 1:4
-                sk.pion_field[i,j,k,a] = sk2.pion_field[i,j,k,a] - dt*( (5/6*dt)*dEdp2[i,j,k,a]  - (dt/6)*( dEdp1[i,j,k,a] .+ dEdp3[i,j,k,a] ) ) 
-            end
-
-        end
-    end
-
-end
-
-function newton_flow_for_1_step_RK4_juggle!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
+function newton_flow_for_1_step_juggle!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
 
     getdEdp1!(sk, dEdp1, sk2, skd, dt)
     # sk2 = sk + (0.5*dt).*skd
@@ -462,16 +388,16 @@ function newton_flow_for_1_step_RK4_juggle!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, d
     #getdEdp!(sk, dEdp3), sk2 = sk + (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
 
     ##sk.pion_field .+= (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
-    getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, dt)
+    getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
     # #getdEdp!(sk2, dEdp4), sk += sk2 - dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )  
 
     #RESET field to original value: sk.pion_field .-= (0.5*dt).*skd + (0.5*dt)^2 *(4.0 .* dEdp2 - dEdp1) + (0.5*dt)^2 .*dEdp1 + (0.5*dt).*skd
     #Then update: sk.pion_field .+= dt.*(skd + dt/6.0 .*( dEdp1 .+ dEdp2 .+ dEdp3 ) ), combined into:
     ###sk.pion_field .-=  dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )
     
-    skd .+= (dt/6.0).*(dEdp1 .+ 2.0.*dEdp2 .+ 2.0.*dEdp3 .+ dEdp4)
+    #
    
-    orthog_skd_and_sk_and_normer!(skd,sk)
+    #orthog_skd_and_sk_and_normer!(skd,sk)
     #normer!(sk)
 
     ##orthog_skd_and_sk_and_normer!(skd,sk)
@@ -479,8 +405,90 @@ function newton_flow_for_1_step_RK4_juggle!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, d
 end
 
 
+function getdEdp1!(sk, dEdp, sk2, skd, dt)
 
+    Threads.@threads for k in sk.sum_grid[3]
+        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            p, dp, ddp1, ddp2 = getders_local(sk,i,j,k)
 
+            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+
+            for a in 1:4
+                sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt)*skd[i,j,k,a]
+            end
+
+        end
+    end
+
+end
+
+function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
+
+    Threads.@threads for k in sk.sum_grid[3]
+        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            p, dp, ddp1, ddp2 = getders_local(sk2,i,j,k)
+
+            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+
+            for a in 1:4
+                sk.pion_field[i,j,k,a] = p[a] + (0.5*dt)^2*dEdp1[i,j,k,a]
+            end
+
+        end
+    end
+
+end
+
+function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
+
+    Threads.@threads for k in sk.sum_grid[3]
+        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            p, dp, ddp1, ddp2 = getders_local(sk,i,j,k)
+
+            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+
+            for a in 1:4
+                sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt).*skd[i,j,k,a] + (0.5*dt)^2*(4.0*dEdp2[i,j,k,a] - dEdp1[i,j,k,a])
+                
+            end
+
+        end
+    end
+
+end
+
+function getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
+
+    Threads.@threads for k in sk.sum_grid[3]
+        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            p, dp, ddp1, ddp2 = getders_local(sk2,i,j,k)
+            getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+
+            skd_dot_sk = 0.0
+            sk_dot_sk = 0.0
+
+            for a in 1:4
+                sk.pion_field[i,j,k,a] = p[a] - dt*( (5/6*dt)*dEdp2[i,j,k,a]  - (dt/6)*( dEdp1[i,j,k,a] .+ dEdp3[i,j,k,a] ) ) 
+                skd[i,j,k,a] += (dt/6.0)*(dEdp1[i,j,k,a] + 2.0*dEdp2[i,j,k,a] + 2.0*dEdp3[i,j,k,a] + dEdp4[i,j,k,a])
+
+                skd_dot_sk += skd[i,j,k,a]*sk.pion_field[i,j,k,a]
+                sk_dot_sk += sk.pion_field[i,j,k,a]^2
+            end
+
+            sk_dot_sk /= sqrt( sk_dot_sk) 
+            for a in 1:4
+                skd[i,j,k,a] -=  skd_dot_sk*sk.pion_field[i,j,k,a]
+                sk.pion_field[i,j,k,a] /=  sk_dot_sk 
+            end
+
+        end
+    end
+
+end
 
 
 

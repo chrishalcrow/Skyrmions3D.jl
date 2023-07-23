@@ -69,6 +69,8 @@ function resize_lattice!(skyrmion, lp, ls)
     skyrmion.index_grid_y = index_grid(lp[2])
     skyrmion.index_grid_z = index_grid(lp[3])
     
+    skyrmion.sum_grid = sum_grid(lp,skyrmion.periodic)
+    
     normer!(skyrmion)
     if skyrmion.periodic == false
         set_dirichlet!(skyrmion)

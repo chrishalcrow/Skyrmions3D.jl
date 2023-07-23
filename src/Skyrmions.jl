@@ -1,5 +1,19 @@
 module Skyrmions
 
+#= TO DO LIST 
+
+- Scanning plot
+- Merge RK4 (need testing...)
+- Test periodic and unequal lattices
+- B=4 Alberto stuff
+- Status report
+- Plot status
+- Automatic profile function
+- uADHM data
+
+=#
+
+
 using Makie
 using GLMakie, WGLMakie, CairoMakie
 
@@ -12,7 +26,7 @@ export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axi
 export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD, engpt, dydzdiffD, dxdydiffD, dxdzdiffD
 
 export make_periodic, make_non_periodic, gradient_flow_heun!, arrested_newton_flow_yuen!, getDP, getDX, getders_local
-export newton_flow_for_1_step_RK4!, newton_flow_for_1_step_RK4_juggle!
+export newton_flow_for_1_step_RK4!, newton_flow_for_1_step_juggle!, arrested_newton_flow_juggle!
 
 # For developing fast dedp
 export dedfpt1v,dedfpt2v, getAj, getBj, getdEdp!, getdEdp2!
