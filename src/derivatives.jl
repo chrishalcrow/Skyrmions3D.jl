@@ -262,85 +262,248 @@ end
 # The actual derivatives
 
 function dxD(pion_field, a, i, j, k, lsx)
-    @inbounds (-pion_field[i+2,j,k,a] + 8.0*pion_field[i+1,j,k,a] - 8.0*pion_field[i-1,j,k,a] + pion_field[i-2,j,k,a])/(12.0*lsx)
+    @fastmath @inbounds (-pion_field[i+2,j,k,a] + 8.0*pion_field[i+1,j,k,a] - 8.0*pion_field[i-1,j,k,a] + pion_field[i-2,j,k,a])/(12.0*lsx)
 end
 function dyD(pion_field, a, i, j, k, lsy)
-    @inbounds (-pion_field[i,j+2,k,a] + 8.0*pion_field[i,j+1,k,a] - 8.0*pion_field[i,j-1,k,a] + pion_field[i,j-2,k,a])/(12.0*lsy)
+    @fastmath @inbounds (-pion_field[i,j+2,k,a] + 8.0*pion_field[i,j+1,k,a] - 8.0*pion_field[i,j-1,k,a] + pion_field[i,j-2,k,a])/(12.0*lsy)
 end
 function dzD(pion_field, a, i, j, k, lsz)
-    @inbounds (-pion_field[i,j,k+2,a] + 8.0*pion_field[i,j,k+1,a] - 8.0*pion_field[i,j,k-1,a] + pion_field[i,j,k-2,a])/(12.0*lsz)
+    @fastmath @inbounds (-pion_field[i,j,k+2,a] + 8.0*pion_field[i,j,k+1,a] - 8.0*pion_field[i,j,k-1,a] + pion_field[i,j,k-2,a])/(12.0*lsz)
 end
 
 function d2xD(pion_field, a, i, j, k, lsx)
-    @inbounds (-pion_field[i+2,j,k,a] + 16.0*pion_field[i+1,j,k,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i-1,j,k,a] - pion_field[i-2,j,k,a])/(12.0*lsx^2)
+    @fastmath @inbounds (-pion_field[i+2,j,k,a] + 16.0*pion_field[i+1,j,k,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i-1,j,k,a] - pion_field[i-2,j,k,a])/(12.0*lsx^2)
 end
 function d2yD(pion_field, a, i, j, k, lsx)
-    @inbounds (-pion_field[i,j+2,k,a] + 16.0*pion_field[i,j+1,k,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i,j-1,k,a] - pion_field[i,j-2,k,a])/(12.0*lsx^2)
+    @fastmath @inbounds (-pion_field[i,j+2,k,a] + 16.0*pion_field[i,j+1,k,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i,j-1,k,a] - pion_field[i,j-2,k,a])/(12.0*lsx^2)
 end
 function d2zD(pion_field, a, i, j, k, lsx)
-    @inbounds (-pion_field[i,j,k+2,a] + 16.0*pion_field[i,j,k+1,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i,j,k-1,a] - pion_field[i,j,k-2,a])/(12.0*lsx^2)
+    @fastmath  @inbounds (-pion_field[i,j,k+2,a] + 16.0*pion_field[i,j,k+1,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i,j,k-1,a] - pion_field[i,j,k-2,a])/(12.0*lsx^2)
 end
 
 function dxdydiffD(pion_field, a, i, j, k, lsx, lsy)
-    @inbounds (-pion_field[i+2,j+2,k,a] + 16.0*pion_field[i+1,j+1,k,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i-1,j-1,k,a] - pion_field[i-2,j-2,k,a])/(12.0*lsx*lsy)
+    @fastmath @inbounds (-pion_field[i+2,j+2,k,a] + 16.0*pion_field[i+1,j+1,k,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i-1,j-1,k,a] - pion_field[i-2,j-2,k,a])/(12.0*lsx*lsy)
 end
 function dxdzdiffD(pion_field, a, i, j, k, lsx, lsy)
-    @inbounds (-pion_field[i+2,j,k+2,a] + 16.0*pion_field[i+1,j,k+1,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i-1,j,k-1,a] - pion_field[i-2,j,k-2,a])/(12.0*lsx*lsy)
+    @fastmath @inbounds (-pion_field[i+2,j,k+2,a] + 16.0*pion_field[i+1,j,k+1,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i-1,j,k-1,a] - pion_field[i-2,j,k-2,a])/(12.0*lsx*lsy)
 end
 function dydzdiffD(pion_field, a, i, j, k, lsx, lsy)
-    @inbounds (-pion_field[i,j+2,k+2,a] + 16.0*pion_field[i,j+1,k+1,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i,j-1,k-1,a] - pion_field[i,j-2,k-2,a])/(12.0*lsx*lsy)
+    @fastmath @inbounds (-pion_field[i,j+2,k+2,a] + 16.0*pion_field[i,j+1,k+1,a] - 30.0*pion_field[i,j,k,a] + 16.0*pion_field[i,j-1,k-1,a] - pion_field[i,j-2,k-2,a])/(12.0*lsx*lsy)
 end
 
 function dxdyD(pion_field, a, i, j, k, lsx, lsy)
-    @inbounds 0.5*( dxdydiffD(pion_field, a, i, j, k, lsx, lsy) - d2xD(pion_field, a, i, j, k, lsx) - d2yD(pion_field, a, i, j, k, lsx) )
+    @fastmath @inbounds 0.5*( dxdydiffD(pion_field, a, i, j, k, lsx, lsy) - d2xD(pion_field, a, i, j, k, lsx) - d2yD(pion_field, a, i, j, k, lsx) )
 end
 function dxdzD(pion_field, a, i, j, k, lsx, lsz)
-    @inbounds 0.5*( dxdzdiffD(pion_field, a, i, j, k, lsx, lsz) - d2xD(pion_field, a, i, j, k, lsx) - d2zD(pion_field, a, i, j, k, lsz) )
+    @fastmath @inbounds 0.5*( dxdzdiffD(pion_field, a, i, j, k, lsx, lsz) - d2xD(pion_field, a, i, j, k, lsx) - d2zD(pion_field, a, i, j, k, lsz) )
 end
 function dydzD(pion_field, a, i, j, k, lsy, lsz)
-    @inbounds 0.5*( dydzdiffD(pion_field, a, i, j, k, lsy, lsz) - d2yD(pion_field, a, i, j, k, lsy) - d2zD(pion_field, a, i, j, k, lsz) )
+    @fastmath  @inbounds 0.5*( dydzdiffD(pion_field, a, i, j, k, lsy, lsz) - d2yD(pion_field, a, i, j, k, lsy) - d2zD(pion_field, a, i, j, k, lsz) )
 end
 
 
 # periodic stuff
 
 function dxDp(pion_field, a, i, j, k, lsx, ig)
-    @inbounds (-pion_field[ig[i+4],j,k,a] + 8.0*pion_field[ig[i+3],j,k,a] - 8.0*pion_field[ig[i+1],j,k,a] + pion_field[ig[i],j,k,a])/(12.0*lsx)
+    @fastmath @inbounds (-pion_field[ig[i+4],j,k,a] + 8.0*pion_field[ig[i+3],j,k,a] - 8.0*pion_field[ig[i+1],j,k,a] + pion_field[ig[i],j,k,a])/(12.0*lsx)
 end
 function dyDp(pion_field, a, i, j, k, lsy, ig)
-    @inbounds (-pion_field[i,ig[j+4],k,a] + 8.0*pion_field[i,ig[j+3],k,a] - 8.0*pion_field[i,ig[j+1],k,a] + pion_field[i,ig[j],k,a])/(12.0*lsy)
+    @fastmath @inbounds (-pion_field[i,ig[j+4],k,a] + 8.0*pion_field[i,ig[j+3],k,a] - 8.0*pion_field[i,ig[j+1],k,a] + pion_field[i,ig[j],k,a])/(12.0*lsy)
 end
 function dzDp(pion_field, a, i, j, k, lsz, ig)
-    @inbounds (-pion_field[i,j,ig[k+4],a] + 8.0*pion_field[i,j,ig[k+3],a] - 8.0*pion_field[i,j,ig[k+1],a] + pion_field[i,j,ig[k],a])/(12.0*lsz)
+    @fastmath @inbounds (-pion_field[i,j,ig[k+4],a] + 8.0*pion_field[i,j,ig[k+3],a] - 8.0*pion_field[i,j,ig[k+1],a] + pion_field[i,j,ig[k],a])/(12.0*lsz)
 end
 
 
 function d2xDp(pion_field, a, i, j, k, lsx, ig)
-    @inbounds (-pion_field[ig[i+4],j,k,a] + 16.0*pion_field[ig[i+3],j,k,a] - 30.0*pion_field[ig[i+2],j,k,a] + 16.0*pion_field[ig[i+1],j,k,a] - pion_field[ig[i],j,k,a])/(12.0*lsx^2)
+    @fastmath  @inbounds (-pion_field[ig[i+4],j,k,a] + 16.0*pion_field[ig[i+3],j,k,a] - 30.0*pion_field[ig[i+2],j,k,a] + 16.0*pion_field[ig[i+1],j,k,a] - pion_field[ig[i],j,k,a])/(12.0*lsx^2)
 end
 function d2yDp(pion_field, a, i, j, k, lsx, ig)
-    @inbounds (-pion_field[i,ig[j+4],k,a] + 16.0*pion_field[i,ig[j+3],k,a] - 30.0*pion_field[i,ig[j+2],k,a] + 16.0*pion_field[i,ig[j+1],k,a] - pion_field[i,ig[j],k,a])/(12.0*lsx^2)
+    @fastmath @inbounds (-pion_field[i,ig[j+4],k,a] + 16.0*pion_field[i,ig[j+3],k,a] - 30.0*pion_field[i,ig[j+2],k,a] + 16.0*pion_field[i,ig[j+1],k,a] - pion_field[i,ig[j],k,a])/(12.0*lsx^2)
 end
 function d2zDp(pion_field, a, i, j, k, lsx, ig)
-    @inbounds (-pion_field[i,j,ig[k+4],a] + 16.0*pion_field[i,j,ig[k+3],a] - 30.0*pion_field[i,j,ig[k+2],a] + 16.0*pion_field[i,j,ig[k+1],a] - pion_field[i,j,ig[k],a])/(12.0*lsx^2)
+    @fastmath  @inbounds (-pion_field[i,j,ig[k+4],a] + 16.0*pion_field[i,j,ig[k+3],a] - 30.0*pion_field[i,j,ig[k+2],a] + 16.0*pion_field[i,j,ig[k+1],a] - pion_field[i,j,ig[k],a])/(12.0*lsx^2)
 end
 
 function dxdydiffDp(pion_field, a, i, j, k, lsx, lsy, igx, igy)
-    @inbounds (-pion_field[igx[i+4],igy[j+4],k,a] + 16.0*pion_field[igx[i+3],igy[j+3],k,a] - 30.0*pion_field[igx[i+2],igy[j+2],k,a] + 16.0*pion_field[igx[i+1],igy[j+1],k,a] - pion_field[igx[i],igy[j],k,a])/(12.0*lsx*lsy)
+    @fastmath  @inbounds (-pion_field[igx[i+4],igy[j+4],k,a] + 16.0*pion_field[igx[i+3],igy[j+3],k,a] - 30.0*pion_field[igx[i+2],igy[j+2],k,a] + 16.0*pion_field[igx[i+1],igy[j+1],k,a] - pion_field[igx[i],igy[j],k,a])/(12.0*lsx*lsy)
 end
 function dxdzdiffDp(pion_field, a, i, j, k, lsx, lsy, igx, igz)
-    @inbounds (-pion_field[igx[i+4],j,igz[k+4],a] + 16.0*pion_field[igx[i+3],j,igz[k+3],a] - 30.0*pion_field[igx[i+2],j,igz[k+2],a] + 16.0*pion_field[igx[i+1],j,igz[k+1],a] - pion_field[igx[i],j,igz[k],a])/(12.0*lsx*lsy)
+    @fastmath @inbounds (-pion_field[igx[i+4],j,igz[k+4],a] + 16.0*pion_field[igx[i+3],j,igz[k+3],a] - 30.0*pion_field[igx[i+2],j,igz[k+2],a] + 16.0*pion_field[igx[i+1],j,igz[k+1],a] - pion_field[igx[i],j,igz[k],a])/(12.0*lsx*lsy)
 end
 function dydzdiffDp(pion_field, a, i, j, k, lsx, lsy, igy, igz)
-    @inbounds (-pion_field[i,igy[j+4],igz[k+4],a] + 16.0*pion_field[i,igy[j+3],igz[k+3],a] - 30.0*pion_field[i,igy[j+2],igz[k+2],a] + 16.0*pion_field[i,igy[j+1],igz[k+1],a] - pion_field[i,igy[j],igz[k],a])/(12.0*lsx*lsy)
+    @fastmath @inbounds (-pion_field[i,igy[j+4],igz[k+4],a] + 16.0*pion_field[i,igy[j+3],igz[k+3],a] - 30.0*pion_field[i,igy[j+2],igz[k+2],a] + 16.0*pion_field[i,igy[j+1],igz[k+1],a] - pion_field[i,igy[j],igz[k],a])/(12.0*lsx*lsy)
 end
 
 function dxdyDp(pion_field, a, i, j, k, lsx, lsy, igx, igy)
-    @inbounds 0.5*( dxdydiffDp(pion_field, a, i, j, k, lsx, lsy, igx, igy) - d2xDp(pion_field, a, i, j, k, lsx, igx) - d2yDp(pion_field, a, i, j, k, lsx, igy) )
+    @fastmath @inbounds 0.5*( dxdydiffDp(pion_field, a, i, j, k, lsx, lsy, igx, igy) - d2xDp(pion_field, a, i, j, k, lsx, igx) - d2yDp(pion_field, a, i, j, k, lsx, igy) )
 end
 function dxdzDp(pion_field, a, i, j, k, lsx, lsz, igx, igz)
-    @inbounds 0.5*( dxdzdiffDp(pion_field, a, i, j, k, lsx, lsz, igx, igz) - d2xDp(pion_field, a, i, j, k, lsx, igx) - d2zDp(pion_field, a, i, j, k, lsz, igz) )
+    @fastmath @inbounds 0.5*( dxdzdiffDp(pion_field, a, i, j, k, lsx, lsz, igx, igz) - d2xDp(pion_field, a, i, j, k, lsx, igx) - d2zDp(pion_field, a, i, j, k, lsz, igz) )
 end
 function dydzDp(pion_field, a, i, j, k, lsy, lsz, igy, igz)
-    @inbounds 0.5*( dydzdiffDp(pion_field, a, i, j, k, lsy, lsz, igy, igz) - d2yDp(pion_field, a, i, j, k, lsy, igy) - d2zDp(pion_field, a, i, j, k, lsz, igz) )
+    @fastmath @inbounds 0.5*( dydzdiffDp(pion_field, a, i, j, k, lsy, lsz, igy, igz) - d2yDp(pion_field, a, i, j, k, lsy, igy) - d2zDp(pion_field, a, i, j, k, lsz, igz) )
+end
+
+
+
+function getders_local(sk,i,j,k)
+
+    px1 = dx_stencil(sk,i,j,k,1)
+    py1 = dy_stencil(sk,i,j,k,1)
+    pz1 = dz_stencil(sk,i,j,k,1)
+
+    px2 = dx_stencil(sk,i,j,k,2)
+    py2 = dy_stencil(sk,i,j,k,2)
+    pz2 = dz_stencil(sk,i,j,k,2)
+
+    px3 = dx_stencil(sk,i,j,k,3)
+    py3 = dy_stencil(sk,i,j,k,3)
+    pz3 = dz_stencil(sk,i,j,k,3)
+
+    px4 = dx_stencil(sk,i,j,k,4)
+    py4 = dy_stencil(sk,i,j,k,4)
+    pz4 = dz_stencil(sk,i,j,k,4)
+
+    pxy1 = dxy_stencil(sk,i,j,k,1)
+    pxz1 = dxz_stencil(sk,i,j,k,1)
+    pyz1 = dyz_stencil(sk,i,j,k,1)
+
+    pxy2 = dxy_stencil(sk,i,j,k,2)
+    pxz2 = dxz_stencil(sk,i,j,k,2)
+    pyz2 = dyz_stencil(sk,i,j,k,2)
+
+    pxy3 = dxy_stencil(sk,i,j,k,3)
+    pxz3 = dxz_stencil(sk,i,j,k,3)
+    pyz3 = dyz_stencil(sk,i,j,k,3)
+
+    pxy4 = dxy_stencil(sk,i,j,k,4)
+    pxz4 = dxz_stencil(sk,i,j,k,4)
+    pyz4 = dyz_stencil(sk,i,j,k,4)
+
+
+    dxV =  SMatrix{3,4,Float64,12}(
+        dx(px1,sk.ls[1]),
+        dx(py1,sk.ls[2]),
+        dx(pz1,sk.ls[3]),
+
+        dx(px2,sk.ls[1]),
+        dx(py2,sk.ls[2]),
+        dx(pz2,sk.ls[3]),
+
+        dx(px3,sk.ls[1]),
+        dx(py3,sk.ls[2]),
+        dx(pz3,sk.ls[3]),
+
+        dx(px4,sk.ls[1]),
+        dx(py4,sk.ls[2]),
+        dx(pz4,sk.ls[3])
+    )
+
+    d2xV1 =  SMatrix{3,4,Float64,12}(
+        ddx(px1,sk.ls[1]),
+        ddx(py1,sk.ls[2]),
+        ddx(pz1,sk.ls[3]),
+
+        ddx(px2,sk.ls[1]),
+        ddx(py2,sk.ls[2]),
+        ddx(pz2,sk.ls[3]),
+
+        ddx(px3,sk.ls[1]),
+        ddx(py3,sk.ls[2]),
+        ddx(pz3,sk.ls[3]),
+
+        ddx(px4,sk.ls[1]),
+        ddx(py4,sk.ls[2]),
+        ddx(pz4,sk.ls[3])
+    )
+
+    d2xV2 =  SMatrix{3,4,Float64,12}(
+        @fastmath 0.5*( dm(pyz1, sk.ls[2], sk.ls[3] ) - d2xV1[2,1] - d2xV1[3,1] ),
+         0.5*( dm(pxz1, sk.ls[1], sk.ls[3] ) - d2xV1[1,1] - d2xV1[3,1] ),
+         0.5*( dm(pxy1, sk.ls[2], sk.ls[1] ) - d2xV1[2,1] - d2xV1[1,1] ),
+
+         0.5*( dm(pyz2, sk.ls[2], sk.ls[3] ) - d2xV1[2,2] - d2xV1[3,2] ),
+         0.5*( dm(pxz2, sk.ls[1], sk.ls[3] ) - d2xV1[1,2] - d2xV1[3,2] ),
+         0.5*( dm(pxy2, sk.ls[2], sk.ls[1] ) - d2xV1[2,2] - d2xV1[1,2] ),
+
+         0.5*( dm(pyz3, sk.ls[2], sk.ls[3] ) - d2xV1[2,3] - d2xV1[3,3] ),
+         0.5*( dm(pxz3, sk.ls[1], sk.ls[3] ) - d2xV1[1,3] - d2xV1[3,3] ),
+         0.5*( dm(pxy3, sk.ls[2], sk.ls[1] ) - d2xV1[2,3] - d2xV1[1,3] ),
+
+         0.5*( dm(pyz4, sk.ls[2], sk.ls[3] ) - d2xV1[2,4] - d2xV1[3,4] ),
+         0.5*( dm(pxz4, sk.ls[1], sk.ls[3] ) - d2xV1[1,4] - d2xV1[3,4] ),
+         0.5*( dm(pxy4, sk.ls[2], sk.ls[1] ) - d2xV1[2,4] - d2xV1[1,4] )
+    )
+
+    return SVector{4,Float64}( sk.pion_field[i,j,k,1], sk.pion_field[i,j,k,2], sk.pion_field[i,j,k,3], sk.pion_field[i,j,k,4] ), dxV, d2xV1, d2xV2
+    
+end
+
+
+function dx(pion_field, lsx)
+    @fastmath @inbounds (-pion_field[5] + 8.0*pion_field[4] - 8.0*pion_field[2] + pion_field[1])/(12.0*lsx)
+ end
+ 
+ function ddx(pion_field, lsx)
+     @fastmath @inbounds (-pion_field[5] + 16.0*pion_field[4] - 30.0*pion_field[3] + 16.0*pion_field[2] - pion_field[1])/(12.0*lsx^2)
+ end
+ 
+ function dm(pion_field,lsx,lsy)
+     @fastmath @inbounds (-pion_field[5] + 16.0*pion_field[4] - 30.0*pion_field[3] + 16.0*pion_field[2] - pion_field[1])/(12.0*lsx*lsy)
+ end
+
+function dx_stencil(sk,i,j,k,a)
+    return SVector{5,Float64}(
+        sk.pion_field[i-2,j,k,a],
+        sk.pion_field[i-1,j,k,a],
+        sk.pion_field[i  ,j,k,a],
+        sk.pion_field[i+1,j,k,a],
+        sk.pion_field[i+2,j,k,a]
+    )
+end
+function dy_stencil(sk,i,j,k,a)
+    return SVector{5,Float64}(
+        sk.pion_field[i,j-2,k,a],
+        sk.pion_field[i,j-1,k,a],
+        sk.pion_field[i,j  ,k,a],
+        sk.pion_field[i,j+1,k,a],
+        sk.pion_field[i,j+2,k,a]
+    )
+end
+function dz_stencil(sk,i,j,k,a)
+    return SVector{5,Float64}(
+        sk.pion_field[i,j,k-2,a],
+        sk.pion_field[i,j,k-1,a],
+        sk.pion_field[i,j,k  ,a],
+        sk.pion_field[i,j,k+1,a],
+        sk.pion_field[i,j,k+2,a]
+    )
+end
+function dxy_stencil(sk,i,j,k,a)
+    return SVector{5,Float64}(
+        sk.pion_field[i-2,j-2,k,a],
+        sk.pion_field[i-1,j-1,k,a],
+        sk.pion_field[i  ,j  ,k,a],
+        sk.pion_field[i+1,j+1,k,a],
+        sk.pion_field[i+2,j+2,k,a]
+    )
+end
+function dxz_stencil(sk,i,j,k,a)
+    return SVector{5,Float64}(
+        sk.pion_field[i-2,j,k-2,a],
+        sk.pion_field[i-1,j,k-1,a],
+        sk.pion_field[i  ,j,k  ,a],
+        sk.pion_field[i+1,j,k+1,a],
+        sk.pion_field[i+2,j,k+2,a]
+    )
+end
+function dyz_stencil(sk,i,j,k,a)
+    return SVector{5,Float64}(
+        sk.pion_field[i,j-2,k-2,a],
+        sk.pion_field[i,j-1,k-1,a],
+        sk.pion_field[i,j  ,k  ,a],
+        sk.pion_field[i,j+1,k+1,a],
+        sk.pion_field[i,j+2,k+2,a]
+    )
 end

@@ -9,10 +9,10 @@ using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgeb
 
 export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!, flowDE!, an_flow!
 
-export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD, engpt
+export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD, engpt, dydzdiffD, dxdydiffD, dxdzdiffD
 
-export make_periodic, make_non_periodic, gradient_flow_heun!, arrested_newton_flow_yuen!
-
+export make_periodic, make_non_periodic, gradient_flow_heun!, arrested_newton_flow_yuen!, getDP, getDX, getders_local
+export newton_flow_for_1_step_RK4!, newton_flow_for_1_step_RK4_juggle!
 
 # For developing fast dedp
 export dedfpt1v,dedfpt2v, getAj, getBj, getdEdp!, getdEdp2!
