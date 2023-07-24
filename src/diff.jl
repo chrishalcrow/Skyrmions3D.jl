@@ -6,31 +6,40 @@ Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps o
 See also [`newton_flow!`, `arrested_newton_flow!`]
 
 """
-function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/80.0, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4) , error_function::Function=L2_err)
+function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4) , error_function::Function=L2_err)
 
     if tolerance == 0 && frequency_of_checking_tolerance > steps
         frequency_of_checking_tolerance = steps
     end
     
     if print_stuff == true
+        println(dt)
         println("initial: energy: ", Energy(ϕ) )
+
     end
 
     counter = 0
-
+    prev_error = 1.0e9
+    
     while counter < steps
         
         gradient_flow_for_n_steps!(ϕ,dEdp,frequency_of_checking_tolerance,dt)
+        
+        err = max_abs_err(dEdp)
+        if err > 3*prev_error
+            error("Suspected numerical blowup. Please use a smaller dt. Currently, dt = ", dt)
+        end
+        prev_error = err
+
         counter += frequency_of_checking_tolerance
-        error = max_abs_err(dEdp)
         
         if print_stuff == true
             #println("after ", counter, " steps, error = ", round(error, sigdigits=4))
-            println( round(error, sigdigits=8), "," )
+            println( round(err, sigdigits=8), "," )
         end
 
         if tolerance != 0.0    # => we are in tol mode    
-            if error < tolerance
+            if err < tolerance
                 counter = steps + 1    # => end the while loop
             else
                 steps += frequency_of_checking_tolerance    # => continue the while loop
@@ -190,6 +199,8 @@ function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp1,dt,energy
 
             fill!(ϕd, 0.0);
             ϕ.pion_field .= old_pion_field;
+
+            
     
         end
 
@@ -307,9 +318,9 @@ end
 
 
 
-function arrested_newton_flow_juggle!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true)
+function arrested_newton_flow_juggle!(ϕ,ϕd; dt=ϕ.ls[1]/10.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true)
 
-
+    println(dt)
 
     if tolerance == 0 && frequency_of_checking_tolerance > steps
         frequency_of_checking_tolerance = steps
@@ -333,8 +344,8 @@ function arrested_newton_flow_juggle!(ϕ,ϕd; dt=ϕ.ls[1]/5.0, steps=1, toleranc
         counter += frequency_of_checking_tolerance
 
         if print_stuff == true 
-            #println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
-            println( round(error, sigdigits=8), "," )
+            println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
+            #println( round(error, sigdigits=8), "," )
         end
 
         if tolerance != 0.0    # => we are in tol mode
@@ -367,6 +378,10 @@ function arrested_newton_flow_for_n_steps_juggle!(ϕ,sk2,ϕd,old_pion_field,dEdp
 
             fill!(ϕd, 0.0);
             ϕ.pion_field .= old_pion_field;
+
+            if new_energy > 1.2*old_energy
+                error("Suspected numerical blow-up. Please use smaller dt. Currently, dt = ", dt)
+            end
     
         end
 

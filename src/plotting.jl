@@ -416,9 +416,9 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 			end
 		elseif which_flow == 2
 			if dt == 0.0
-				arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, step_algorithm="RK4" )
+				arrested_newton_flow_juggle!(my_skyrmion, skd; steps=total_runs )
 			else
-				arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt, step_algorithm="RK4" )
+				arrested_newton_flow_juggle!(my_skyrmion, skd; steps=total_runs, dt = dt )
 			end
 			
 		elseif which_flow == 3
