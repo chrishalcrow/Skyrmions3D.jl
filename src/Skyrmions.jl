@@ -4,10 +4,8 @@ module Skyrmions
 
 - Scanning plot
 - Merge RK4 (need testing...)
-- Test periodic and unequal lattices
 - B=4 Alberto stuff
 - Status report
-- Plot status
 - Automatic profile function
 - uADHM data
 
@@ -16,47 +14,31 @@ module Skyrmions
 
 using Makie
 using GLMakie, WGLMakie, CairoMakie
-
 using DifferentialEquations, DiffEqCallbacks
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
-export Skyrmion, check_if_normalised, makeADHM!, normer!, normer_SA!, R_from_axis_angle, turn_on_physical!,  turn_off_physical!, stepANF!, compute_current, center_skyrmion!, resize_lattice!, flowDE!, an_flow!
-
-export dxD, dyD, dzD, d2xD, d2yD, d2zD, dxdyD, dxdzD, dydzD, engpt, dydzdiffD, dxdydiffD, dxdzdiffD
-
-export make_periodic, make_non_periodic, gradient_flow_heun!, arrested_newton_flow_yuen!, getDP, getDX, getders_local
-export newton_flow_for_1_step_RK4!, newton_flow_for_1_step_juggle!, arrested_newton_flow_juggle!
-
-# For developing fast dedp
-export dedfpt1v,dedfpt2v, getAj, getBj, getdEdp!, getdEdp2!
-
-export getDDX1, getDDX2, getDDX
+export Skyrmion, set_mpi!, set_periodic!, set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
+export check_if_normalised, normer!
 
 include("transform.jl")
-export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk, product_approx, product_approx!, make_RM_product!, set_dirichlet!
+export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
+export product_approx, product_approx!, center_skyrmion!
 
 include("properties.jl")
-export EnergyD, BaryonD, Energy, Baryon, getMOI, center_of_mass, rms_baryon, Baryon_SA
-
+export Energy, Baryon, center_of_mass, rms_baryon, compute_current
 
 include("initialise.jl")
-export makeRationalMap!, R_from_axis_angle
-
-export makeRM, SkyrIso, MakeProduct, SkyrShift, multicubes!
-export Skyr, ANFflow!,  momflow!, array2, B3_tet_data, B4_cube_data
-
-
-export gradient_flow!, arrested_newton_flow!
+export makeRationalMap!, make_RM_product!, makeADHM!
 
 include("plotting.jl")
-export plot_field, plot_baryon_density, interactive_flow
+export plot_field, plot_baryon_density, interactive_flow, plot_overview, plot_scan
  
 include("derivatives.jl")
 
 
 include("diff.jl")
-export newton_flow!
+export gradient_flow!, arrested_newton_flow!
 
 
 """
@@ -91,15 +73,124 @@ Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=fa
 
 Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic), [getDX, getDDX] )
 
-function make_periodic(skyrmion::Skyrmion)
-	skyrmion.periodic = true
-	skyrmion.sum_grid = sum_grid(skyrmion.lp, skyrmion.periodic)
+"""
+    set_mpi!(skyrmion::Skyrmion, mpi)
+
+Set the pion mass of `skyrmion` to `mpi`.
+"""
+function set_mpi!(sk::Skyrmion, mpi)
+	sk.mpi = mpi
 end
 
-function make_non_periodic(skyrmion::Skyrmion)
-	skyrmion.periodic = false
-	skyrmion.sum_grid = sum_grid(skyrmion.lp, skyrmion.periodic)
+"""
+	set_periodic!(skyrmion::Skyrmion, is_periodic)
+
+Sets the `skyrmion` to have periodic boundary conditions if `is_periodic` is `true`, and Dirichlet boundary conditions if `is_periodic` is `false.
+"""
+function set_periodic!(sk::Skyrmion, periodic::Bool)
+	
+	sk.sum_grid = sum_grid(sk.lp, sk.periodic)
+	sk.periodic = periodic
+
+	if periodic == true
+		println("Periodic boundary conditions activated")
+	else
+		set_dirichlet!(sk)
+		println("Dirichlet boundary conditions activated")
+	end
+
 end
+
+"""
+	set_Fpi!(skyrmion::Skyrmion, Fpi)
+
+Sets the pion decay constant of `skyrmion` to `Fpi`. 
+"""
+function set_Fpi!(sk::Skyrmion, Fpi)
+	
+	sk.Fpi = Fpi
+
+end
+
+
+"""
+	set_ee!(skyrmion::Skyrmion, ee)
+
+Sets the Skyrme coupling constant of `skyrmion` to `ee`. 
+"""
+function set_ee!(sk::Skyrmion, ee)
+	
+	sk.ee = ee
+
+end
+
+
+"""
+    set_physical!(skyrmion::Skyrmion, is_physical; Fpi=Fpi, ee=ee)
+
+Sets `skyrmion` to use physical units with `Fpi` MeV and skyrme coupling `ee`, when `is_physical` is `true`.
+Also used to turn off physical units by setting is_physical=false
+"""
+function set_physical!(skyrmion::Skyrmion, physical::Bool; Fpi=skyrmion.Fpi, ee=skyrmion.ee)
+	
+	skyrmion.physical = physical
+
+	if skyrmion.physical == true
+		println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.mpi)
+		println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee*skyrmion.mpi/2.0, ", length unit = ", 197.327*2.0/(skyrmion.ee*skyrmion.Fpi), "and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
+	end
+
+end
+
+"""
+    set_lattice!(skyrmion, lp = [lpx, lpy, lpz], ls = [lsx, lsy, lsz])
+
+Sets the underlying lattice to one with `lpx`x`lpy`x`lpz` points and `lsx`x`lsy`x`lsz` spacings, and reinterpolates `skyrmion` on the new grid.
+
+"""
+function set_lattice!(skyrmion, lp, ls)
+
+    old_x = skyrmion.x
+    x = setgrid(lp,ls)
+
+    sky_temp = Skyrmion(lp, ls,  mpi = skyrmion.mpi , periodic = skyrmion.periodic)
+    vac = [0.0,0.0,0.0,1.0]
+
+    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (old_x[1],old_x[2],old_x[3]) ), Throw()) for a in 1:4 ]
+
+    for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
+
+        if old_x[1][1] < x[1][i] < old_x[1][end] && old_x[2][1] < x[2][j] < old_x[2][end] && old_x[3][1] < x[3][k] < old_x[3][end]
+            for a in 1:4
+                sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i], x[2][j], x[3][k])
+            end
+        else
+            sky_temp.pion_field[i,j,k,:] .= vac
+        end
+        
+    end
+    
+    skyrmion.lp = sky_temp.lp
+    skyrmion.ls = sky_temp.ls
+    skyrmion.x = sky_temp.x
+    skyrmion.pion_field = zeros(lp[1],lp[2],lp[3],4)
+    skyrmion.pion_field .= sky_temp.pion_field
+
+    skyrmion.index_grid_x = index_grid(lp[1])
+    skyrmion.index_grid_y = index_grid(lp[2])
+    skyrmion.index_grid_z = index_grid(lp[3])
+    
+    skyrmion.sum_grid = sum_grid(lp,skyrmion.periodic)
+    
+    normer!(skyrmion)
+    if skyrmion.periodic == false
+        set_dirichlet!(skyrmion)
+    end
+
+	println("Your new lattice has ", lp[1],"*",lp[2],"*",lp[3]," points with lattice spacing [",ls[1],", ",ls[2],", ",ls[3],"].")
+
+end
+
 
 function vacuum_skyrmion(lpx,lpy,lpz,vac)
 
@@ -133,7 +224,6 @@ function sum_grid(lp::Vector{Int64},periodic::Bool)
 	
 end
 
-
 function index_grid(lp)
 
 	index_grid_array = zeros(lp+4)
@@ -143,28 +233,6 @@ function index_grid(lp)
 	end
 
 	return index_grid_array
-
-end
-
-
-"""
-	turn_on_physical!(skyrmion)
-
-Turns on physical units. Output of energy etc will now be displayed in units of MeV and fm.
-
-"""
-function turn_on_physical!(skyrmion)
-	
-	skyrmion.physical = true
-
-	println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.mpi)
-	println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee*skyrmion.mpi/2.0, ", length unit = ", 197.327*2.0/(skyrmion.ee*skyrmion.Fpi), "and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
-
-end
-
-function turn_off_physical!(skyrmion)
-	
-	skyrmion.physical = false
 
 end
 
@@ -209,7 +277,7 @@ end
 """
     normer!(skyrmion)
 
-Normalise a skyrmion.
+Normalises `skyrmion`.
 
 See also [`normer`]
 """
@@ -249,7 +317,7 @@ end
 """
     normer(skyrmion)
 
-Returns the normalised skyrmion
+Returns normalised `skyrmion`.
 
 See also [`normer!`]
 

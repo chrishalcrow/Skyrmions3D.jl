@@ -1,127 +1,4 @@
 """
-    set_dirichlet!(skyrmion; vac = [0.0,0.0,0.0,1.0])
-
-    Sets the boundary of `skyrmion` equal to `vac`, with default value `[0.0, 0.0, 0.0, 1.0]`
-
-"""
-function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
-
-    for i in 1:sk.lp[1], j in 1:sk.lp[2]
-        sk.pion_field[i,j,1,:] .= vac
-        sk.pion_field[i,j,2,:] .= vac
-        sk.pion_field[i,j,sk.lp[3],:] .= vac
-        sk.pion_field[i,j,sk.lp[3]-1,:] .= vac
-    end
-    
-    for k in 1:sk.lp[3], j in 1:sk.lp[2]
-        sk.pion_field[1,j,k,:] .= vac
-        sk.pion_field[2,j,k,:] .= vac
-        sk.pion_field[sk.lp[1],j,k,:] .= vac
-        sk.pion_field[sk.lp[1]-1,j,k,:] .= vac
-    end
-    
-    for k in 1:sk.lp[3], i in 1:sk.lp[1]
-        sk.pion_field[i,1,k,:] .= vac
-        sk.pion_field[i,2,k,:] .= vac
-        sk.pion_field[i,sk.lp[2],k,:] .= vac
-        sk.pion_field[i,sk.lp[2]-1,k,:] .= vac
-    end
-    
-end
-
-"""
-    resize_lattice!(skyrmion, lp = [lpx, lpy, lpx], ls = [lsx, lsy, lsz])
-
-Resizes the underlying lattice to one with `lpx`x`lpy`x`lpz` points and `lsx`x`lsy`x`lsz` spacings, and reinterpolates `skyrmion` on the new grid.
-
-"""
-function resize_lattice!(skyrmion, lp, ls)
-
-    old_x = skyrmion.x
-    x = setgrid(lp,ls)
-
-    sky_temp = Skyrmion(lp, ls,  mpi = skyrmion.mpi , periodic = skyrmion.periodic)
-    println(size(sky_temp.pion_field))
-    vac = [0.0,0.0,0.0,1.0]
-
-
-    ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (old_x[1],old_x[2],old_x[3]) ), Throw()) for a in 1:4 ]
-
-    for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
-
-        if old_x[1][1] < x[1][i] < old_x[1][end] && old_x[2][1] < x[2][j] < old_x[2][end] && old_x[3][1] < x[3][k] < old_x[3][end]
-            for a in 1:4
-                sky_temp.pion_field[i,j,k,a] = ϕinterp[a](x[1][i], x[2][j], x[3][k])
-            end
-        else
-            sky_temp.pion_field[i,j,k,:] .= vac
-        end
-        
-    end
-    
-    skyrmion.lp = sky_temp.lp
-    skyrmion.ls = sky_temp.ls
-    skyrmion.x = sky_temp.x
-    skyrmion.pion_field = zeros(lp[1],lp[2],lp[3],4)
-    skyrmion.pion_field .= sky_temp.pion_field
-
-    skyrmion.index_grid_x = index_grid(lp[1])
-    skyrmion.index_grid_y = index_grid(lp[2])
-    skyrmion.index_grid_z = index_grid(lp[3])
-    
-    skyrmion.sum_grid = sum_grid(lp,skyrmion.periodic)
-    
-    normer!(skyrmion)
-    if skyrmion.periodic == false
-        set_dirichlet!(skyrmion)
-    end
-end
-
-"""
-    make_RM_product!(skyrmion, X_list) 
-
-Makes a product approximation of many rational map skyrmions, determined through the  list `X_list`. The final field is written into `skyrmion`.
-
-The formatting of the list is as follow:
-`X_list = [ data_1, data_2, data_3, ... ]`
-where
-`data_1 = [ f(r), p(z), q(z), X, θiso, n_iso, θrot, n_rot ]`
-
-See also [`product`]
-
-# Example of list
-```
-p1(z) = z; q1(z) = 1; f1(r) = 4*atan(exp(-r));
-p2(z) = z^2; q2(z) = 1; f2(r) = 4*atan(exp(-0.7*r));
-X_list = [ [ f1, p1, q1, [0.0,0.0,1.5], 0.0, [0.0,0.0,1.0], 0.0, [0.0,0.0,1.0] ], [ f2, p2, q2, [0.0,0.0,-1.5], pi, [1.0,0.0,0.0], 0.0, [0.0,0.0,1.0] ] ]
-```
-
-# Technical details
-
-The product is taken pairwise in order. E.g. for a list of 3 skyrmions, we first calculate the symmetrised product of the first and second skyrmions then calculate the symmtrised product with the third skyrmion. Hence the final solution is not symmetric under permutations.
-
-"""
-function make_RM_product!(sk, Xs)
-
-    x = sk.x
-    lp = sk.lp
-    ls = sk.ls
-
-    temp_sk = Skyrmion(lp,ls)
-
-    a=1
-    makeRM!(sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
-    
-    for a in 2:size(Xs)[1]
-
-        makeRationalMap!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
-        product_approx!(sk, temp_sk)
-    end
-
-end
-
-
-"""
     product_approx!(skyrmion1,skyrmion2) 
 
 Makes the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The output is written in to `skyrmion1`. The returned field is normalised.
@@ -463,3 +340,33 @@ function center_skyrmion!(sk)
     
 end
 
+"""
+    set_dirichlet!(skyrmion; vac = [0.0,0.0,0.0,1.0])
+
+    Sets the boundary of `skyrmion` equal to `vac`, with default value `[0.0, 0.0, 0.0, 1.0]`
+
+"""
+function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
+
+    for i in 1:sk.lp[1], j in 1:sk.lp[2]
+        sk.pion_field[i,j,1,:] .= vac
+        sk.pion_field[i,j,2,:] .= vac
+        sk.pion_field[i,j,sk.lp[3],:] .= vac
+        sk.pion_field[i,j,sk.lp[3]-1,:] .= vac
+    end
+    
+    for k in 1:sk.lp[3], j in 1:sk.lp[2]
+        sk.pion_field[1,j,k,:] .= vac
+        sk.pion_field[2,j,k,:] .= vac
+        sk.pion_field[sk.lp[1],j,k,:] .= vac
+        sk.pion_field[sk.lp[1]-1,j,k,:] .= vac
+    end
+    
+    for k in 1:sk.lp[3], i in 1:sk.lp[1]
+        sk.pion_field[i,1,k,:] .= vac
+        sk.pion_field[i,2,k,:] .= vac
+        sk.pion_field[i,sk.lp[2],k,:] .= vac
+        sk.pion_field[i,sk.lp[2]-1,k,:] .= vac
+    end
+    
+end

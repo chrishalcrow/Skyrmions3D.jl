@@ -45,7 +45,6 @@ function get_energy_density!(density, sk ;moment=0)
 
 end
 
-
 function engpt(dp,p4,mpi)
 
     return 2*mpi^2*(1 - p4) + (dp[1,1]^2 + dp[1,2]^2 + dp[1,3]^2 + dp[1,4]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2 + dp[3,4]^2) + (dp[1,4]^2*dp[2,1]^2 + dp[1,4]^2*dp[2,2]^2 + dp[1,4]^2*dp[2,3]^2 + dp[1,1]^2*(dp[2,2]^2 + dp[2,3]^2) - 2*dp[1,1]*dp[1,4]*dp[2,1]*dp[2,4] + dp[1,1]^2*dp[2,4]^2 + dp[1,4]^2*dp[3,1]^2 + dp[2,2]^2*dp[3,1]^2 + dp[2,3]^2*dp[3,1]^2 + dp[2,4]^2*dp[3,1]^2 - 2*dp[2,1]*dp[2,2]*dp[3,1]*dp[3,2] + dp[1,1]^2*dp[3,2]^2 + dp[1,4]^2*dp[3,2]^2 + dp[2,1]^2*dp[3,2]^2 + dp[2,3]^2*dp[3,2]^2 + dp[2,4]^2*dp[3,2]^2 - 2*dp[2,1]*dp[2,3]*dp[3,1]*dp[3,3] - 2*dp[2,2]*dp[2,3]*dp[3,2]*dp[3,3] + dp[1,1]^2*dp[3,3]^2 + dp[1,4]^2*dp[3,3]^2 + dp[2,1]^2*dp[3,3]^2 + dp[2,2]^2*dp[3,3]^2 + dp[2,4]^2*dp[3,3]^2 - 2*(dp[1,1]*dp[1,4]*dp[3,1] + dp[2,4]*(dp[2,1]*dp[3,1] + dp[2,2]*dp[3,2] + dp[2,3]*dp[3,3]))*dp[3,4] + (dp[1,1]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2)*dp[3,4]^2 + dp[1,3]^2*(dp[2,1]^2 + dp[2,2]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,4]^2) + dp[1,2]^2*(dp[2,1]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,3]^2 + dp[3,4]^2) - 2*dp[1,2]*(dp[1,1]*(dp[2,1]*dp[2,2] + dp[3,1]*dp[3,2]) + dp[1,3]*(dp[2,2]*dp[2,3] + dp[3,2]*dp[3,3]) + dp[1,4]*(dp[2,2]*dp[2,4] + dp[3,2]*dp[3,4])) - 2*dp[1,3]*(dp[1,1]*(dp[2,1]*dp[2,3] + dp[3,1]*dp[3,3]) + dp[1,4]*(dp[2,3]*dp[2,4] + dp[3,3]*dp[3,4])))
@@ -111,7 +110,7 @@ function center_of_mass(sk)
 
     @inbounds for i in 3:sk.lp[1]-2, j in 3:sk.lp[2]-2, k in 3:sk.lp[3]-2
     
-        dp = getDX(sk ,i, j, k )
+        dp = getDP(sk ,i, j, k )
 
         the_engpt = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
 
@@ -181,8 +180,6 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
 
    for k in sk.sum_grid[3]
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-
-            
 
             KD = diagm([1.0,1.0,1.0])
 
@@ -429,8 +426,6 @@ function make_levi_civita()
 end
 
 
-
-
 function trace_su2_ij(Lia,Lib,i,j)
     return -2.0*(Lia[1,i]*Lib[1,j] + Lia[2,i]*Lib[2,j] + Lia[3,i]*Lib[3,j])
 end
@@ -438,111 +433,3 @@ end
 function trace_su2_ijkl(L1,L2,L3,L4,i,j,k,l)
     return -8.0*(L1[i,1]*(L2[j,2]*(-(L3[k,2]*L4[l,1]) + L3[k,1]*L4[l,2]) + L2[j,3]*(-(L3[k,3]*L4[l,1]) + L3[k,1]*L4[l,3])) + L1[i,3]*(L2[j,1]*(L3[k,3]*L4[l,1] - L3[k,1]*L4[l,3]) + L2[j,2]*(L3[k,3]*L4[l,2] - L3[k,2]*L4[l,3])) + L1[i,2]*(L2[j,1]*(L3[k,2]*L4[l,1] - L3[k,1]*L4[l,2]) + L2[j,3]*(-(L3[k,3]*L4[l,2]) + L3[k,2]*L4[l,3])))
 end
-
-
-#= GRAVEYARD
-
-
-
-
-"""
-    getMOI(skyrmion; density=false, moment=0)
-
-Compute the moments of inertia of `skyrmion`.
-
-Set 'density = true' to output the MOI densities and moment to `n` to calculate the nth moment of the MOI.
-
-"""
-function getMOI(sk; density = false, moment=0)
-	
-    x = sk.x
-
-    MOI_D = zeros(6,6,sk.lp[1],sk.lp[2],sk.lp[3])
-
-    epsilon = make_levi_civita()
-
-	VV = zeros(6,6)
-    GG = zeros(6,3)
-    RR = zeros(3,3)
-	
-
-	@inbounds for i = 3:sk.lp[1]-2, j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
-
-	    xxx = [x[1][i], x[2][j], x[3][k]]
-        mm = getDX(sk ,i, j, k)
-		po = getX(sk, i, j, k)
-
-	    for a in 1:3, b in 1:3
-
-	        RR[a,b] = po[4]*mm[a,b] - mm[a,4]*po[b]
-	        GG[a+3,b] = -po[a]*po[b]
-	        GG[a+3,a] += po[b]*po[b]
-
-	        for c in 1:3
-	            GG[a+3,b] -= po[4]*po[c]*epsilon[a,c,b]
-	            for d in 1:3
-	                RR[a,b] += epsilon[b,c,d]*mm[a,c]*po[d]
-	            end
-	        end
-	    end
-
-	    for a in 1:3, d in 1:3
-            GG[a,d] = 0.0
-            for b in 1:3, c in 1:3
-	    	    GG[a,d] += epsilon[a,b,c]*xxx[b]*RR[c,d]
-            end
-	    end
-
-        if i==18 && j==22 && k == 17
-            println(GG[4:6,:])
-        end
-
-        for a in 1:6, b in 1:6, c in 1:3
-
-            if moment == 0
-                MOI_D[a,b,i,j,k] += GG[a,c]*GG[b,c]
-            else
-                r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                MOI_D[a,b,i,j,k] += GG[a,c]*GG[b,c] * r^moment
-            end
-
-            for d = 1:3, e = 1:3
-
-                if moment == 0
-                    #MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])
-                else
-                    r = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )
-                    MOI_D[a,b,i,j,k] -= 2.0*(GG[a,c]*GG[b,d]*RR[e,c]*RR[e,d] - GG[a,c]*GG[b,c]*RR[d,e]*RR[d,e])* r^moment
-                end
-
-            end
-		end
-		
-	end
-
-    if density == false
-        for a in 1:6, b in 1:6
-            for i = 3:sk.lp[1]-2,  j = 3:sk.lp[2]-2, k = 3:sk.lp[3]-2
-                VV[a,b] += MOI_D[a,b,i,j,k]*sk.ls[1]*sk.ls[2]*sk.ls[3]
-            end
-        end
-        if sk.physical == false
-            return VV
-        else
-            return (VV*sk.Fpi/(4.0*sk.ee)*(197.327*2.0/(sk.ee*sk.Fpi))^2*(197.327*2.0/(sk.ee*sk.Fpi))^moment, "MeV fm^"*string(2+moment))
-        end
-    else
-        return MOI_D
-    end
-	
-	return VV
-	
-end
-
-=#
-
-
-
-
-
-

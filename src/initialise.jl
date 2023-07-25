@@ -1,3 +1,47 @@
+
+"""
+    make_RM_product!(skyrmion, X_list) 
+
+Makes a product approximation of many rational map skyrmions, determined through the  list `X_list`. The final field is written into `skyrmion`.
+
+The formatting of the list is as follow:
+`X_list = [ data_1, data_2, data_3, ... ]`
+where
+`data_1 = [ f(r), p(z), q(z), X, θiso, n_iso, θrot, n_rot ]`
+
+See also [`product`]
+
+# Example of list
+```
+p1(z) = z; q1(z) = 1; f1(r) = 4*atan(exp(-r));
+p2(z) = z^2; q2(z) = 1; f2(r) = 4*atan(exp(-0.7*r));
+X_list = [ [ f1, p1, q1, [0.0,0.0,1.5], 0.0, [0.0,0.0,1.0], 0.0, [0.0,0.0,1.0] ], [ f2, p2, q2, [0.0,0.0,-1.5], pi, [1.0,0.0,0.0], 0.0, [0.0,0.0,1.0] ] ]
+```
+
+# Technical details
+
+The product is taken pairwise in order. E.g. for a list of 3 skyrmions, we first calculate the symmetrised product of the first and second skyrmions then calculate the symmtrised product with the third skyrmion. Hence the final solution is not symmetric under permutations.
+
+"""
+function make_RM_product!(sk, Xs)
+
+    x = sk.x
+    lp = sk.lp
+    ls = sk.ls
+
+    temp_sk = Skyrmion(lp,ls)
+
+    a=1
+    makeRationalMap!(sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+    
+    for a in 2:size(Xs)[1]
+
+        makeRationalMap!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+        product_approx!(sk, temp_sk)
+    end
+
+end
+
 """
     makeRationalMap!(skyrmion, prof, pfn, qfn; kwargs... )
     
@@ -82,9 +126,23 @@ end
 """
     makeADHM!(skyrmion, L, M )
     
-Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M can be given by `Bx4` and `BxBx4` arrays or as `B` and `BxB` arrays of Quaternions, from the `Quaternionic` package.
+Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M can be given by `Bx4` and `BxBx4` arrays or as `B` and `BxB` arrays of Quaternions, from the `GLMakie` package.
 
-# Example
+# Example of data
+```
+B=2
+
+L = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B ]
+M = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B, b in 1:B ]
+
+L[1] = Quaternion(0.0, 0.0, 0.0, sqrt(2.0))
+L[2] = Quaternion(0.0, 0.0, sqrt(2.0), 0.0)
+
+M[1,1] = Quaternion(1.0, 0.0, 0.0, 0.0)
+M[1,2] = Quaternion(0.0, 1.0, 0.0, 0.0)
+M[2,1] = Quaternion(0.0, 1.0, 0.0, 0.0)
+M[2,2] = Quaternion(-1.0, 0.0, 0.0, 0.0)
+```
 
 """
 function makeADHM!(an_ADHM_skyrmion, L, M)
@@ -231,52 +289,6 @@ function third_order_update!(Q,q1,q2,q3)
 
 end
 
-function B3_tet_data(lam)
-
-    L = zeros(3,4)
-    M = zeros(3,3,4)
-
-    L[1,2] = lam
-    L[2,3] = lam
-    L[3,4] = lam
-
-    M[1,2,4] = lam;    M[1,3,3] = lam;
-    M[2,1,4] = lam;    M[2,3,2] = lam;
-    M[3,1,3] = lam;    M[3,2,2] = lam;
-
-    return L, M
-
-end
-
-function B4_cube_data(lam)
-
-    L = zeros(4,4)
-    M = zeros(4,4,4)
-
-    L[1,1] = lam
-    L[2,2] = lam
-    L[3,3] = lam
-    L[4,4] = lam
-
-    lam /= sqrt(2.0)
-
-    M[1,2,3] = -lam; M[1,2,4] = -lam;
-    M[1,3,2] = -lam; M[1,3,4] = -lam;
-    M[1,4,2] = -lam; M[1,4,3] = -lam;
-
-    M[2,3,2] = -lam; M[2,3,3] =  lam;
-    M[2,4,2] =  lam; M[2,4,4] = -lam;
-
-    M[3,4,3] = -lam; M[3,4,4] =  lam;
-
-    for a in 1:4, b in 1:a, c in 1:4
-        M[a,b,c] = M[b,a,c]
-    end
-
-    return L, M
-
-end
-
 
 function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
 
@@ -405,10 +417,6 @@ function getΩ!(Ω1,vp,v,B)
 
 end
 
-
-
-
-
 function Nfy!(Nα,tint,L,M,y,Mmdysp,p,B,ct,Rnm,iRnm)
 
 
@@ -498,25 +506,51 @@ function makeRnm!(Rnm,L,M,B)
 end
 
 
+function B3_tet_data(lam)
 
+    L = zeros(3,4)
+    M = zeros(3,3,4)
 
+    L[1,2] = lam
+    L[2,3] = lam
+    L[3,4] = lam
 
+    M[1,2,4] = lam;    M[1,3,3] = lam;
+    M[2,1,4] = lam;    M[2,3,2] = lam;
+    M[3,1,3] = lam;    M[3,2,2] = lam;
 
+    return L, M
 
+end
 
+function B4_cube_data(lam)
 
+    L = zeros(4,4)
+    M = zeros(4,4,4)
 
+    L[1,1] = lam
+    L[2,2] = lam
+    L[3,3] = lam
+    L[4,4] = lam
 
+    lam /= sqrt(2.0)
 
+    M[1,2,3] = -lam; M[1,2,4] = -lam;
+    M[1,3,2] = -lam; M[1,3,4] = -lam;
+    M[1,4,2] = -lam; M[1,4,3] = -lam;
 
+    M[2,3,2] = -lam; M[2,3,3] =  lam;
+    M[2,4,2] =  lam; M[2,4,4] = -lam;
 
+    M[3,4,3] = -lam; M[3,4,4] =  lam;
 
+    for a in 1:4, b in 1:a, c in 1:4
+        M[a,b,c] = M[b,a,c]
+    end
 
+    return L, M
 
-
-
-
-
+end
 
 
 
