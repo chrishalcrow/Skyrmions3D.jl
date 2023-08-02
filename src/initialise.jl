@@ -220,6 +220,11 @@ function R_from_axis_angle(th, n)
 
 end
 
+function makeADHM!(an_ADHM_skyrmion, LM)
+    B = size(LM)[2]
+    makeADHM!(an_ADHM_skyrmion, LM[1,1:B], LM[2:B+1,1:B])
+end
+
 """
     makeADHM!(skyrmion, L, M )
     
@@ -648,6 +653,90 @@ function B4_cube_data(lam)
     return L, M
 
 end
+
+
+
+
+
+function get_close_ADHM_data(uADHM,iADHM)
+
+    B = size(uADHM)[2]
+
+    ux = zeros(4*B*(B+1))
+    u0 = zeros(4*B*(B+1))
+
+    count=1
+    for i in 1:B+1, j in 1:B, k in 1:4
+        ux[count] = uADHM[i,j][k]
+        u0[count] = iADHM[i,j][k]
+        count += 1
+    end
+
+    optproblem = OptimizationFunction(to_minimise, Optimization.AutoModelingToolkit(), cons=reality)
+    prob = OptimizationProblem(optproblem, u0 , ux, lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
+    sol = solve(prob,IPNewton())
+
+    newLM = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B+1, b in 1:B ]
+    for i in 1:B+1, j in 1:B
+        newLM[i,j] = Quaternion( sol[ B*4*(i-1) + 4*(j-1) + 1],
+        sol[ B*4*(i-1) + 4*(j-1) + 2],
+        sol[ B*4*(i-1) + 4*(j-1) + 3],
+        sol[ B*4*(i-1) + 4*(j-1) + 4] )
+    end
+
+    return newLM
+
+end
+
+
+
+function reality(res,x,p)
+
+    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
+
+    count = 0
+    for i in 1:B-1, k in i+1:B
+
+        # imposes reality on the upper triangular part of the ADHM data 
+
+        for a in 1:3
+            res[7*count + a] = 0.0
+        end
+
+        for j in 1:B+1
+
+            res[7*count+1] += x[ B*4*(j-1) + 4*(i-1) + 1]*x[ B*4*(j-1) + 4*(k-1) + 4] - x[ B*4*(j-1) + 4*(i-1) + 4]*x[ B*4*(j-1) + 4*(k-1) + 1] + x[ B*4*(j-1) + 4*(i-1) + 2]*x[ B*4*(j-1) + 4*(k-1) + 3] - x[ B*4*(j-1) + 4*(i-1) + 3]*x[ B*4*(j-1) + 4*(k-1) + 2]
+
+            res[7*count+2] += x[ B*4*(j-1) + 4*(i-1) + 2]*x[ B*4*(j-1) + 4*(k-1) + 4] - x[ B*4*(j-1) + 4*(i-1) + 4]*x[ B*4*(j-1) + 4*(k-1) + 2] + x[ B*4*(j-1) + 4*(i-1) + 3]*x[ B*4*(j-1) + 4*(k-1) + 1] - x[ B*4*(j-1) + 4*(i-1) + 1]*x[ B*4*(j-1) + 4*(k-1) + 3]
+
+            res[7*count+3] += x[ B*4*(j-1) + 4*(i-1) + 3]*x[ B*4*(j-1) + 4*(k-1) + 4] - x[ B*4*(j-1) + 4*(i-1) + 4]*x[ B*4*(j-1) + 4*(k-1) + 3] + x[ B*4*(j-1) + 4*(i-1) + 1]*x[ B*4*(j-1) + 4*(k-1) + 2] - x[ B*4*(j-1) + 4*(i-1) + 2]*x[ B*4*(j-1) + 4*(k-1) + 1]
+
+        end
+
+        # makes the ADHM data symmetric
+        for a in 1:4
+            res[7*count + 3 + a] = x[ B*4*(i+1 - 1) + 4*(k-1) + 1] - x[ B*4*(k+1-1) + 4*(i-1) + 1]
+        end
+
+
+        count += 1
+
+    end
+
+end
+
+
+
+function to_minimise(x,ux)
+
+    tot = 0.0
+    for i in 1:size(x)[1]
+        tot += (x[i] - ux[i])^2
+    end
+    return tot
+
+end
+
 
 
 

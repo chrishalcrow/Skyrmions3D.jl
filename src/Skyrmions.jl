@@ -13,7 +13,7 @@ module Skyrmions
 
 using Makie
 using GLMakie, WGLMakie, CairoMakie
-using DifferentialEquations, DiffEqCallbacks
+using Optimization, OptimizationOptimJL, ModelingToolkit, Symbolics
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
@@ -28,7 +28,7 @@ include("properties.jl")
 export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview
 
 include("initialise.jl")
-export makeRationalMap!, make_RM_product!, makeADHM!
+export makeRationalMap!, make_RM_product!, makeADHM!, get_close_ADHM_data
 
 include("plotting.jl")
 export plot_field, plot_baryon_density, interactive_flow, plot_overview, plot_scan
@@ -356,4 +356,12 @@ function normer(sk)
 end
 
 end
+#=
+function Base.:+(q1::Quaternion{Float64}, q2::Quaternion{Float64})
+    return Quaternion(q1[1] + q2[1], q1[2] + q2[2], q1[3] + q2[3], q1[4] + q2[4])
+end 
 
+function Base.:-(q1::Quaternion{Float64}, q2::Quaternion{Float64})
+    return Quaternion(q1[1] - q2[1], q1[2] - q2[2], q1[3] - q2[3], q1[4] - q2[4])
+end 
+=#

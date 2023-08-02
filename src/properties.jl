@@ -1,4 +1,4 @@
-"""
+#="""
     overview(skyrmion)
 
 Displays an overview of `skyrmion`'s properties.
@@ -22,7 +22,7 @@ function overview(sk::Skyrmion)
 
 end
 
-
+=#
 """
     Energy(skyrmion; density=false)
 
@@ -278,13 +278,13 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
 
                 for a in aindices, b in bindices
                     
-                    #current_density[a,b,i,j,k] += (sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
+                    current_density[a,b,i,j,k] += 3*2/3*(sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
                     
-                    current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,a,b)*rm
+                    #current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,a,b)*rm
                   
                     for c in 1:3
 
-                        current_density[a,b,i,j,k] -= 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
+                     #  current_density[a,b,i,j,k] += 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
            
                     end
                     
@@ -296,6 +296,8 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
                 Lia = getLka(p,dp)
 
                 for a in aindices, b in bindices
+
+                    
                     
                     current_density[a,b,i,j,k] += (sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
                     
