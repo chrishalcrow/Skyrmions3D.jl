@@ -6,14 +6,13 @@ Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps o
 See also [`newton_flow!`, `arrested_newton_flow!`]
 
 """
-function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4) , error_function::Function=L2_err)
+function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0, tolerance = 0.0, check = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4) , error_function::Function=L2_err)
 
-    if tolerance == 0 && frequency_of_checking_tolerance > steps
+    if tolerance == 0 && check > steps
         frequency_of_checking_tolerance = steps
     end
     
     if print_stuff == true
-        println(dt)
         println("initial: energy: ", Energy(ϕ) )
 
     end
@@ -23,7 +22,7 @@ function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/1
     
     while counter < steps
         
-        gradient_flow_for_n_steps!(ϕ,dEdp,frequency_of_checking_tolerance,dt)
+        gradient_flow_for_n_steps!(ϕ,dEdp,check,dt)
         
         err = max_abs_err(dEdp)
         if err > 3*prev_error
@@ -31,18 +30,18 @@ function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/1
         end
         prev_error = err
 
-        counter += frequency_of_checking_tolerance
+        counter += check
         
         if print_stuff == true
-            #println("after ", counter, " steps, error = ", round(error, sigdigits=4))
-            println( round(err, sigdigits=8), "," )
+            println("after ", counter, " steps, error = ", round(err, sigdigits=4))
+            #println( round(err, sigdigits=8), "," )
         end
 
         if tolerance != 0.0    # => we are in tol mode    
             if err < tolerance
                 counter = steps + 1    # => end the while loop
             else
-                steps += frequency_of_checking_tolerance    # => continue the while loop
+                steps += check    # => continue the while loop
             end
         end
 

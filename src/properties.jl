@@ -1,4 +1,29 @@
 """
+    overview(skyrmion)
+
+Displays an overview of `skyrmion`'s properties.
+
+"""
+function overview(sk::Skyrmion)
+
+    hbar = 197
+
+    println("This skyrmion is on a ", sk.lp[1],"x",sk.lp[2],"x",sk.lp[3]," grid, with lattice spacing [", sk.ls[1],", ", sk.ls[2],", ", sk.ls[3], "]. ")
+    println()
+    println("            m = ", round(sk.mpi, sigdigits=5) ) 
+    println("Baryon number = ", round(Baryon(sk), sigdigits=5) ) 
+    println("       Energy = ", round(12*pi*pi*Energy(sk), sigdigits=5) ) 
+    println("   Baryon rms = ", round(rms_baryon(sk), sigdigits=5) ) 
+    println()
+    println("With physical constants Fpi = ", sk.Fpi, " and e = ", sk.ee,",")
+    println("the energy and length units are ", round(sk.Fpi/(4*sk.ee),sigdigits=4), " MeV and ", round(hbar*2/(sk.ee*sk.Fpi),sigdigits=4), " fm." )
+    println("So physical E = ", round(12*pi*pi*Energy(sk)*sk.Fpi/(4*sk.ee), sigdigits=5), " MeV." )
+    println("   Baryon rms = ", round(rms_baryon(sk)*2*hbar/(sk.ee*sk.Fpi), sigdigits=5), " fm." ) 
+
+end
+
+
+"""
     Energy(skyrmion; density=false)
 
 Compute energy of `skyrmion`.
@@ -162,7 +187,7 @@ The possible currents are (currently):
 """
 function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=0  )
 
-    if label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial" && label != "stress"
+    if label != "energy" && label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial" && label != "stress"
         println("ERROR: Current label '", label, "' unknown. Type '?compute_current' for help.")
         return
     end
@@ -247,20 +272,40 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
                     end
                 end
 
+            elseif label == "energy"
+
+                Lia = getLka(p,dp)
+
+                for a in aindices, b in bindices
+                    
+                    #current_density[a,b,i,j,k] += (sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
+                    
+                    current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,a,b)*rm
+                  
+                    for c in 1:3
+
+                        current_density[a,b,i,j,k] -= 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
+           
+                    end
+                    
+                end
+                
+
             elseif label == "stress"
 
                 Lia = getLka(p,dp)
 
                 for a in aindices, b in bindices
                     
-                    current_density[a,b,i,j,k] -= (sk.mpi^2/2.0)*(1.0 - p[4])*KD[a,b]*rm
-                    current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*rm
+                    current_density[a,b,i,j,k] += (sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
                     
+                    current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*rm
                     for c in 1:3
+                        current_density[a,b,i,j,k] += 0.5*trace_su2_ij(Lia,Lia,c,c)*KD[a,b]*rm
+                        
 
-                        current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,c,c)*KD[a,b]*rm
-                        current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
 
+current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
                         for d in 1:3
                             current_density[a,b,i,j,k] += 0.0625*trace_su2_ijkl(Lia,Lia,Lia,Lia,c,d,c,d)*KD[a,b]*rm
                         end
@@ -302,6 +347,11 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
         
         end
 
+    end
+
+    if ( label == "uMOI" || label == "wMOI" || label == "vMOI" ) && sk.physical == true
+        println("Using physical units, result is in MeV fm^2.")
+        current_density .*= 197^2/(sk.Fpi*sk.ee^3)
     end
 
     if density == false

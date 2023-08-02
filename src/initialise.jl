@@ -47,6 +47,8 @@ end
     
 Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
 
+If no `f` is given, the function will find an OK approximation for the profile.
+
 # Optional arguments
 -  `X=[0.0,0.0,0.0]`: translate the initial skyrmion by `X`
 -  `iTH = 0.0`: isorotate by initial skyrmion by `iTH`
@@ -97,6 +99,101 @@ function makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_
     
 end
 
+function makeRationalMap!(skyrmion, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+
+    R(z) = pfn(z)/qfn(z)
+    k1,k2=getOKprofile(1.0,1.0,Baryon(skyrmion),getI(R),1.0)
+    println(k1,k2)
+    prof(r) = pi/(1 - tanh(-k2*k1))*( -tanh(k2*(r - k1)) + 1.0  );
+    makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+    
+
+end
+
+
+function getI(R)
+
+    I_tot = 0.0
+    dz_r = 0.05
+    dz_i = 0.05
+    dx=0.0001;
+    for z_real in -10-dz_r/2:dz_r:10+dz_r/2, z_imag in -10-dz_i/2:dz_i:10+dz_i/2
+        z = z_real + 1.0im*z_imag
+        Rp = ((R(z+dx)-R(z-dx))/(2dx) + (R(z+dx*1.0im)-R(z-dx*1.0im))/(2im*dx))/2.0 
+        I_tot += real( ( Rp*conj(Rp) )^2*( 1 + z*conj(z) )^2/(1.0 + R(z)*conj(R(z)))^4 )
+    end
+    
+    return I_tot*dz_r*dz_i/pi
+
+end
+
+
+function getOKprofile(k1,k2,B,I,m)
+
+    dk1=0.001;
+    dk2=0.001;
+
+    for _ in 1:10
+
+        dE = [(energy_test(k1+dk1,k2,(B,I,m)) - energy_test(k1-dk1,k2,(B,I,m)))/(2*dk1)   (energy_test(k1,k2+dk2,(B,I,m)) - energy_test(k1,k2-dk2,(B,I,m)))/(2*dk1) ]
+
+        ddE = [ (energy_test(k1+dk1,k2,(B,I,m)) - 2.0*energy_test(k1,k2,(B,I,m)) + energy_test(k1-dk1,k2,(B,I,m)))/(dk1^2) ( energy_test(k1+dk1,k2+dk2,(B,I,m)) + energy_test(k1-dk1,k2-dk2,(B,I,m)) - energy_test(k1+dk1,k2-dk2,(B,I,m)) - energy_test(k1-dk1,k2+dk2,(B,I,m)) )/(4*dk1*dk2)  ;
+                ( energy_test(k1+dk1,k2+dk2,(B,I,m)) + energy_test(k1-dk1,k2-dk2,(B,I,m)) - energy_test(k1+dk1,k2-dk2,(B,I,m)) - energy_test(k1-dk1,k2+dk2,(B,I,m)) )/(4*dk1*dk2)  (energy_test(k1,k2+dk2,(B,I,m)) - 2.0*energy_test(k1,k2,(B,I,m)) + energy_test(k1,k2-dk2,(B,I,m)))/(dk2^2) ]
+
+        change = inv(ddE)*dE'
+
+        k1 -= change[1]
+        k2 -= change[2]
+    
+    end
+
+    return k1, k2
+
+end
+
+
+function energy_test(k1,k2,(B,I,m);lp=500,ls=0.05,test_prof = profile(lp, ls))
+    
+    test_prof.field .= pi/(1.0 - tanh(-k2*k1)).*( -tanh.(k2*(test_prof.r_grid .- k1))  .+ 1.0  );
+    return energy(test_prof,(B,I,m))
+
+end
+
+function energy(p,(B,I,m))
+    
+    ED = zeros(p.lp)
+
+    dp = getdpB(p,2)
+    ED[2] = Ept([p.field[2], dp, p.r_grid[2], B,I,m])
+    for i in 3:p.lp-2
+        
+        dp = getdpD(p,i)
+        ED[i] = Ept([p.field[i], dp, p.r_grid[i], B,I,m])
+
+    end
+
+    return sum(ED)*p.ls/(3pi)
+
+end
+
+# From symbolics code.
+function Ept(ˍ₋arg1,)
+    #= /Users/chris/.julia/packages/SymbolicUtils/H684H/src/code.jl:350 =#
+    #= /Users/chris/.julia/packages/SymbolicUtils/H684H/src/code.jl:351 =#
+    #= /Users/chris/.julia/packages/SymbolicUtils/H684H/src/code.jl:352 =#
+    begin
+        (/)((+)((+)((+)((+)((+)((*)(ˍ₋arg1[5], (^)((sin)(ˍ₋arg1[1]), 4)), (*)((^)(ˍ₋arg1[3], 4), (^)(ˍ₋arg1[2], 2))), (*)((*)(2, (^)(ˍ₋arg1[6], 2)), (^)(ˍ₋arg1[3], 4))), (*)((*)((*)(2, ˍ₋arg1[4]), (^)(ˍ₋arg1[3], 2)), (^)((sin)(ˍ₋arg1[1]), 2))), (*)((*)((*)(-2, (^)(ˍ₋arg1[6], 2)), (^)(ˍ₋arg1[3], 4)), (cos)(ˍ₋arg1[1]))), (*)((*)((*)((*)(2, ˍ₋arg1[4]), (^)(ˍ₋arg1[3], 2)), (^)(ˍ₋arg1[2], 2)), (^)((sin)(ˍ₋arg1[1]), 2))), (^)(ˍ₋arg1[3], 2))
+    end
+end
+
+
+function getdpD(p,i)
+    return (-p.field[i+2] + 8.0*p.field[i+1] - 8.0*p.field[i-1] + p.field[i-2])/(12.0*p.ls)
+end
+
+function getdpB(p,i)
+    return (p.field[i+1] - p.field[i-1])/(2.0*p.ls)
+end
 
 function R_from_axis_angle(th, n)
 
