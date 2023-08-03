@@ -64,7 +64,7 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
     RI = R_from_axis_angle(iTH, i_n)
     RJ = R_from_axis_angle(jTH, j_n)
 
-    for k in 1:lp[3]
+    Threads.@threads for k in 1:lp[3]
         @inbounds for j in 1:lp[2], i in 1:lp[1]
 
             Xto = SVector{3,Float64}( x[1][i]-X[1], x[2][j]-X[2], x[3][k]-X[3] )
