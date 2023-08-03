@@ -1,12 +1,9 @@
-module Skyrmions
+module Skyrmions3D
 
 #= TO DO LIST 
 
 - Scanning plot
-- Merge RK4 (need testing...)
 - B=4 Alberto stuff
-- Status report
-- uADHM data
 
 =#
 
@@ -28,7 +25,7 @@ include("properties.jl")
 export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview
 
 include("initialise.jl")
-export makeRationalMap!, make_RM_product!, makeADHM!, get_close_ADHM_data
+export make_rational_map!, make_RM_product!, makeADHM!, get_close_ADHM_data
 
 include("plotting.jl")
 export plot_field, plot_baryon_density, interactive_flow, plot_overview, plot_scan
@@ -68,9 +65,9 @@ mutable struct Skyrmion
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, 180.0, 4.0, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp), sum_grid(lp, periodic), [getDX, getDDX] )
+Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp), sum_grid(lp, periodic), [getDX, getDDX] )
 
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,180.0, 4.0, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic), [getDX, getDDX] )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic), [getDX, getDDX] )
 
 mutable struct profile
     field::Vector{Float64}

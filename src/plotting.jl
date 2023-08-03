@@ -183,8 +183,10 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs
 	bdmax = maximum(BD)
     bdmin = minimum(BD)
 	if iso_value == 0.0
-		iso_value = (bdmax - bdmin)/2.0
+		iso_value = (bdmax + bdmin)/4.0
 	end
+
+    println("iso_value = ", iso_value)
 
     if iso_value > bdmax || iso_value < bdmin
         error("Your iso_value is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
@@ -558,16 +560,16 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 			end
 		elseif which_flow == 2
 			if dt == 0.0
-				arrested_newton_flow_juggle!(my_skyrmion, skd; steps=total_runs )
+				arrested_newton_flow!(my_skyrmion; steps=total_runs )
 			else
-				arrested_newton_flow_juggle!(my_skyrmion, skd; steps=total_runs, dt = dt )
+				arrested_newton_flow!(my_skyrmion; steps=total_runs, dt = dt )
 			end
 			
 		elseif which_flow == 3
 			if dt == 0.0
-				newton_flow!(my_skyrmion, skd; steps=total_runs, step_algorithm="RK4"  )
+				newton_flow!(my_skyrmion; steps=total_runs )
 			else
-				newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt, step_algorithm="RK4"  )
+				newton_flow!(my_skyrmion; steps=total_runs, dt = dt  )
 			end
 		end
 

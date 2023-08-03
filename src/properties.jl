@@ -1,14 +1,19 @@
-#="""
+"""
     overview(skyrmion)
 
 Displays an overview of `skyrmion`'s properties.
 
 """
-function overview(sk::Skyrmion)
+function overview(sk)
 
     hbar = 197
 
     println("This skyrmion is on a ", sk.lp[1],"x",sk.lp[2],"x",sk.lp[3]," grid, with lattice spacing [", sk.ls[1],", ", sk.ls[2],", ", sk.ls[3], "]. ")
+    if sk.periodic==true 
+        println("The field is periodic.")
+    else
+        println("The field is not periodic.")
+    end
     println()
     println("            m = ", round(sk.mpi, sigdigits=5) ) 
     println("Baryon number = ", round(Baryon(sk), sigdigits=5) ) 
@@ -22,7 +27,7 @@ function overview(sk::Skyrmion)
 
 end
 
-=#
+
 """
     Energy(skyrmion; density=false)
 

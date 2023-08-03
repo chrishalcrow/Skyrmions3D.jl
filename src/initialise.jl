@@ -7,7 +7,7 @@ Makes a product approximation of many rational map skyrmions, determined through
 The formatting of the list is as follow:
 `X_list = [ data_1, data_2, data_3, ... ]`
 where
-`data_1 = [ f(r), p(z), q(z), X, θiso, n_iso, θrot, n_rot ]`
+`data_1 = [ p(z), q(z), f(r), X, θiso, n_iso, θrot, n_rot ]`
 
 See also [`product`]
 
@@ -15,7 +15,7 @@ See also [`product`]
 ```
 p1(z) = z; q1(z) = 1; f1(r) = 4*atan(exp(-r));
 p2(z) = z^2; q2(z) = 1; f2(r) = 4*atan(exp(-0.7*r));
-X_list = [ [ f1, p1, q1, [0.0,0.0,1.5], 0.0, [0.0,0.0,1.0], 0.0, [0.0,0.0,1.0] ], [ f2, p2, q2, [0.0,0.0,-1.5], pi, [1.0,0.0,0.0], 0.0, [0.0,0.0,1.0] ] ]
+X_list = [ [ p1, q1, f1, [0.0,0.0,1.5], 0.0, [0.0,0.0,1.0], 0.0, [0.0,0.0,1.0] ], [ p2, q2, f2, [0.0,0.0,-1.5], pi, [1.0,0.0,0.0], 0.0, [0.0,0.0,1.0] ] ]
 ```
 
 # Technical details
@@ -32,18 +32,18 @@ function make_RM_product!(sk, Xs)
     temp_sk = Skyrmion(lp,ls)
 
     a=1
-    makeRationalMap!(sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+    make_rational_map!(sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
     
     for a in 2:size(Xs)[1]
 
-        makeRationalMap!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+        make_rational_map!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
         product_approx!(sk, temp_sk)
     end
 
 end
 
 """
-    makeRationalMap!(skyrmion, prof, pfn, qfn; kwargs... )
+    mak_rational_map!(skyrmion, prof, pfn, qfn; kwargs... )
     
 Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
 
@@ -57,7 +57,7 @@ If no `f` is given, the function will find an OK approximation for the profile.
 -  `j_n = 0.0`: isorotate initial skyrmion around `j_n`
 
 """
-function makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
     
     lp, x = skyrmion.lp, skyrmion.x
 
@@ -99,13 +99,21 @@ function makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_
     
 end
 
-function makeRationalMap!(skyrmion, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+function make_rational_map!(skyrmion, pfn, qfn; baryon=0.0, X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
 
+    if baryon == 0.0
+        baryon1 = abs( (log(pfn(10000)) - log(pfn(1)))/log(10000) )
+        baryon2 = abs( (log(qfn(10000)) - log(qfn(1)))/log(10000) )
+        baryon = max( round(baryon1), round(baryon2) )
+        println("I think your baryon number is ", baryon, ". If it is not, include '; baryon=B' in your argument.")
+    end
+    
     R(z) = pfn(z)/qfn(z)
-    k1,k2=getOKprofile(1.0,1.0,Baryon(skyrmion),getI(R),1.0)
-    println(k1,k2)
+    k1,k2=getOKprofile(1.0,1.0,baryon,getI(R),skyrmion.mpi)
+    #println(k1)
+    #println(k2)
     prof(r) = pi/(1 - tanh(-k2*k1))*( -tanh(k2*(r - k1)) + 1.0  );
-    makeRationalMap!(skyrmion, prof, pfn, qfn; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+    make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
     
 
 end
