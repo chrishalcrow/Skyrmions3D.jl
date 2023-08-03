@@ -7,6 +7,12 @@
 # plotting. Additionally, we'll tell our editor to *use* GLMakie. This is a bit awkward,
 # but the many commands below should mean that it is turned on on all OSs.
 
+# Note: you need to type the next time into the REPL in Visual Studio code. That means:
+# type ']',which will enter "package mode", then type
+# "add https://github.com/chrishalcrow/Skyrmions3D.jl.git"
+
+]add https://github.com/chrishalcrow/Skyrmions3D.jl.git
+
 using Skyrmions3D
 
 using GLMakie
