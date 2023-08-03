@@ -202,6 +202,7 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
     aindices = 1:3
     bindices = 1:3
 
+
     if indices != [0,0]
         aindices = indices[1]:indices[1]
         bindices = indices[2]:indices[2]
@@ -285,11 +286,11 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
                     
                     current_density[a,b,i,j,k] += 3*2/3*(sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
                     
-                    #current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,a,b)*rm
+                    current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,a,b)*rm
                   
                     for c in 1:3
 
-                     #  current_density[a,b,i,j,k] += 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
+                       current_density[a,b,i,j,k] -= 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
            
                     end
                     
@@ -304,17 +305,18 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
 
                     
                     
-                    current_density[a,b,i,j,k] += (sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
+                    current_density[a,b,i,j,k] -= 2.0*(sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
                     
                     current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*rm
+
                     for c in 1:3
+
                         current_density[a,b,i,j,k] += 0.5*trace_su2_ij(Lia,Lia,c,c)*KD[a,b]*rm
                         
+                        current_density[a,b,i,j,k] -= 1/4.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
 
-
-current_density[a,b,i,j,k] -= 0.25*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
                         for d in 1:3
-                            current_density[a,b,i,j,k] += 0.0625*trace_su2_ijkl(Lia,Lia,Lia,Lia,c,d,c,d)*KD[a,b]*rm
+                            current_density[a,b,i,j,k] += 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,c,d,c,d)*KD[a,b]*rm
                         end
                     end
                     

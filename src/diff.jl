@@ -128,125 +128,6 @@ function getBj(dp)
 
 end
 
-#=
-"""
-    arrested_newton_flow!(skyrmion; skyrmion_dot, steps = n, tolerance = tol, dt=ls^2/80.0, frequency_of_checking_tolerance = freq, print_stuff = true)
-    
-Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
-
-See also [`gradient_flow!`, `newton_flow!`]
-"""
-function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/5.0, steps=1, tolerance = 0.0, frequency_of_checking_tolerance = max(100,steps), print_stuff = true, step_algorithm="RK4")
-
-    if tolerance == 0 && frequency_of_checking_tolerance > steps
-        frequency_of_checking_tolerance = steps
-    end
-
-    energy_density = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3])
-    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    old_pion_field = deepcopy(ϕ.pion_field);
-
-    counter = 0
-    while counter < steps
-
-        arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp,dt,energy_density,frequency_of_checking_tolerance,step_algorithm,initial_energy=EnergyANF(ϕ,energy_density))
-        error = max_abs_err(dEdp)
-        counter += frequency_of_checking_tolerance
-
-        if print_stuff == true 
-            println("after ", counter, " steps, error = ", round(error, sigdigits=4), " energy = ", round(sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2), sigdigits=8) )
-        end
-
-        if tolerance != 0.0    # => we are in tol mode
-            if error < tolerance 
-                counter = steps + 1    # => end the while loop
-            else
-                steps += frequency_of_checking_tolerance
-            end
-        end
-
-    end
-
-    return
-
-end
- 
-function arrested_newton_flow_for_n_steps!(ϕ,ϕd,old_pion_field,dEdp1,dt,energy_density,n,step_algorithm::String; initial_energy)
-
-    new_energy = initial_energy
-    
-    if step_algorithm == "RK4"
-        dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    end
-
-    for _ in 1:n
-
-        old_energy = new_energy
-        old_pion_field .= ϕ.pion_field
-
-        if step_algorithm == "Euler"
-            newton_flow_for_1_step!(ϕ,ϕd,dEdp,dt)
-        elseif step_algorithm == "RK4"
-            newton_flow_for_1_step_RK4!(ϕ,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
-        end
-
-        new_energy = EnergyANF(ϕ,energy_density)
-
-        if new_energy > old_energy
-
-            fill!(ϕd, 0.0);
-            ϕ.pion_field .= old_pion_field;
-
-            
-    
-        end
-
-    end
-
-end
-
-
-
-function newton_flow_for_1_step_RK4!(sk, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
-
-    getdEdp!(sk, dEdp1)
-    # sk2 = sk + (0.5*dt).*skd
-    sk.pion_field .+= (0.5*dt).*skd
-
-    getdEdp!(sk, dEdp2)
-    #getdEdp!(sk2, dEdp2), sk = sk2 + (0.5*dt)^2 .*dEdp1
-    sk.pion_field .+= (0.5*dt)^2 .*dEdp1
-
-    getdEdp!(sk, dEdp3)
-    #getdEdp!(sk, dEdp2), sk2 = sk + (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
-    sk.pion_field .+= (0.5*dt).*skd .+ (0.5*dt)^2 .*(4.0 .* dEdp2 .- dEdp1)
-
-
-    getdEdp!(sk, dEdp4)
-    # #getdEdp!(sk2, dEdp2), sk +=  dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )
-    #RESET field to original value: sk.pion_field .-= (0.5*dt).*skd + (0.5*dt)^2 *(4.0 .* dEdp2 - dEdp1) + (0.5*dt)^2 .*dEdp1 + (0.5*dt).*skd
-    #Then update: sk.pion_field .+= dt.*(skd + dt/6.0 .*( dEdp1 .+ dEdp2 .+ dEdp3 ) ), combined into:
-    sk.pion_field .-=  dt.*(  (5/6*dt).*dEdp2  .- (dt/6).*( dEdp1 .+ dEdp3 ) )
-    skd .+= (dt/6.0).*(dEdp1 .+ 2.0.*dEdp2 .+ 2.0.*dEdp3 .+ dEdp4)
-   
-    #orthog_skd_and_sk!(skd,sk)
-    #normer!(sk)
-    orthog_skd_and_sk_and_normer!(skd,sk)
-   
-end
-
-
-function newton_flow_for_1_step!(sk, skd ,dEdp, dt)
-
-    getdEdp!(sk, dEdp)
-    sk.pion_field .+= dt.*skd
-    skd .+= dt.*dEdp
-    normer!(sk)
-   
-end
-=#
 function orthog_skd_and_sk!(skd,sk)
 
     Threads.@threads for k in sk.sum_grid[3]
@@ -324,8 +205,6 @@ Applies an arrested Newton flow to `skyrmion` whose initial time derivative fiel
 See also [`gradient_flow!`, `newton_flow!`]
 """
 function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/10.0, steps=1, tolerance = 0.0, checks = max(100,steps), print_stuff = true)
-
-    println(dt)
 
     if tolerance == 0 && checks > steps
         checks = steps
@@ -520,15 +399,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
 """
     newton_flow!(skyrmion; skyrmion_dot, steps = n, dt=ls^2/80.0, frequency_of_printing = freq, print_stuff = true)
     
@@ -536,7 +406,7 @@ Applies a newton flow to `skyrmion` whose initial time derivative field is skyrm
 
 See also [`gradient_flow!`, `arrested_newton_flow!`]
 """
-function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/20.0, steps=1, print_stuff = true, frequency_of_printing = steps, step_algorithm::String)
+function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/20.0, steps=1, print_stuff = true, frequency_of_printing = steps)
 
     if print_stuff == true
         println("intial energy: ", Energy(ϕ))
@@ -545,7 +415,7 @@ function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1
     counter = 0
     while counter < steps
 
-        newton_flow_for_n_steps!(ϕ,ϕd,dt,frequency_of_printing, step_algorithm="RK4")
+        newton_flow_for_n_steps!(ϕ,ϕd,dt,frequency_of_printing)
         counter += frequency_of_printing
 
         if print_stuff == true 
@@ -559,24 +429,17 @@ function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1
 end
 
 
-function newton_flow_for_n_steps!(ϕ,ϕd,dt,n;step_algorithm::String)
+function newton_flow_for_n_steps!(ϕ,ϕd,dt,n)
 
-    
-    if step_algorithm == "RK4"
-        dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-        dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    end
+    dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    sk2 = Skyrmion(ϕ.lp, ϕ.ls);
+
 
     for _ in 1:n
-
-        if step_algorithm == "Euler"
-            newton_flow_for_1_step!(ϕ,ϕd,dEdp1,dt)
-        elseif step_algorithm == "RK4"
-            newton_flow_for_1_step_RK4!(ϕ,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
-        end
-
+        newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
     end
 
 end

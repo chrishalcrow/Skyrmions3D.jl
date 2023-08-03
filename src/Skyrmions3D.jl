@@ -25,7 +25,7 @@ include("properties.jl")
 export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview
 
 include("initialise.jl")
-export make_rational_map!, make_RM_product!, makeADHM!, get_close_ADHM_data
+export make_rational_map!, make_RM_product!, make_ADHM!, get_close_ADHM_data
 
 include("plotting.jl")
 export plot_field, plot_baryon_density, interactive_flow, plot_overview, plot_scan
@@ -97,8 +97,8 @@ Sets the `skyrmion` to have periodic boundary conditions if `is_periodic` is `tr
 """
 function set_periodic!(sk::Skyrmion, periodic::Bool)
 	
-	sk.sum_grid = sum_grid(sk.lp, sk.periodic)
 	sk.periodic = periodic
+	sk.sum_grid = sum_grid(sk.lp, sk.periodic)
 
 	if periodic == true
 		println("Periodic boundary conditions activated")

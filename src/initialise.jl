@@ -43,7 +43,7 @@ function make_RM_product!(sk, Xs)
 end
 
 """
-    mak_rational_map!(skyrmion, prof, pfn, qfn; kwargs... )
+    make_rational_map!(skyrmion, prof, pfn, qfn; kwargs... )
     
 Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
 
@@ -64,7 +64,7 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
     RI = R_from_axis_angle(iTH, i_n)
     RJ = R_from_axis_angle(jTH, j_n)
 
-    Threads.@threads for k in 1:lp[3]
+    for k in 1:lp[3]
         @inbounds for j in 1:lp[2], i in 1:lp[1]
 
             Xto = SVector{3,Float64}( x[1][i]-X[1], x[2][j]-X[2], x[3][k]-X[3] )
@@ -96,6 +96,8 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
     if skyrmion.periodic == false
         set_dirichlet!(skyrmion)
     end
+
+    #println("hello.")
     
 end
 
@@ -138,7 +140,7 @@ end
 
 function getOKprofile(k1,k2,B,I,m)
 
-    dk1=0.001;
+    #=dk1=0.001;
     dk2=0.001;
 
     for _ in 1:10
@@ -155,7 +157,26 @@ function getOKprofile(k1,k2,B,I,m)
     
     end
 
-    return k1, k2
+    return k1, k2=#
+
+    dk1=0.001;
+
+    for _ in 1:10
+
+        dE = (energy_test(k1+dk1,k2,(B,I,m)) - energy_test(k1-dk1,k2,(B,I,m)))/(2*dk1)   
+
+        ddE =  (energy_test(k1+dk1,k2,(B,I,m)) - 2.0*energy_test(k1,k2,(B,I,m)) + energy_test(k1-dk1,k2,(B,I,m)))/(dk1^2)  
+
+        change = dE/ddE
+
+        k1 -= change[1]
+        #k2 -= change[2]
+    
+    end
+
+    return k1, 1.0
+
+
 
 end
 
@@ -228,13 +249,13 @@ function R_from_axis_angle(th, n)
 
 end
 
-function makeADHM!(an_ADHM_skyrmion, LM)
+function make_ADHM!(an_ADHM_skyrmion, LM)
     B = size(LM)[2]
-    makeADHM!(an_ADHM_skyrmion, LM[1,1:B], LM[2:B+1,1:B])
+    make_ADHM!(an_ADHM_skyrmion, LM[1,1:B], LM[2:B+1,1:B])
 end
 
 """
-    makeADHM!(skyrmion, L, M )
+    make_ADHM!(skyrmion, L, M )
     
 Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M can be given by `Bx4` and `BxBx4` arrays or as `B` and `BxB` arrays of Quaternions, from the `GLMakie` package.
 
@@ -255,7 +276,7 @@ M[2,2] = Quaternion(-1.0, 0.0, 0.0, 0.0)
 ```
 
 """
-function makeADHM!(an_ADHM_skyrmion, L, M)
+function make_ADHM!(an_ADHM_skyrmion, L, M)
 
     B = size(L)[1]
 

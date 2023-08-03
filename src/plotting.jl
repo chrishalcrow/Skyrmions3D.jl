@@ -567,9 +567,9 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 			
 		elseif which_flow == 3
 			if dt == 0.0
-				newton_flow!(my_skyrmion; steps=total_runs )
+				newton_flow!(my_skyrmion; ϕd = skd, steps=total_runs )
 			else
-				newton_flow!(my_skyrmion; steps=total_runs, dt = dt  )
+				newton_flow!(my_skyrmion; ϕd = skd, steps=total_runs, dt = dt  )
 			end
 		end
 
