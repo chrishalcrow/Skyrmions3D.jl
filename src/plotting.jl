@@ -21,6 +21,148 @@ end
 
 
 """
+    plot_overview(skyrmion)
+    
+Plots the pion fields and a baryon density of `skyrmion`.
+
+"""
+function plot_overview(skyrmion; iso_value = 0.5)
+    
+    fig = Figure()
+
+
+	x = skyrmion.x
+	lp = skyrmion.lp
+
+	BD = Baryon(skyrmion,density=true)
+	bdmax = maximum(BD)
+    bdmin = minimum(BD)
+	
+	Biso_value = (bdmax - bdmin)/2.0
+
+	BDmesh = getmesh(BD, Biso_value, x)
+	skcolormap = make_color_map(skyrmion, BDmesh)
+
+	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
+	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
+
+
+	ax = Axis3(fig[1,1:2], aspect = the_aspect, title="Baryon density" )
+
+        Makie.mesh!(ax,BDmesh,
+        	color = skcolormap,
+        	shading=false,
+        	)
+
+    ax11 = Axis3(fig[2,1], 
+    	title= "Isosurface ϕ" * string(1) * " = ±" * string(iso_value),
+    	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
+    )
+	ax12 = Axis3(fig[2,2], 
+	title= "Isosurface ϕ" * string(2) * " = " * string(iso_value),
+	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
+	)
+	ax21 = Axis3(fig[3,1], 
+	title= "Isosurface ϕ" * string(3) * " = " * string(iso_value),
+	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
+	)
+	ax22 = Axis3(fig[3,2], 
+	title= "Isosurface ϕ" * string(4) * " = " * string(iso_value),
+	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
+	)
+
+	volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+	volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+
+	volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+	volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+
+	volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+	volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+
+	volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+	volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+
+	return fig
+
+end
+
+
+
+
+"""
+    plot_scan(skyrmion)
+    
+Plots the pion fields and a baryon density of `skyrmion`.
+
+"""
+function plot_scan(skyrmion; iso_value = 0.5)
+    
+    fig = Figure()
+
+	scanner = 18
+
+	x = skyrmion.x
+	lp = skyrmion.lp
+
+	BD = Baryon(skyrmion,density=true)
+	bdmax = maximum(BD)
+    bdmin = minimum(BD)
+	
+	Biso_value = (bdmax - bdmin)/2.0
+
+	BDmesh = getmesh(BD, Biso_value, x)
+	skcolormap = make_color_map(skyrmion, BDmesh)
+
+	println(BDmesh[1])
+
+	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
+	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
+
+	println(the_extrema[1])
+	println(the_extrema[2])
+
+
+	ax = Axis3(fig[1,1], aspect = the_aspect, title="Baryon density" )
+
+        Makie.mesh!(ax,BDmesh,
+        	color = skcolormap,
+        	shading=false,
+        	)
+			
+			#poly!(fig[1,1], Point3f[
+			#	(the_extrema[1][1], the_extrema[2][1], x[3][scanner]),
+		#		(the_extrema[1][1], the_extrema[2][2], x[3][scanner]), 
+		#		(the_extrema[1][2], the_extrema[2][2], x[3][scanner]), 
+		#		(the_extrema[1][2], the_extrema[2][1], x[3][scanner])])
+
+#		lines!(ax,[the_extrema[1][1], the_extrema[2][1],x[3][scanner]], [the_extrema[1][1], the_extrema[2][2], x[3][scanner]])#
+	#	lines!(ax,[the_extrema[1][1], the_extrema[2][2],x[3][scanner]], [the_extrema[1][2], the_extrema[2][2], x[3][scanner]])
+#		lines!(ax,[the_extrema[1][2], the_extrema[2][2],x[3][scanner]], [the_extrema[1][2], the_extrema[2][1], x[3][scanner]])
+#		lines!(ax,[the_extrema[1][2], the_extrema[2][1],x[3][scanner]], [the_extrema[1][1], the_extrema[2][1], x[3][scanner]])#
+
+	lilscale=0.99
+	lines!(ax, [lilscale*the_extrema[1][1],lilscale*the_extrema[1][1],lilscale*the_extrema[1][2],lilscale*the_extrema[1][2],lilscale*the_extrema[1][1]],[lilscale*the_extrema[2][1],lilscale*the_extrema[2][2],lilscale*the_extrema[2][2],lilscale*the_extrema[2][1],lilscale*the_extrema[2][1]],[x[3][scanner],x[3][scanner],x[3][scanner],x[3][scanner],x[3][scanner]] , linewidth=10)
+
+    ax11 = Axis(fig[2,1], 
+    	title= "A slice."
+    )
+
+
+
+
+
+	contour!(ax11, x[1], x[2], BD[:,:,scanner] )
+
+	return fig
+
+end
+
+
+
+
+
+"""
     plot_baryon_density(skyrmion; iso_value = 0.5*(max(BD) - min(BD)), juggling = false, kwargs...)
     
 Plots an isosurface of constant baryon density, with value `iso_value`, coloured to reveal the pion field structure, originally described in [].
@@ -41,8 +183,10 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs
 	bdmax = maximum(BD)
     bdmin = minimum(BD)
 	if iso_value == 0.0
-		iso_value = (bdmax - bdmin)/2.0
+		iso_value = (bdmax + bdmin)/4.0
 	end
+
+    println("iso_value = ", iso_value)
 
     if iso_value > bdmax || iso_value < bdmin
         error("Your iso_value is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
@@ -261,7 +405,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 	flow_tb = Textbox(g_dynamics[4,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
 
 	Label(g_dynamics[5,1], text="dt: ",halign=:right)
-	dt_tb = Textbox(g_dynamics[5,2]; placeholder=string(round(my_skyrmion.ls[1]*my_skyrmion.ls[2]/80.0;digits=5)),validator = Float64, tellwidth=false, halign=:left)
+	dt_tb = Textbox(g_dynamics[5,2]; placeholder=string(0.0),validator = Float64, tellwidth=false, halign=:left)
 
 	flow_button = Button(g_dynamics[6,1:2]; label="Flow!", tellwidth=false, halign=:center, font=:bold, width=220)
 
@@ -403,17 +547,30 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		#bd_tb.stored_string = bd_tb.displayed_string
 
 		dt = parse(Float64,to_value(dt_tb.displayed_string))
-		println("dt = ", dt)
+		#println("dt = ", dt)
 
 		total_runs = deepcopy(parse(Int64, to_value(flow_tb.displayed_string)))
 		iso_val = deepcopy(parse(Float64,to_value(bd_tb.displayed_string)))
 
 		if which_flow == 1
-			gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
+			if dt == 0.0
+				gradient_flow!(my_skyrmion; steps=total_runs)
+			else
+				gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
+			end
 		elseif which_flow == 2
-			arrested_newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
+			if dt == 0.0
+				arrested_newton_flow!(my_skyrmion; steps=total_runs )
+			else
+				arrested_newton_flow!(my_skyrmion; steps=total_runs, dt = dt )
+			end
+			
 		elseif which_flow == 3
-			newton_flow!(my_skyrmion, skd; steps=total_runs, dt = dt )
+			if dt == 0.0
+				newton_flow!(my_skyrmion; ϕd = skd, steps=total_runs )
+			else
+				newton_flow!(my_skyrmion; ϕd = skd, steps=total_runs, dt = dt  )
+			end
 		end
 
 		#if to_value(menu1.selection) == "Gradient flow"
@@ -425,6 +582,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		BD = Baryon(my_skyrmion,density=true)
 		BDmesh = getmesh(BD, iso_val, x)
 		skcolormap = make_color_map(my_skyrmion, BDmesh)
+
 
 		#displayed_energy[] = Energy(my_skyrmion)
 		#displayed_baryon[] = sum(BD)
