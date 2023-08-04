@@ -744,7 +744,7 @@ function reality(res,x,p)
 
         # makes the ADHM data symmetric
         for a in 1:4
-            res[7*count + 3 + a] = x[ B*4*(i+1 - 1) + 4*(k-1) + 1] - x[ B*4*(k+1-1) + 4*(i-1) + 1]
+            res[7*count + 3 + a] = x[ B*4*(i+1 - 1) + 4*(k-1) + a] - x[ B*4*(k+1-1) + 4*(i-1) + a]
         end
 
 
