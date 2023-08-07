@@ -687,22 +687,45 @@ end
 
 
 
-function get_close_ADHM_data(uADHM,iADHM)
+function get_close_ADHM_data(uADHM,iADHM; included_indices = [0,0])
+
 
     B = size(uADHM)[2]
+    println("Baryon number is ", B)
+
+    if included_indices == [0,0]
+        included_indices = vcat( [ [1,a] for a in 1:B ], [ [(b+1),b] for b in 1:B ] )
+    end
 
     ux = zeros(4*B*(B+1))
     u0 = zeros(4*B*(B+1))
+
+    coeffs = zeros(4*B*(B+1))
+
+
 
     count=1
     for i in 1:B+1, j in 1:B, k in 1:4
         ux[count] = uADHM[i,j][k]
         u0[count] = iADHM[i,j][k]
+        coeffs[count] = 0.0;
         count += 1
     end
+    for i in 1:size(included_indices)[1]
+        a = included_indices[i][1];
+        b = included_indices[i][2];
+        for c in 1:4
+            coeffs[Int(B*4*(a-1) + 4*(b-1) + c)] = 1.0
+        end
+    end
+
+    
+
+
+    newp = vcat(ux, coeffs)
 
     optproblem = OptimizationFunction(to_minimise, Optimization.AutoModelingToolkit(), cons=reality)
-    prob = OptimizationProblem(optproblem, u0 , ux, lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
+    prob = OptimizationProblem(optproblem, u0 , newp , lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
     sol = solve(prob,IPNewton())
 
     newLM = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B+1, b in 1:B ]
@@ -716,6 +739,61 @@ function get_close_ADHM_data(uADHM,iADHM)
     return newLM
 
 end
+
+
+
+
+function to_minimise(x,p)
+
+    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
+
+    ux = p[1:4*B*(B+1)];
+    coeffs = p[ 4*B*(B+1)+1: end]
+
+    tot = 0.0
+
+    # keep all terms
+    for i in 1:Int(round(size(x)[1]/4))
+            tot += coeffs[Int(i)]*(x[Int(i)] - ux[Int(i)])^2
+    end
+
+    #if included_indices == [[0 0]]
+    #included_indices = vcat( [ [1,a] for a in 1:B ], [ [(b+1),b] for b in 1:B ] )
+    #end
+
+    # only L and diag...
+
+    #(ux, included_indices) = p
+    #included_indices = p[2]
+
+    #println(size(p[2]))
+
+    #=for i in 1:size(included_indices)[1]
+        a = included_indices[i][1]
+        b = included_indices[i][2]
+        for c in 1:4
+            tot += coeffs[B*4*(a-1) + 4*(b-1) + c]*(x[B*4*(a-1) + 4*(b-1) + c] - ux[B*4*(a-1) + 4*(b-1) + c])^2
+        end
+    end=#
+
+    #=for i in 1:4*(B+1)
+        tot += (x[i] - ux[i])^2
+    end
+    for a in 2:B
+        for i in a*4*B + 4*(a-1) + 1 : a*4*B + 4*(a-1) + 4
+            tot += (x[i] - ux[i])^2
+        end
+    end
+=#
+
+    
+
+    return tot
+
+end
+
+
+
 
 
 
@@ -755,35 +833,3 @@ function reality(res,x,p)
     end
 
 end
-
-
-
-function to_minimise(x,ux)
-
-    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
-
-    tot = 0.0
-
-    # keep all terms
-    #for i in 1:round(size(x)[1]/4)
-    #        tot += (x[i] - ux[i])^2
-    #end
-
-    # only L and diag...
-    for i in 1:4*(B+1)
-        tot += (x[i] - ux[i])^2
-    end
-    for a in 2:B
-        for i in a*4*B + 4*(a-1) + 1 : a*4*B + 4*(a-1) + 4
-            tot += (x[i] - ux[i])^2
-        end
-    end
-
-
-    return tot
-
-end
-
-
-
-
