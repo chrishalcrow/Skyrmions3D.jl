@@ -10,7 +10,7 @@ module Skyrmions3D
 
 using Makie
 using GLMakie, WGLMakie, CairoMakie
-using Optimization, OptimizationOptimJL, ModelingToolkit, Symbolics
+using Optimization, OptimizationOptimJL, ForwardDiff, Symbolics
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 

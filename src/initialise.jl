@@ -724,7 +724,7 @@ function get_close_ADHM_data(uADHM,iADHM; included_indices = [0,0])
 
     newp = vcat(ux, coeffs)
 
-    optproblem = OptimizationFunction(to_minimise, Optimization.AutoModelingToolkit(), cons=reality)
+    optproblem = OptimizationFunction(to_minimise, Optimization.AutoForwardDiff(), cons=reality)
     prob = OptimizationProblem(optproblem, u0 , newp , lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
     sol = solve(prob,IPNewton())
 
