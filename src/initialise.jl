@@ -687,7 +687,7 @@ end
 
 
 
-function get_close_ADHM_data(uADHM,iADHM; included_indices = [0,0])
+function get_close_ADHM_data(uADHM, iADHM; included_indices = [0,0])
 
 
     B = size(uADHM)[2]
@@ -697,11 +697,12 @@ function get_close_ADHM_data(uADHM,iADHM; included_indices = [0,0])
         included_indices = vcat( [ [1,a] for a in 1:B ], [ [(b+1),b] for b in 1:B ] )
     end
 
+    println(included_indices)
+
     ux = zeros(4*B*(B+1))
     u0 = zeros(4*B*(B+1))
 
     coeffs = zeros(4*B*(B+1))
-
 
 
     count=1
@@ -719,8 +720,7 @@ function get_close_ADHM_data(uADHM,iADHM; included_indices = [0,0])
         end
     end
 
-    
-
+    println(coeffs)
 
     newp = vcat(ux, coeffs)
 
@@ -753,8 +753,11 @@ function to_minimise(x,p)
     tot = 0.0
 
     # keep all terms
-    for i in 1:Int(round(size(x)[1]/4))
-            tot += coeffs[Int(i)]*(x[Int(i)] - ux[Int(i)])^2
+    #for i in 1:Int(round(size(x)[1]/4))
+    #        tot += coeffs[Int(i)]*(x[Int(i)] - ux[Int(i)])^2
+    #end
+    for i in 1:Int(round(size(x)[1]))
+            tot += coeffs[i]*(x[Int(i)] - ux[Int(i)])^2
     end
 
     #if included_indices == [[0 0]]
