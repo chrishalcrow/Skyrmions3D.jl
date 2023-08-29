@@ -6,7 +6,7 @@ Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps o
 See also [`newton_flow!`, `arrested_newton_flow!`]
 
 """
-function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0, tolerance = 0.0, checks = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4) )
+function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0, tolerance = 0.0, checks = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), max_steps = Inf )
 
     if tolerance == 0 && checks > steps
         checks = steps
@@ -20,7 +20,7 @@ function gradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/1
     counter = 0
     prev_error = 1.0e9
     
-    while counter < steps
+    while counter < steps && counter < max_steps
         
         gradient_flow_for_n_steps!(ϕ,dEdp,checks,dt)
         
@@ -204,7 +204,7 @@ Applies an arrested Newton flow to `skyrmion` whose initial time derivative fiel
 
 See also [`gradient_flow!`, `newton_flow!`]
 """
-function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/10.0, steps=1, tolerance = 0.0, checks = max(100,steps), print_stuff = true)
+function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/10.0, steps=1, tolerance = 0.0, checks = max(100,steps), print_stuff = true, max_steps=Inf)
 
     if tolerance == 0 && checks > steps
         checks = steps
@@ -221,7 +221,7 @@ function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), d
 
 
     counter = 0
-    while counter < steps
+    while counter < steps && counter < max_steps
 
         arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp,dEdp2,dEdp3,dEdp4,dt,energy_density,checks, EnergyANF(ϕ,energy_density))
         error = max_abs_err(dEdp)

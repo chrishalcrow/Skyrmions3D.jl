@@ -3,19 +3,21 @@ module Skyrmions3D
 #= TO DO LIST 
 
 - Scanning plot
-- B=4 Alberto stuff
 
 =#
 
 
 using Makie
-using GLMakie, WGLMakie, CairoMakie
+using GLMakie, CairoMakie
 using Optimization, OptimizationOptimJL, ForwardDiff, Symbolics
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
 export Skyrmion, set_mpi!, set_periodic!, set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
 export check_if_normalised, normer!
+
+#temp
+export indx_symm, get_close_ADHM_data_symm, indx, get_close_ADHM_data_symm_an
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk

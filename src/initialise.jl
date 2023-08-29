@@ -32,11 +32,20 @@ function make_RM_product!(sk, Xs)
     temp_sk = Skyrmion(lp,ls)
 
     a=1
-    make_rational_map!(sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
-    
+    if size(Xs[a])[1] == 8
+        make_rational_map!(sk, Xs[a][1], Xs[a][2], Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+    else
+        make_rational_map!(sk, Xs[a][1],Xs[a][2], X = Xs[a][3], iTH = Xs[a][4], i_n = Xs[a][5], jTH = Xs[a][6], j_n = Xs[a][7]  )
+    end
+
     for a in 2:size(Xs)[1]
 
-        make_rational_map!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+        if size(Xs[a])[1] == 8
+            make_rational_map!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+        else
+            make_rational_map!(temp_sk, Xs[a][1],Xs[a][2], X = Xs[a][3], iTH = Xs[a][4], i_n = Xs[a][5], jTH = Xs[a][6], j_n = Xs[a][7]  )
+        end
+
         product_approx!(sk, temp_sk)
     end
 
@@ -74,7 +83,11 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
 
             sine_of_prof_r = sin(prof(r))
 
-            zRM = ( Xt[1] + 1.0im*Xt[2] )/(r + Xt[3])
+            if r + Xt[3] == 0
+                zRM = 0.0
+            else
+                zRM = ( Xt[1] + 1.0im*Xt[2] )/(r + Xt[3])
+            end
 
             pRM = pfn(zRM)
             qRM = qfn(zRM)
@@ -85,6 +98,12 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
             skyrmion.pion_field[i,j,k,2] = (sine_of_prof_r/den)*imag( pRM*conj(qRM) - qRM*conj(pRM) )
             skyrmion.pion_field[i,j,k,3] = (sine_of_prof_r/den)*real( qRM*conj(qRM) - pRM*conj(pRM) )
             skyrmion.pion_field[i,j,k,4] = cos(prof(r))
+
+            for a in 1:4
+                if isnan(skyrmion.pion_field[i,j,k,a])
+                    println(r + Xt[3])
+                end
+            end
 
             if iTH != 0.0
                 skyrmion.pion_field[i,j,k,1:3] = RI*skyrmion.pion_field[i,j,k,1:3]
@@ -115,7 +134,7 @@ function make_rational_map!(skyrmion, pfn, qfn; baryon=0.0, X=[0.0,0.0,0.0], iTH
     #println(k1)
     #println(k2)
     prof(r) = pi/(1 - tanh(-k2*k1))*( -tanh(k2*(r - k1)) + 1.0  );
-    make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+    make_rational_map!(skyrmion, pfn, qfn, prof; X, iTH, i_n, jTH, j_n )
     
 
 end
@@ -160,6 +179,7 @@ function getOKprofile(k1,k2,B,I,m)
     return k1, k2=#
 
     dk1=0.001;
+    k2=1.0;
 
     for _ in 1:10
 
@@ -724,7 +744,7 @@ function get_close_ADHM_data(uADHM, iADHM; included_indices = [0,0])
 
     newp = vcat(ux, coeffs)
 
-    optproblem = OptimizationFunction(to_minimise, Optimization.AutoForwardDiff(), cons=reality)
+    optproblem = OptimizationFunction(to_minimise, Optimization.AutoFiniteDiff(), cons=reality)
     prob = OptimizationProblem(optproblem, u0 , newp , lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
     sol = solve(prob,IPNewton())
 
@@ -828,6 +848,242 @@ function reality(res,x,p)
         # makes the ADHM data symmetric
         for a in 1:4
             res[7*count + 3 + a] = x[ B*4*(i+1 - 1) + 4*(k-1) + a] - x[ B*4*(k+1-1) + 4*(i-1) + a]
+        end
+
+
+        count += 1
+
+    end
+
+end
+
+
+
+
+function get_close_ADHM_data_symm(uADHM, iADHM; included_indices = [0,0])
+
+
+    B = size(uADHM)[2]
+    println("Baryon number is ", B)
+
+    if included_indices == [0,0]
+        included_indices = vcat( [ [1,a] for a in 1:B ], [ [(b+1),b] for b in 1:B ] )
+    end
+
+    println(included_indices)
+
+    ux = zeros(4*B*(B+1))
+    u0 = zeros(4*B*(B+1))
+
+    coeffs = zeros(4*B*(B+1))
+
+
+    count=1
+    for i in 1:B+1, j in 1:B, k in 1:4
+        ux[count] = uADHM[i,j][k]
+        u0[count] = iADHM[i,j][k]
+        coeffs[count] = 0.0;
+        count += 1
+    end
+    for i in 1:size(included_indices)[1]
+        a = included_indices[i][1];
+        b = included_indices[i][2];
+        for c in 1:4
+            coeffs[Int(B*4*(a-1) + 4*(b-1) + c)] = 1.0
+        end
+    end
+    println(coeffs)
+
+    newp = vcat(ux, coeffs)
+
+    optproblem = OptimizationFunction(to_minimise_symm, Optimization.AutoFiniteDiff(), cons=reality_symm)
+    prob = OptimizationProblem(optproblem, u0 , newp , lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
+    sol = solve(prob,IPNewton())
+
+    newLM = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B+1, b in 1:B ]
+    for i in 1:B+1, j in 1:B
+        #newLM[i,j] = Quaternion( sol[ B*4*(i-1) + 4*(j-1) + 1],
+        #sol[ B*4*(i-1) + 4*(j-1) + 2],
+        #sol[ B*4*(i-1) + 4*(j-1) + 3],
+        #sol[ B*4*(i-1) + 4*(j-1) + 4] )
+        newLM[i,j] = Quaternion( sol[ indx_symm(i,j,1,B) ],
+        sol[ indx_symm(i,j,2,B) ],
+        sol[ indx_symm(i,j,3,B) ],
+        sol[ indx_symm(i,j,4,B) ] )
+    end
+
+    return newLM
+
+end
+
+
+function get_close_ADHM_data_symm_an(uADHM, iADHM; included_indices = [0,0])
+
+
+    B = size(uADHM)[2]
+    println("Baryon number is ", B)
+
+    if included_indices == [0,0]
+        included_indices = vcat( [ [1,a] for a in 1:B ], [ [(b+1),b] for b in 1:B ] )
+    end
+
+    println(included_indices)
+
+    ux = zeros(4*B*(B+1))
+    u0 = zeros(4*B*(B+1))
+
+    coeffs = zeros(4*B*(B+1))
+
+
+    count=1
+    for i in 1:B+1, j in 1:B, k in 1:4
+        ux[count] = uADHM[i,j][k]
+        u0[count] = iADHM[i,j][k]
+        coeffs[count] = 0.0;
+        count += 1
+    end
+    for i in 1:size(included_indices)[1]
+        a = included_indices[i][1];
+        b = included_indices[i][2];
+        for c in 1:4
+            coeffs[Int(B*4*(a-1) + 4*(b-1) + c)] = 1.0
+        end
+    end
+    println(coeffs)
+
+    newp = vcat(ux, coeffs)
+
+    optproblem = OptimizationFunction(to_minimise_symm, grad = grad_to_minimise_symm, Optimization.AutoForwardDiff(), cons=reality_symm)
+    prob = OptimizationProblem(optproblem, u0 , newp , lcons = zeros(Float64,Int(7*B*(B-1)/2)), ucons = zeros(Float64,Int(7*(B-1)*(B)/2)) )
+    sol = solve(prob,IPNewton())
+
+    newLM = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B+1, b in 1:B ]
+    for i in 1:B+1, j in 1:B
+        #newLM[i,j] = Quaternion( sol[ B*4*(i-1) + 4*(j-1) + 1],
+        #sol[ B*4*(i-1) + 4*(j-1) + 2],
+        #sol[ B*4*(i-1) + 4*(j-1) + 3],
+        #sol[ B*4*(i-1) + 4*(j-1) + 4] )
+        newLM[i,j] = Quaternion( sol[ indx_symm(i,j,1,B) ],
+        sol[ indx_symm(i,j,2,B) ],
+        sol[ indx_symm(i,j,3,B) ],
+        sol[ indx_symm(i,j,4,B) ] )
+    end
+
+    return newLM
+
+end
+
+function to_minimise_symm(x,p)
+
+    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
+
+    ux = p[1:4*B*(B+1)];
+    coeffs = p[ 4*B*(B+1)+1: end]
+
+    tot = 0.0
+
+    for i in 1:B, k in 1:B+1, a in 1:4
+        tot += coeffs[indx_symm(i,k,a,B) ]*(x[indx_symm(i,k,a,B)] - ux[indx_symm(i,k,a,B)])^2
+    end
+    #end
+    #for i in 1:Int(round(size(x)[1]))
+    #        tot += coeffs[i]*(x[Int(i)] - ux[Int(i)])^2
+    #end
+
+
+    return tot
+
+end
+
+function grad_to_minimise_symm(G,x,p)
+
+    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
+
+    ux = p[1:4*B*(B+1)];
+    coeffs = p[ 4*B*(B+1)+1: end]
+
+
+
+    for i in 1:B, k in 1:B+1, a in 1:4
+        G[indx_symm(i,k,a,B)] = 2.0*coeffs[indx_symm(i,k,a,B) ]*(x[indx_symm(i,k,a,B)] - ux[indx_symm(i,k,a,B)])
+    end
+    #end
+    #for i in 1:Int(round(size(x)[1]))
+    #        tot += coeffs[i]*(x[Int(i)] - ux[Int(i)])^2
+    #end
+
+end
+
+function hess_to_minimise_symm(H,x,p)
+
+    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
+
+    ux = p[1:4*B*(B+1)];
+    coeffs = p[ 4*B*(B+1)+1: end]
+
+    for a in 1:4*B*(B+1), b in 4*B*(B+1)
+        H[a,b] = 0.0
+    end
+
+    for i in 1:B, k in 1:B+1, a in 1:4
+        H[indx_symm(i,k,a,B), indx_symm(i,k,a,B)] += 2.0*coeffs[indx_symm(i,k,a,B) ]
+    end
+
+end
+
+
+function indx(j,i,k,B)
+
+    B*4*(j-1) + 4*(i-1) + k
+
+end
+
+function indx_symm(j,i,k,B)
+
+    if j-1 <= i 
+        B*4*(j-1) + 4*(i-1) + k
+    else
+        B*4*(i) + 4*(j-2) + k
+    end
+
+end
+
+
+function reality_symm(res,x,p)
+
+    B = Int(1/2*(-1+sqrt(1.0+size(x)[1])))
+
+    count = 0
+    for i in 1:B-1, k in i+1:B
+
+        # imposes reality on the upper triangular part of the ADHM data 
+
+        for a in 1:3
+            res[7*count + a] = 0.0
+        end
+
+        for j in 1:B+1
+
+            res[7*count+1] += x[ indx_symm(j,i,1,B) ]*x[indx_symm(j,k,4,B)] - x[ indx_symm(j,i,4,B)]*x[ indx_symm(j,k,1,B)] + x[ indx_symm(j,i,2,B)]*x[indx_symm(j,k,3,B)] - x[ indx_symm(j,i,3,B)]*x[ indx_symm(j,k,2,B)]
+            res[7*count+2] += x[ indx_symm(j,i,2,B) ]*x[indx_symm(j,k,4,B)] - x[ indx_symm(j,i,4,B)]*x[ indx_symm(j,k,2,B)] + x[ indx_symm(j,i,3,B)]*x[indx_symm(j,k,1,B)] - x[ indx_symm(j,i,1,B)]*x[ indx_symm(j,k,3,B)]
+            res[7*count+3] += x[ indx_symm(j,i,3,B) ]*x[indx_symm(j,k,4,B)] - x[ indx_symm(j,i,4,B)]*x[ indx_symm(j,k,3,B)] + x[ indx_symm(j,i,1,B)]*x[indx_symm(j,k,2,B)] - x[ indx_symm(j,i,2,B)]*x[ indx_symm(j,k,1,B)]
+
+            #res[7*count+1] += x[ indx(j,i,1,B) ]*x[indx(j,k,4,B)] - x[ indx(j,i,4,B)]*x[ indx(j,k,1,B)] + x[ indx(j,i,2,B)]*x[indx(j,k,3,B)] - x[ indx(j,i,3,B)]*x[ indx(j,k,2,B)]
+            #res[7*count+2] += x[ indx(j,i,2,B) ]*x[indx(j,k,4,B)] - x[ indx(j,i,4,B)]*x[ indx(j,k,2,B)] + x[ indx(j,i,3,B)]*x[indx(j,k,1,B)] - x[ indx(j,i,1,B)]*x[ indx(j,k,3,B)]
+            #res[7*count+3] += x[ indx(j,i,3,B) ]*x[indx(j,k,4,B)] - x[ indx(j,i,4,B)]*x[ indx(j,k,3,B)] + x[ indx(j,i,1,B)]*x[indx(j,k,2,B)] - x[ indx(j,i,2,B)]*x[ indx(j,k,1,B)]
+
+            # res[7*count+1] += x[ B*4*(j-1) + 4*(i-1) + 1]*x[ B*4*(j-1) + 4*(k-1) + 4] - x[ B*4*(j-1) + 4*(i-1) + 4]*x[ B*4*(j-1) + 4*(k-1) + 1] + x[ B*4*(j-1) + 4*(i-1) + 2]*x[ B*4*(j-1) + 4*(k-1) + 3] - x[ B*4*(j-1) + 4*(i-1) + 3]*x[ B*4*(j-1) + 4*(k-1) + 2]
+
+            # res[7*count+2] += x[ B*4*(j-1) + 4*(i-1) + 2]*x[ B*4*(j-1) + 4*(k-1) + 4] - x[ B*4*(j-1) + 4*(i-1) + 4]*x[ B*4*(j-1) + 4*(k-1) + 2] + x[ B*4*(j-1) + 4*(i-1) + 3]*x[ B*4*(j-1) + 4*(k-1) + 1] - x[ B*4*(j-1) + 4*(i-1) + 1]*x[ B*4*(j-1) + 4*(k-1) + 3]
+
+            # res[7*count+3] += x[ B*4*(j-1) + 4*(i-1) + 3]*x[ B*4*(j-1) + 4*(k-1) + 4] - x[ B*4*(j-1) + 4*(i-1) + 4]*x[ B*4*(j-1) + 4*(k-1) + 3] + x[ B*4*(j-1) + 4*(i-1) + 1]*x[ B*4*(j-1) + 4*(k-1) + 2] - x[ B*4*(j-1) + 4*(i-1) + 2]*x[ B*4*(j-1) + 4*(k-1) + 1]
+
+        end
+
+        # makes the ADHM data symmetric
+        for a in 1:4
+            res[7*count + 3 + a] = x[ indx(i+1,k,a,B) ] - x[ indx(k+1,i,a,B) ]
+            #res[7*count + 3 + a] = x[ B*4*(i+1 - 1) + 4*(k-1) + a] - x[ B*4*(k+1-1) + 4*(i-1) + a]
         end
 
 
