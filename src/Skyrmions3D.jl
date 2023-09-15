@@ -6,6 +6,8 @@ module Skyrmions3D
 
 =#
 
+# temp
+export R_from_axis_angle
 
 using Makie
 using GLMakie, CairoMakie
@@ -63,13 +65,11 @@ mutable struct Skyrmion
 	index_grid_y::Vector{Int64}
 	index_grid_z::Vector{Int64}
 	sum_grid::Vector{UnitRange{Int64}}
-	derivative_functions::Vector{Function}
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp), sum_grid(lp, periodic), [getDX, getDDX] )
-
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic), [getDX, getDDX] )
+Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp), sum_grid(lp, periodic) )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic) )
 
 mutable struct profile
     field::Vector{Float64}
@@ -80,7 +80,6 @@ end
 
 
 profile(lp,ls) = profile( zeros(Float64,lp), lp, ls,  [ ls*i for i in 0:(lp-1) ] )
-
 
 
 """
@@ -236,7 +235,7 @@ end
 
 function index_grid(lp)
 
-	index_grid_array = zeros(lp+4)
+	index_grid_array = zeros(Int64, lp+4)
 
 	for i in 1:lp+4
 		index_grid_array[i] = mod1(i-2,lp)
@@ -293,22 +292,29 @@ See also [`normer`]
 """
 function normer!(sk)
 
-	Threads.@threads for k in 1:sk.lp[3]
-		for j in 1:sk.lp[2], i in 1:sk.lp[1]
-			
-			@inbounds normer = 1.0/sqrt( sk.pion_field[i,j,k,1]^2 + sk.pion_field[i,j,k,2]^2 + sk.pion_field[i,j,k,3]^2 + sk.pion_field[i,j,k,4]^2 )
-			for a in 1:4
-				@inbounds sk.pion_field[i,j,k,a] *= normer
-			end
-	
-		end
-	end
+    normer!(sk.pion_field, sk.lp)
+
+end
+
+"""
+    normer(skyrmion)
+
+Returns normalised `skyrmion`.
+
+See also [`normer!`]
+
+"""
+function normer(sk)
+
+    sk_new = deepcopy(sk)
+    normer!(sk_new.pion_field, sk_new.lp)
+
+	return sk_new
+
 end
 
 
-function normer!(pion_field::Array{Float64, 4})
-
-	lp = size(pion_field)[1:3]
+function normer!(pion_field::Array{Float64, 4}, lp)
 
 	Threads.@threads for k in 1:lp[3]
 		for j in 1:lp[2], i in 1:lp[1]
@@ -322,45 +328,4 @@ function normer!(pion_field::Array{Float64, 4})
 	end
 end
 
-
-
-"""
-    normer(skyrmion)
-
-Returns normalised `skyrmion`.
-
-See also [`normer!`]
-
-"""
-function normer(sk)
-
-    lp = sk.lp
-    ls = sk.ls
-
-    sk_new = Skyrmion(lp,ls)
-
-	Threads.@threads for k in 1:sk.lp[3]
-		for j in 1:sk.lp[2], i in 1:sk.lp[1]
-			
-			@inbounds normer = 1.0/sqrt( sk.pion_field[i,j,k,1]^2 + sk.pion_field[i,j,k,2]^2 + sk.pion_field[i,j,k,3]^2 + sk.pion_field[i,j,k,4]^2 )
-			for a in 1:4
-				@inbounds sk_new.pion_field[i,j,k,a] = sk.pion_field[i,j,k,a]*normer
-			end
-	
-		end
-	end
-
-	return sk_new
-
 end
-
-end
-#=
-function Base.:+(q1::Quaternion{Float64}, q2::Quaternion{Float64})
-    return Quaternion(q1[1] + q2[1], q1[2] + q2[2], q1[3] + q2[3], q1[4] + q2[4])
-end 
-
-function Base.:-(q1::Quaternion{Float64}, q2::Quaternion{Float64})
-    return Quaternion(q1[1] - q2[1], q1[2] - q2[2], q1[3] - q2[3], q1[4] - q2[4])
-end 
-=#

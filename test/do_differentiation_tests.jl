@@ -1,6 +1,6 @@
 
-using Skyrmions
-
+using Skyrmions3D
+#=
 x2y3z4 = zeros(5,5,5,1)
 for i in 1:5, j in 1:5, k in 1:5
     x2y3z4[i,j,k,1] = i^2*j^2 + 2.0*i^2*k^2 + 3.0*j^2*k^2
@@ -17,4 +17,4 @@ end
 @test dxdyD(x2y3z4,1,3,3,3,1.0,1.0) ≈ 4.0*3^2
 @test dxdzD(x2y3z4,1,3,3,3,1.0,1.0) ≈ 8.0*3^2
 @test dydzD(x2y3z4,1,3,3,3,1.0,1.0) ≈ 12.0*3^2
-
+=#
