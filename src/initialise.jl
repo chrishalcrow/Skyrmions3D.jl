@@ -140,25 +140,6 @@ end
 
 function getOKprofile(k1,k2,B,I,m)
 
-    #=dk1=0.001;
-    dk2=0.001;
-
-    for _ in 1:10
-
-        dE = [(energy_test(k1+dk1,k2,(B,I,m)) - energy_test(k1-dk1,k2,(B,I,m)))/(2*dk1)   (energy_test(k1,k2+dk2,(B,I,m)) - energy_test(k1,k2-dk2,(B,I,m)))/(2*dk1) ]
-
-        ddE = [ (energy_test(k1+dk1,k2,(B,I,m)) - 2.0*energy_test(k1,k2,(B,I,m)) + energy_test(k1-dk1,k2,(B,I,m)))/(dk1^2) ( energy_test(k1+dk1,k2+dk2,(B,I,m)) + energy_test(k1-dk1,k2-dk2,(B,I,m)) - energy_test(k1+dk1,k2-dk2,(B,I,m)) - energy_test(k1-dk1,k2+dk2,(B,I,m)) )/(4*dk1*dk2)  ;
-                ( energy_test(k1+dk1,k2+dk2,(B,I,m)) + energy_test(k1-dk1,k2-dk2,(B,I,m)) - energy_test(k1+dk1,k2-dk2,(B,I,m)) - energy_test(k1-dk1,k2+dk2,(B,I,m)) )/(4*dk1*dk2)  (energy_test(k1,k2+dk2,(B,I,m)) - 2.0*energy_test(k1,k2,(B,I,m)) + energy_test(k1,k2-dk2,(B,I,m)))/(dk2^2) ]
-
-        change = inv(ddE)*dE'
-
-        k1 -= change[1]
-        k2 -= change[2]
-    
-    end
-
-    return k1, k2=#
-
     dk1=0.001;
 
     for _ in 1:10
@@ -170,7 +151,6 @@ function getOKprofile(k1,k2,B,I,m)
         change = dE/ddE
 
         k1 -= change[1]
-        #k2 -= change[2]
     
     end
 
@@ -232,6 +212,7 @@ function R_from_axis_angle(th, n)
 
     if n == [0.0,0.0,0.0]
         println("ERROR: your vector is zero.")
+        return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
     end
 
     n1 = n[1]
@@ -316,9 +297,6 @@ function make_ADHM!(an_ADHM_skyrmion, L, M)
 
     ctL = [ cos(lstime*(tint-1)) for tint in 1:tsteps+1 ]
     stL = [ sin(lstime*(tint-1)) for tint in 1:tsteps+1 ]
-
-
-
 
     x = an_ADHM_skyrmion.x
     lp = an_ADHM_skyrmion.lp
@@ -491,11 +469,6 @@ function ADHMpt2(L,M,y,B,tsteps,ctL,stL)
     end
 
     for tint in 1:2:tsteps-1
-
-        #= FIRST ORDER 
-        getΩ!(Ω1,allN[tint+1,:,:],allN[tint,:,:],B)
-        Ω1M = makeQmultmatrix2(Ω1)
-        U = Ω1M*U =#
 
         getΩf!(Ω1,allN,tint+2,tint+1,B)
         getΩf!(Ω2,allN,tint+1,tint,B)

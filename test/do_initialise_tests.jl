@@ -62,3 +62,20 @@ set_physical!(a_skyrmion, false)
 
 @test a_skyrmion.physical == false
 
+@test sum_grid([3,3,3],true) == sum_grid(3,true)
+
+@test sum_grid([3,3,3],false) == sum_grid(3,false)
+
+@test index_grid(6)[end]   == 2
+@test index_grid(6)[end-1] == 1
+@test index_grid(6)[1]     == 5
+@test index_grid(6)[2]     == 6
+
+a_skyrmion.pion_field[2,3,1,1] = 2.0
+normer!(a_skyrmion)
+check_if_normalised(a_skyrmion)
+
+a_skyrmion.pion_field[2,3,1,1] = 2.0
+check_if_normalised(normer(a_skyrmion))
+
+
