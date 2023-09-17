@@ -16,6 +16,12 @@ product_approx!(a_skyrmion, b_skyrmion)
 translate_sk!(a_skyrmion, [0.0,0.0,-4.0])
 @test a_skyrmion.pion_field == b_skyrmion.pion_field
 
+rotate_sk!(a_skyrmion, 0.5, [0.0,0.0,1.0])
+@test a_skyrmion.pion_field == b_skyrmion.pion_field
+
+isorotate_sk!(a_skyrmion, 0.5, [0.0,1.0,0.0])
+@test a_skyrmion.pion_field == b_skyrmion.pion_field
+
 
 # Check if transformations work in the same way for rational maps and post-RM transforms.
 # Need to actually make a B=1
@@ -38,7 +44,24 @@ for X0 in [ [0.2,0,0,0,0], [-0.2,0.0,0.0], [0.0,0.2,0.0], [0.0,-0.2,0.0], [0.0,0
 
 end
 
+theta = 2.0*pi*rand()
+n = [rand(), rand(), rand()]
+
+make_rational_map!(a_skyrmion, p, q, f)
+make_rational_map!(b_skyrmion, p, q, f, iTH = theta, i_n = n)
+@test isorotate_sk(a_skyrmion, theta, n).pion_field[3,3,3,:] ≈ b_skyrmion.pion_field[3,3,3,:]
+
+make_rational_map!(a_skyrmion, p, q, f)
+make_rational_map!(b_skyrmion, p, q, f, jTH = theta, j_n = n)
+@test rotate_sk(a_skyrmion, theta, n).pion_field[3,3,3,:] ≈ b_skyrmion.pion_field[3,3,3,:]
 
 
+b_skyrmion = Skyrmion(6,0.2)
+set_neumann!(b_skyrmion)
+make_rational_map!(b_skyrmion, p, q, f, X=[0.2,0.0,0.0])
+center_skyrmion!(a_skyrmion)
+@test center_of_mass(a_skyrmion) ≈ [0.0,0.0,0.0]
 
 
+Skyrmions3D.set_dirichlet_boudary!(b_skyrmion, vac=[2.0,0.2,-0.3,0.5])
+@test b_skyrmion.pion_field[1,1,1,:] == [2.0,0.2,-0.3,0.5]

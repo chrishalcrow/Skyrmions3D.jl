@@ -237,6 +237,7 @@ function rotate_sk!(skyrmion,θ,n)
     rotation_matrix = R_from_axis_angle(θ,n)
 
     lp = skyrmion.lp
+    x = skyrmion.x
 
     sky_temp = deepcopy(skyrmion)
 
@@ -285,6 +286,7 @@ function rotate_sk(skyrmion,θ,n)
     rotation_matrix = R_from_axis_angle(θ,n)
 
     lp = skyrmion.lp
+    x = skyrmion.x
 
     sky_temp = deepcopy(skyrmion)
 

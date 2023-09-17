@@ -1,10 +1,5 @@
 module Skyrmions3D
 
-#= TO DO LIST 
-
-- Scanning plot
-
-=#
 
 using Makie
 using GLMakie, CairoMakie
@@ -15,9 +10,6 @@ using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgeb
 export Skyrmion, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
-
-#temp
-export indx_symm, get_close_ADHM_data_symm, indx, get_close_ADHM_data_symm_an
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
