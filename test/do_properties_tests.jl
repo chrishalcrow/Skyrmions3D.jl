@@ -7,11 +7,17 @@ b_skyrmion = deepcopy(a_skyrmion)
 overview(a_skyrmion)
 
 @test Energy(a_skyrmion) ≈ 0.0
-
 @test Energy(a_skyrmion, density=true) ≈ 0.0.*similar(a_skyrmion.pion_field[:,:,:,1])
 
-@test Skyrmions3D.engpt(zeros(3,4),[0.0,0.0,0.0,1.0][4],rand()) ≈ 0.0
+set_neumann!(a_skyrmion)
+@test Energy(a_skyrmion) ≈ 0.0
 
+set_periodic!(a_skyrmion)
+@test Energy(a_skyrmion) ≈ 0.0
+
+set_dirichlet!(a_skyrmion)
+
+@test Skyrmions3D.engpt(zeros(3,4),[0.0,0.0,0.0,1.0][4],rand()) ≈ 0.0
 
 @test Baryon(a_skyrmion) ≈ 0.0
 @test Baryon(a_skyrmion, density=true) ≈ 0.0.*similar(a_skyrmion.pion_field[:,:,:,1])

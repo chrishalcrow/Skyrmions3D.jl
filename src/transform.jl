@@ -76,7 +76,7 @@ Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
 See also [`translate_sk!`]
 """
-function translate_sk(skyrmion, X::Vector{Number})
+function translate_sk(skyrmion, X)
 
     x = skyrmion.x
     lp = skyrmion.lp
