@@ -11,7 +11,7 @@ the_same_skyrmion = Skyrmion([5,5,5],[0.2,0.2,0.2])
 @test a_skyrmion.Fpi == the_same_skyrmion.Fpi
 @test a_skyrmion.ee == the_same_skyrmion.ee
 @test a_skyrmion.physical == the_same_skyrmion.physical
-@test a_skyrmion.periodic == the_same_skyrmion.periodic
+@test a_skyrmion.dirichlet == the_same_skyrmion.dirichlet
 @test a_skyrmion.index_grid_x == the_same_skyrmion.index_grid_x
 @test a_skyrmion.index_grid_y == the_same_skyrmion.index_grid_y
 @test a_skyrmion.index_grid_z == the_same_skyrmion.index_grid_z
@@ -38,9 +38,21 @@ set_lattice!(a_skyrmion, [6,4,7], [0.1, 0.15, 0.25])
 @test a_skyrmion.ls[2] == 0.15
 @test a_skyrmion.ls[3] == 0.25
 
-set_periodic!(a_skyrmion, true)
+@test a_skyrmion.dirichlet == true
 
-@test a_skyrmion.periodic == true
+set_neumann!(a_skyrmion)
+@test a_skyrmion.dirichlet == false
+@test a_skyrmion.boundary_conditions == "neumann"
+
+@test a_skyrmion.sum_grid == [ 1:6, 1:4, 1:7 ] 
+
+@test a_skyrmion.index_grid_x == [2, 1, 1, 2, 3, 4, 5, 6, 6, 5]
+@test a_skyrmion.index_grid_y == [2, 1, 1, 2, 3, 4, 4, 3]
+@test a_skyrmion.index_grid_z == [2, 1, 1, 2, 3, 4, 5, 6, 7, 7, 6]
+
+set_periodic!(a_skyrmion)
+@test a_skyrmion.dirichlet == false
+@test a_skyrmion.boundary_conditions == "periodic"
 
 @test a_skyrmion.sum_grid == [ 1:6, 1:4, 1:7 ] 
 
@@ -48,9 +60,9 @@ set_periodic!(a_skyrmion, true)
 @test a_skyrmion.index_grid_y == [3, 4, 1, 2, 3, 4, 1, 2]
 @test a_skyrmion.index_grid_z == [6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2]
 
-set_periodic!(a_skyrmion, false)
-
-@test a_skyrmion.periodic == false
+set_dirichlet!(a_skyrmion)
+@test a_skyrmion.dirichlet == true
+@test a_skyrmion.boundary_conditions == "dirichlet"
 
 @test a_skyrmion.sum_grid == [ 3:4, 3:2, 3:5 ] 
 
@@ -62,16 +74,21 @@ set_physical!(a_skyrmion, false)
 
 @test a_skyrmion.physical == false
 
-@test sum_grid([3,3,3],true) == sum_grid(3,true)
+@test Skyrmions3D.sum_grid([3,3,3],"dirichlet") == Skyrmions3D.sum_grid(3,"dirichlet")
 
-@test sum_grid([3,3,3],false) == sum_grid(3,false)
+@test Skyrmions3D.sum_grid([3,3,3],"neumann") == Skyrmions3D.sum_grid(3,"neumann")
 
-@test index_grid(6)[end]   == 2
-@test index_grid(6)[end-1] == 1
-@test index_grid(6)[1]     == 5
-@test index_grid(6)[2]     == 6
+@test Skyrmions3D.sum_grid([3,3,3],"periodic") == Skyrmions3D.sum_grid(3,"periodic")
+
+@test Skyrmions3D.index_grid(6,"periodic")[end]   == 2
+@test Skyrmions3D.index_grid(6,"periodic")[end-1] == 1
+@test Skyrmions3D.index_grid(6,"periodic")[1]     == 5
+@test Skyrmions3D.index_grid(6,"periodic")[2]     == 6
 
 a_skyrmion.pion_field[2,3,1,1] = 2.0
+
+@test_throws AssertionError check_if_normalised(a_skyrmion)
+
 normer!(a_skyrmion)
 check_if_normalised(a_skyrmion)
 

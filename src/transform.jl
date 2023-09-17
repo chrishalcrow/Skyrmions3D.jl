@@ -7,25 +7,13 @@ See also [`product_approx`]
 """
 function product_approx!(sk1, sk2)
 
-    if sk1.x != sk2.x
-        println("Skyrmion grids are not equal. Aborting product.")
-        return
-    end
+    check_grids(sk1,sk2)
 
-    x = sk1.x
     lp = sk1.lp
-    ls = sk1.ls
-
-    tempsk = Skyrmion(lp,ls)
+    tempsk = deepcopy(sk1)
 
     for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1]
-
-        tempsk.pion_field[i,j,k,4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
-        for a in 1:3
-            tempsk.pion_field[i,j,k,a] = sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,4] + sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,a]
-            tempsk.pion_field[i,j,k,4] -= sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,a] 
-        end
-
+        tempsk.pion_field[i,j,k,:] = product_approx_pt(sk1,sk2,i,j,k)
     end
 
     normer!(tempsk)
@@ -42,25 +30,14 @@ See also [`product_approx!`]
 """
 function product_approx(sk1, sk2)
 
-    if sk1.x != sk2.x
-        println("Skyrmion grids are not equal. Aborting product.")
-        return
-    end
+    check_grids(sk1,sk2)
 
-    x = sk1.x
     lp = sk2.lp
-    ls = sk2.ls
 
-    tempsk = Skyrmion(lp,ls)
+    tempsk = deepcopy(sk1)
 
     for k in 1:lp[3], j in 1:lp[2], i in 1:lp[1] 
-
-        tempsk.pion_field[i,j,k,4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
-        for a in 1:3
-            tempsk.pion_field[i,j,k,a] = sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,4] + sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,a]
-            tempsk.pion_field[i,j,k,4] -= sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,a] 
-        end
-
+        tempsk.pion_field[i,j,k,:] = product_approx_pt(sk1,sk2,i,j,k)
     end
 
     normer!(tempsk)
@@ -69,6 +46,29 @@ function product_approx(sk1, sk2)
 
 end
 
+function check_grids(sk1,sk2)
+    if sk1.x != sk2.x
+        error("skyrmion grids are not equal")
+        return
+    end
+end
+
+function product_approx_pt(sk1, sk2, i, j, k)
+
+    temp_pt = MVector{4, Float64}(0.0, 0.0, 0.0, 0.0)
+
+    temp_pt[4] = sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,4] 
+    for a in 1:3
+        temp_pt[a] = sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,4] + sk1.pion_field[i,j,k,4]*sk2.pion_field[i,j,k,a]
+        temp_pt[4] -= sk1.pion_field[i,j,k,a]*sk2.pion_field[i,j,k,a] 
+    end
+
+    return temp_pt
+
+end
+
+
+
 """
     translate_sk(skyrmion,X) -> translated_skyrmion
 
@@ -76,13 +76,12 @@ Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
 See also [`translate_sk!`]
 """
-function translate_sk(skyrmion,X)
+function translate_sk(skyrmion, X::Vector{Number})
 
     x = skyrmion.x
     lp = skyrmion.lp
-    ls = skyrmion.ls
 
-    sky_temp = Skyrmion(lp,ls)
+    sky_temp = deepcopy(skyrmion)
 
     vac = [0.0,0.0,0.0,1.0]
 
@@ -113,9 +112,8 @@ function translate_sk!(skyrmion,X)
 
     x = skyrmion.x
     lp = skyrmion.lp
-    ls = skyrmion.ls
 
-    sky_temp = Skyrmion(lp,ls)
+    sky_temp = deepcopy(skyrmion)
 
     vac = [0.0,0.0,0.0,1.0]
 
@@ -155,12 +153,9 @@ function isorotate_sk!(skyrmion,θ,n)
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
-
-    x = skyrmion.x
     lp = skyrmion.lp
-    ls = skyrmion.ls
 
-    tempsk = Skyrmion(lp,ls)
+    tempsk = deepcopy(skyrmion)
 
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:3
         tempsk.pion_field[i,j,k,a] = 0.0
@@ -200,12 +195,9 @@ function isorotate_sk(skyrmion,θ,n)
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
-    x = skyrmion.x
+    tempsk = deepcopy(skyrmion)
+
     lp = skyrmion.lp
-    ls = skyrmion.ls
-
-    tempsk = Skyrmion(lp,ls)
-
     for i in 1:lp[1], j in 1:lp[2], k in 1:lp[3], a in 1:3
         tempsk.pion_field[i,j,k,a] = 0.0
     end
@@ -244,11 +236,9 @@ function rotate_sk!(skyrmion,θ,n)
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
-    x = skyrmion.x
     lp = skyrmion.lp
-    ls = skyrmion.ls
 
-    sky_temp = Skyrmion(lp,ls)
+    sky_temp = deepcopy(skyrmion)
 
     vac = [0.0,0.0,0.0,1.0]
 
@@ -294,11 +284,9 @@ function rotate_sk(skyrmion,θ,n)
 
     rotation_matrix = R_from_axis_angle(θ,n)
 
-    x = skyrmion.x
     lp = skyrmion.lp
-    ls = skyrmion.ls
 
-    sky_temp = Skyrmion(lp,ls)
+    sky_temp = deepcopy(skyrmion)
 
     vac = [0.0,0.0,0.0,1.0]
 
@@ -346,7 +334,7 @@ end
     Sets the boundary of `skyrmion` equal to `vac`, with default value `[0.0, 0.0, 0.0, 1.0]`
 
 """
-function set_dirichlet!(sk; vac=[0.0,0.0,0.0,1.0])
+function set_dirichlet_boudary!(sk; vac=[0.0,0.0,0.0,1.0])
 
     for i in 1:sk.lp[1], j in 1:sk.lp[2]
         sk.pion_field[i,j,1,:] .= vac

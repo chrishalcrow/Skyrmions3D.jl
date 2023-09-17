@@ -9,11 +9,7 @@ function overview(sk)
     hbar = 197
 
     println("This skyrmion is on a ", sk.lp[1],"x",sk.lp[2],"x",sk.lp[3]," grid, with lattice spacing [", sk.ls[1],", ", sk.ls[2],", ", sk.ls[3], "]. ")
-    if sk.periodic==true 
-        println("The field is periodic.")
-    else
-        println("The field is not periodic.")
-    end
+    println("The boundary conditions are "*sk.boundary_conditions)
     println()
     println("            m = ", round(sk.mpi, sigdigits=5) ) 
     println("Baryon number = ", round(Baryon(sk), sigdigits=5) ) 
@@ -151,8 +147,12 @@ function center_of_mass(sk)
         toteng += the_engpt
    
     end
-        
-    return com/toteng
+
+    if toteng ≈ 0.0
+        return [0.0,0.0,0.0]
+    else
+        return com/toteng
+    end
 
 end 
 
@@ -164,10 +164,15 @@ Compute root mean square charge radius of a skyrmion, using the baryon density.
 """
 function rms_baryon(sk)
 
+    B0 = Baryon(sk; moment = 0)
+    if B0 == 0.0
+        return 0.0
+    end
+
     if sk.physical == false
-        return sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))
+        return sqrt(Baryon(sk; moment = 2)/B0)
     else
-        return ( sqrt(Baryon(sk; moment = 2)/Baryon(sk; moment = 0))*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
+        return ( sqrt(Baryon(sk; moment = 2)/B0)*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
     end
 
 end
@@ -190,10 +195,10 @@ The possible currents are (currently):
 - `NoetherAxial`: the Noether axial current.
 
 """
-function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=0  )
+function compute_current(sk; label="NULL", indices=[0,0], density=false, moment=0  )
 
-    if label != "energy" && label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial" && label != "stress"
-        println("ERROR: Current label '", label, "' unknown. Type '?compute_current' for help.")
+    if label != "energy" && label != "uMOI" && label != "wMOI" && label != "vMOI" && label != "uAxial" && label != "wAxial" && label != "NoetherIso" && label != "NoetherAxial" && label != "stress"
+        println("input label '", label, "' unknown. Type '?compute_current' for help.")
         return
     end
 
@@ -336,8 +341,6 @@ function compute_current(sk; label="uMOI", indices=[0,0], density=false, moment=
 
                 end
             elseif label == "NoetherAxial"
-
-                # DOWN
 
                 Lia, Tiap = getLka(p,dp), getTiap(p)
 

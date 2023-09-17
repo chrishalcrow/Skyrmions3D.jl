@@ -6,17 +6,15 @@ module Skyrmions3D
 
 =#
 
-# temp
-export R_from_axis_angle
-
 using Makie
 using GLMakie, CairoMakie
 using Optimization, OptimizationOptimJL, ForwardDiff, Symbolics
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
-export Skyrmion, set_mpi!, set_periodic!, set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
-export check_if_normalised, normer!
+export Skyrmion, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
+export set_periodic!, set_dirichlet!, set_neumann!
+export check_if_normalised, normer!, normer
 
 #temp
 export indx_symm, get_close_ADHM_data_symm, indx, get_close_ADHM_data_symm_an
@@ -35,7 +33,6 @@ include("plotting.jl")
 export plot_field, plot_baryon_density, interactive_flow, plot_overview, plot_scan
  
 include("derivatives.jl")
-
 
 include("diff.jl")
 export gradient_flow!, arrested_newton_flow!
@@ -60,16 +57,18 @@ mutable struct Skyrmion
 	Fpi::Float64
 	ee::Float64
 	physical::Bool
-	periodic::Bool
+	dirichlet::Bool
 	index_grid_x::Vector{Int64}
 	index_grid_y::Vector{Int64}
 	index_grid_z::Vector{Int64}
 	sum_grid::Vector{UnitRange{Int64}}
+	boundary_conditions::String
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, periodic=false ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, periodic,index_grid(lp), index_grid(lp), index_grid(lp), sum_grid(lp, periodic) )
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , periodic=false) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, periodic,index_grid(lp[1]), index_grid(lp[2]), index_grid(lp[3]), sum_grid(lp,periodic) )
+Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet" ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), sum_grid(lp, boundary_conditions), boundary_conditions )
+
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , boundary_conditions="dirichlet") = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp[1],boundary_conditions), index_grid(lp[2],boundary_conditions), index_grid(lp[3],boundary_conditions), sum_grid(lp,boundary_conditions), boundary_conditions )
 
 mutable struct profile
     field::Vector{Float64}
@@ -78,8 +77,16 @@ mutable struct profile
     r_grid::Vector{Float64}
 end
 
-
 profile(lp,ls) = profile( zeros(Float64,lp), lp, ls,  [ ls*i for i in 0:(lp-1) ] )
+
+function is_dirichlet(boundary_conditions)
+
+	if boundary_conditions == "dirichlet"
+		return true
+	else
+		return false
+	end
+end
 
 
 """
@@ -91,17 +98,12 @@ function set_mpi!(sk::Skyrmion, mpi)
 	sk.mpi = mpi
 end
 
-"""
-	set_periodic!(skyrmion::Skyrmion, is_periodic)
-
-Sets the `skyrmion` to have periodic boundary conditions if `is_periodic` is `true`, and Dirichlet boundary conditions if `is_periodic` is `false.
-"""
 function set_periodic!(sk::Skyrmion, periodic::Bool)
 	
 	sk.periodic = periodic
 	sk.sum_grid = sum_grid(sk.lp, sk.periodic)
 
-	if periodic == true
+	if dirichlet == false
 		println("Periodic boundary conditions activated")
 	else
 		set_dirichlet!(sk)
@@ -109,6 +111,71 @@ function set_periodic!(sk::Skyrmion, periodic::Bool)
 	end
 
 end
+
+
+"""
+	set_periodic!(skyrmion::Skyrmion)
+
+Sets the `skyrmion` to have periodic boundary conditions.
+"""
+function set_periodic!(sk::Skyrmion)
+	
+	sk.dirichlet = false
+
+	sk.boundary_conditions = "periodic"
+	sk.sum_grid = sum_grid(sk.lp, sk.boundary_conditions)
+
+	sk.index_grid_x = index_grid(sk.lp[1], sk.boundary_conditions)
+	sk.index_grid_y = index_grid(sk.lp[2], sk.boundary_conditions)
+	sk.index_grid_z = index_grid(sk.lp[3], sk.boundary_conditions)
+
+	println("Periodic boundary conditions activated")
+
+end
+
+"""
+	set_dirichlet!(skyrmion::Skyrmion)
+
+Sets the `skyrmion` to have Dirichlet boundary conditions.
+"""
+function set_neumann!(sk::Skyrmion)
+
+	sk.dirichlet = false
+	
+	sk.boundary_conditions = "neumann"
+
+	sk.sum_grid = sum_grid(sk.lp, sk.boundary_conditions)
+	sk.index_grid_x = index_grid(sk.lp[1], sk.boundary_conditions)
+	sk.index_grid_y = index_grid(sk.lp[2], sk.boundary_conditions)
+	sk.index_grid_z = index_grid(sk.lp[3], sk.boundary_conditions)
+
+	println("Neumann boundary conditions activated")
+
+end
+
+"""
+	set_dirichlet!(skyrmion::Skyrmion)
+
+Sets the `skyrmion` to have periodic boundary conditions.
+"""
+function set_dirichlet!(sk::Skyrmion)
+
+	sk.dirichlet = true
+	
+	sk.boundary_conditions = "dirichlet"
+	sk.sum_grid = sum_grid(sk.lp, sk.boundary_conditions)
+
+	set_dirichlet_boudary!(sk)
+	println("Dirichlet boundary conditions activated")
+
+end
+
+
+
+
+
+
+
 
 """
 	set_Fpi!(skyrmion::Skyrmion, Fpi)
@@ -162,7 +229,7 @@ function set_lattice!(skyrmion, lp, ls)
     old_x = skyrmion.x
     x = setgrid(lp,ls)
 
-    sky_temp = Skyrmion(lp, ls,  mpi = skyrmion.mpi , periodic = skyrmion.periodic)
+    sky_temp = Skyrmion(lp, ls,  mpi = skyrmion.mpi , boundary_conditions = skyrmion.boundary_conditions)
     vac = [0.0,0.0,0.0,1.0]
 
     ϕinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (old_x[1],old_x[2],old_x[3]) ), Throw()) for a in 1:4 ]
@@ -185,14 +252,14 @@ function set_lattice!(skyrmion, lp, ls)
     skyrmion.pion_field = zeros(lp[1],lp[2],lp[3],4)
     skyrmion.pion_field .= sky_temp.pion_field
 
-    skyrmion.index_grid_x = index_grid(lp[1])
-    skyrmion.index_grid_y = index_grid(lp[2])
-    skyrmion.index_grid_z = index_grid(lp[3])
+    skyrmion.index_grid_x = index_grid(lp[1], sky_temp.boundary_conditions)
+    skyrmion.index_grid_y = index_grid(lp[2], sky_temp.boundary_conditions)
+    skyrmion.index_grid_z = index_grid(lp[3], sky_temp.boundary_conditions)
     
-    skyrmion.sum_grid = sum_grid(lp,skyrmion.periodic)
+    skyrmion.sum_grid = sum_grid(lp, sky_temp.boundary_conditions)
     
     normer!(skyrmion)
-    if skyrmion.periodic == false
+    if skyrmion.boundary_conditions == "dirichlet"
         set_dirichlet!(skyrmion)
     end
 
@@ -213,32 +280,48 @@ function vacuum_skyrmion(lpx,lpy,lpz,vac)
 
 end
 
-function sum_grid(lp::Integer,periodic::Bool)
+function sum_grid(lp::Integer, boundary_conditions::String)
 
-	if periodic == true
-		return [ 1:lp, 1:lp, 1:lp ]
-	else
+	if boundary_conditions == "dirichlet"
 		return [ 3:lp-2, 3:lp-2, 3:lp-2]
+	else
+		return [ 1:lp, 1:lp, 1:lp ]
 	end
 
 end
 
-function sum_grid(lp::Vector{Int64},periodic::Bool)
+function sum_grid(lp::Vector{Int64}, boundary_conditions::String)
 
-	if periodic == true
-		return [ 1:lp[1], 1:lp[2], 1:lp[3] ]
-	else
+	if boundary_conditions == "dirichlet"
 		return [ 3:lp[1]-2, 3:lp[2]-2, 3:lp[3]-2]
+	else
+		return [ 1:lp[1], 1:lp[2], 1:lp[3] ]
 	end
 	
 end
 
-function index_grid(lp)
+function index_grid(lp, boundary_conditions::String)
 
 	index_grid_array = zeros(Int64, lp+4)
 
-	for i in 1:lp+4
-		index_grid_array[i] = mod1(i-2,lp)
+	if boundary_conditions == "periodic"
+
+		for i in 1:lp+4
+			index_grid_array[i] = mod1(i-2,lp)
+		end
+
+	else
+
+		for i in 3:lp+2
+			index_grid_array[i] = i-2
+		end
+		
+		index_grid_array[1] = 2
+		index_grid_array[2] = 1
+		
+		index_grid_array[lp+3] = lp
+		index_grid_array[lp+4] = lp-1
+
 	end
 
 	return index_grid_array

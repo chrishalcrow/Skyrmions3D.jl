@@ -1,4 +1,3 @@
-
 """
     make_RM_product!(skyrmion, X_list) 
 
@@ -112,8 +111,8 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
         end
     end
 
-    if skyrmion.periodic == false
-        set_dirichlet!(skyrmion)
+    if skyrmion.boundary_conditions == "dirichlet"
+        set_dirichlet_boudary!(skyrmion)
     end
 
     #println("hello.")
@@ -131,8 +130,7 @@ function make_rational_map!(skyrmion, pfn, qfn; baryon=0.0, X=[0.0,0.0,0.0], iTH
     
     R(z) = pfn(z)/qfn(z)
     k1,k2=getOKprofile(1.0,1.0,baryon,getI(R),skyrmion.mpi)
-    #println(k1)
-    #println(k2)
+
     prof(r) = pi/(1 - tanh(-k2*k1))*( -tanh(k2*(r - k1)) + 1.0  );
     make_rational_map!(skyrmion, pfn, qfn, prof; X, iTH, i_n, jTH, j_n )
     
@@ -249,6 +247,8 @@ function R_from_axis_angle(th, n)
         
 
 end
+
+
 
 function make_ADHM!(an_ADHM_skyrmion, LM)
     B = size(LM)[2]
