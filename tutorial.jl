@@ -11,6 +11,8 @@
 # type ']',which will enter "package mode", then type
 # "add https://github.com/chrishalcrow/Skyrmions3D.jl.git"
 
+1+1
+
 ]add https://github.com/chrishalcrow/Skyrmions3D.jl.git
 
 using Skyrmions3D
@@ -40,7 +42,7 @@ my_skyrmion = Skyrmion( [40, 40, 40], [0.2, 0.2, 0.2] );
 
 # This generates a Skyrme field on a 40^3 grid with 0.2 lattice spacing. Another:
 
-my_skyrmion = Skyrmion( [40, 40, 40], [0.2, 0.2, 0.2], mpi = 1.0, Fpi=186, ee=4.0, periodic=true);
+my_skyrmion = Skyrmion( [40, 40, 40], [0.2, 0.2, 0.2], mpi = 1.0, Fpi=186, ee=4.0, boundary_conditions="periodic")
 
 # This sets some parameters too and the periodicity of the fields
 # You can check all the properties of the Skyrmion using overview
@@ -53,7 +55,9 @@ set_mpi!(my_skyrmion, 0.5)
 set_Fpi!(my_skyrmion, 100)
 set_ee!(my_skyrmion, 6.5)
 set_lattice!(my_skyrmion, [60,60,60], [0.2,0.2,0.2])
-set_periodic!(my_skyrmion, false)
+set_periodic!(my_skyrmion)
+# set_neumann!(my_skyrmion) # you can also make Neumann boundary conditions!
+# set_dirichlet!(my_skyrmion)
 
 overview(my_skyrmion)
 

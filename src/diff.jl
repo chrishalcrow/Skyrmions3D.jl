@@ -73,7 +73,7 @@ end
 # This creates some code duplication, for a ~10% performance boost.
 
 function getdEdp!(sk, dEdp)
-    if sk.dirichlet
+    if sk.boundary_conditions == "dirichlet"
         getdEdp_np!(sk, dEdp)
     else
         getdEdp_p!(sk, dEdp)
@@ -291,7 +291,7 @@ end
 
 function newton_flow_for_1_step!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
 
-    if sk.dirichet
+    if sk.boundary_conditions == "dirichlet"
         getdEdp1!(sk, dEdp1, sk2, skd, dt)
         getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
         getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
