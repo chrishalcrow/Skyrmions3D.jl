@@ -83,7 +83,7 @@ function plot_overview(skyrmion; iso_value = 0.5)
 	volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
 	volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
 
-	return fig
+	return display(fig)
 
 end
 
@@ -147,7 +147,7 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs
         	)
 
 
-	return fig
+	return display(fig)
 
 end
 
