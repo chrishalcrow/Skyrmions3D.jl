@@ -1,20 +1,30 @@
 
 using Skyrmions3D
-#=
-x2y3z4 = zeros(5,5,5,1)
-for i in 1:5, j in 1:5, k in 1:5
-    x2y3z4[i,j,k,1] = i^2*j^2 + 2.0*i^2*k^2 + 3.0*j^2*k^2
-end
 
-@test dxD(x2y3z4,1,3,3,3,1.0) ≈ 2.0*3^3 + 4.0*3^3
-@test dyD(x2y3z4,1,3,3,3,1.0) ≈ (2.0 + 6.0)*3^3
-@test dzD(x2y3z4,1,3,3,3,1.0) ≈ (4.0 + 6.0)*3^3
+a_skyrmion = Skyrmion(5,0.2)
 
-@test d2xD(x2y3z4,1,3,3,3,1.0) ≈ (2.0 + 4.0)*3^2
-@test d2yD(x2y3z4,1,3,3,3,1.0) ≈ (2.0 + 6.0)*3^2
-@test d2zD(x2y3z4,1,3,3,3,1.0) ≈ (4.0 + 6.0)*3^2
+@test Skyrmions3D.getX(a_skyrmion, 1, 1, 1) == a_skyrmion.pion_field[1,1,1,:]
 
-@test dxdyD(x2y3z4,1,3,3,3,1.0,1.0) ≈ 4.0*3^2
-@test dxdzD(x2y3z4,1,3,3,3,1.0,1.0) ≈ 8.0*3^2
-@test dydzD(x2y3z4,1,3,3,3,1.0,1.0) ≈ 12.0*3^2
-=#
+set_dirichlet!(a_skyrmion)
+
+@test Skyrmions3D.getDP(a_skyrmion, 3, 3, 3) == zeros(3,4)
+
+@test Skyrmions3D.getders_local_np(a_skyrmion,3,3,3) == (a_skyrmion.pion_field[3,3,3,:], zeros(3,4), zeros(3,4), zeros(3,4))
+
+set_periodic!(a_skyrmion)
+
+@test Skyrmions3D.getDP(a_skyrmion, 1, 1, 1) == zeros(3,4)
+
+@test Skyrmions3D.getders_local_p(a_skyrmion,1,1,1) == (a_skyrmion.pion_field[1,1,1,:], zeros(3,4), zeros(3,4), zeros(3,4))
+
+
+set_neumann!(a_skyrmion)
+
+@test Skyrmions3D.getDP(a_skyrmion, 1, 1, 1) == zeros(3,4)
+
+@test Skyrmions3D.getders_local_p(a_skyrmion,1,1,1) == (a_skyrmion.pion_field[1,1,1,:], zeros(3,4), zeros(3,4), zeros(3,4))
+
+
+
+
+

@@ -1,10 +1,10 @@
 module Skyrmions3D
 
+# Plotting
+using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 
-using Makie, CairoMakie
-using Optimization, OptimizationOptimJL, ForwardDiff, Symbolics, Requires
-
-using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
+# Functionality
+using StaticArrays, LinearAlgebra, Interpolations
 
 export Skyrmion, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
 export set_periodic!, set_dirichlet!, set_neumann!
@@ -18,7 +18,7 @@ include("properties.jl")
 export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview
 
 include("initialise.jl")
-export make_rational_map!, make_RM_product!, make_ADHM!, get_close_ADHM_data
+export make_rational_map!, make_RM_product!, make_ADHM!
 
 include("plotting.jl")
 export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan

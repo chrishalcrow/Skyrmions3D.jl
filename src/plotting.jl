@@ -11,21 +11,32 @@ Plots an isosurface of constant value, `skyrme_field[component] = iso_value`
 """
 function plot_field(skyrmion; component=3, iso_value = 0.5, kwargs...)
     
-    fig = Figure()
+    
+	pion_field_to_be_plotted = skyrmion.pion_field[:,:,:,component]
 
-	field_mesh = getmesh(skyrmion.pion_field[:,:,:,component], iso_value, skyrmion.x)
+	println(minimum(pion_field_to_be_plotted) ,", ", iso_value ,", ", maximum(pion_field_to_be_plotted) )
 
-    ax = Axis3(fig[1,1], 
-    	title= "Isosurface ϕ" * string(component) * " = ±" * string(iso_value),
-    	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3]),
-		kwargs...
-    	)
+	if minimum(pion_field_to_be_plotted) < iso_value < maximum(pion_field_to_be_plotted) 
 
-	Makie.mesh!(ax,field_mesh,
-		shading=false,
-	)
+		fig = Figure()
 
-	return fig
+		field_mesh = getmesh(pion_field_to_be_plotted, iso_value, skyrmion.x)
+		
+
+		ax = Axis3(fig[1,1], 
+			title= "Isosurface ϕ" * string(component) * " = ±" * string(iso_value),
+			aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3]),
+			kwargs...
+			)
+
+		Makie.mesh!(ax,field_mesh,
+			shading=false,
+		)
+
+		return fig
+	else
+		error("Your iso value is out of range")
+	end
 
 end
 
@@ -38,29 +49,31 @@ Plots the pion fields and a baryon density of `skyrmion`.
 """
 function plot_overview(skyrmion; iso_value = 0.5)
     
-    fig = Figure()
-
+    
 	x = skyrmion.x
 
 	BD = Baryon(skyrmion,density=true)
 	(bdmin, bdmax) = extrema(BD)
 	Biso_value = (bdmax - bdmin)/2.0
+	if Biso_value == 0
+		error("Cannot plot. You are likely plotting the vacuum state.")
+	end
 
 	BDmesh = getmesh(BD, Biso_value, x)
 
 	skcolormap = make_color_map(skyrmion, BDmesh)
 
-	
-
 	the_aspect = get_aspect_based_on_density(BDmesh)
 
 
+	fig = Figure()
+
 	ax = Axis3(fig[1,1:2], aspect = the_aspect, title="Baryon density" )
 
-        Makie.mesh!(ax,BDmesh,
-        	color = skcolormap,
-        	shading=false,
-        	)
+	Makie.mesh!(ax,BDmesh,
+		color = skcolormap,
+		shading=false,
+		)
 
     ax11 = Axis3(fig[2,1], 
     	title= "Isosurface ϕ" * string(1) * " = ±" * string(iso_value),
@@ -129,7 +142,7 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs
 	(bdmin, bdmax) = extrema(BD)
 
 	if bdmax == bdmin == 0
-		error("There is nothing to plot. You're likely trying to plot the vacuum.")
+		error("There is nothing to plot. You are likely trying to plot the vacuum.")
 	end
 
 	if iso_value == 0.0
@@ -239,78 +252,3 @@ function make_color_map(skyrmion, BDmesh)
 	return [ Colors.HSL( 360*(atan.(pion_field_on_mesh[1,a], -pion_field_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ]
 
 end
-
-
-#=
-
-
-"""
-    plot_scan(skyrmion)
-    
-Plots the pion fields and a baryon density of `skyrmion`.
-
-"""
-function plot_scan(skyrmion; iso_value = 0.5)
-    
-    fig = Figure()
-
-	scanner = 18
-
-	x = skyrmion.x
-	lp = skyrmion.lp
-
-	BD = Baryon(skyrmion,density=true)
-	bdmax = maximum(BD)
-    bdmin = minimum(BD)
-	
-	Biso_value = (bdmax - bdmin)/2.0
-
-	BDmesh = getmesh(BD, Biso_value, x)
-	skcolormap = make_color_map(skyrmion, BDmesh)
-
-	println(BDmesh[1])
-
-	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
-	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
-
-	println(the_extrema[1])
-	println(the_extrema[2])
-
-
-	ax = Axis3(fig[1,1], aspect = the_aspect, title="Baryon density" )
-
-        Makie.mesh!(ax,BDmesh,
-        	color = skcolormap,
-        	shading=false,
-        	)
-			
-			#poly!(fig[1,1], Point3f[
-			#	(the_extrema[1][1], the_extrema[2][1], x[3][scanner]),
-		#		(the_extrema[1][1], the_extrema[2][2], x[3][scanner]), 
-		#		(the_extrema[1][2], the_extrema[2][2], x[3][scanner]), 
-		#		(the_extrema[1][2], the_extrema[2][1], x[3][scanner])])
-
-#		lines!(ax,[the_extrema[1][1], the_extrema[2][1],x[3][scanner]], [the_extrema[1][1], the_extrema[2][2], x[3][scanner]])#
-	#	lines!(ax,[the_extrema[1][1], the_extrema[2][2],x[3][scanner]], [the_extrema[1][2], the_extrema[2][2], x[3][scanner]])
-#		lines!(ax,[the_extrema[1][2], the_extrema[2][2],x[3][scanner]], [the_extrema[1][2], the_extrema[2][1], x[3][scanner]])
-#		lines!(ax,[the_extrema[1][2], the_extrema[2][1],x[3][scanner]], [the_extrema[1][1], the_extrema[2][1], x[3][scanner]])#
-
-	lilscale=0.99
-	lines!(ax, [lilscale*the_extrema[1][1],lilscale*the_extrema[1][1],lilscale*the_extrema[1][2],lilscale*the_extrema[1][2],lilscale*the_extrema[1][1]],[lilscale*the_extrema[2][1],lilscale*the_extrema[2][2],lilscale*the_extrema[2][2],lilscale*the_extrema[2][1],lilscale*the_extrema[2][1]],[x[3][scanner],x[3][scanner],x[3][scanner],x[3][scanner],x[3][scanner]] , linewidth=10)
-
-    ax11 = Axis(fig[2,1], 
-    	title= "A slice."
-    )
-
-
-
-
-
-	contour!(ax11, x[1], x[2], BD[:,:,scanner] )
-
-	return fig
-
-end
-
-
-=#
