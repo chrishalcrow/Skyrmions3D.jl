@@ -1,19 +1,29 @@
+function activate_CairoMakie()
+	CairoMakie.activate!()
+end
+
+
 """
     plot_field!(skyrmion; component=3, iso_value=0.5 )
     
 Plots an isosurface of constant value, `skyrme_field[component] = iso_value`
 
 """
-function plot_field(skyrmion; component=3, iso_value = 0.5)
+function plot_field(skyrmion; component=3, iso_value = 0.5, kwargs...)
     
     fig = Figure()
 
+	field_mesh = getmesh(skyrmion.pion_field[:,:,:,component], iso_value, skyrmion.x)
+
     ax = Axis3(fig[1,1], 
-    	title= "Isosurface ϕ" * string(component) * " = " * string(iso_value),
-    	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
+    	title= "Isosurface ϕ" * string(component) * " = ±" * string(iso_value),
+    	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3]),
+		kwargs...
     	)
 
-	volume!(ax, skyrmion.pion_field[:,:,:,component], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+	Makie.mesh!(ax,field_mesh,
+		shading=false,
+	)
 
 	return fig
 
@@ -30,21 +40,19 @@ function plot_overview(skyrmion; iso_value = 0.5)
     
     fig = Figure()
 
-
 	x = skyrmion.x
-	lp = skyrmion.lp
 
 	BD = Baryon(skyrmion,density=true)
-	bdmax = maximum(BD)
-    bdmin = minimum(BD)
-	
+	(bdmin, bdmax) = extrema(BD)
 	Biso_value = (bdmax - bdmin)/2.0
 
 	BDmesh = getmesh(BD, Biso_value, x)
+
 	skcolormap = make_color_map(skyrmion, BDmesh)
 
-	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
-	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
+	
+
+	the_aspect = get_aspect_based_on_density(BDmesh)
 
 
 	ax = Axis3(fig[1,1:2], aspect = the_aspect, title="Baryon density" )
@@ -71,24 +79,33 @@ function plot_overview(skyrmion; iso_value = 0.5)
 	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
 	)
 
-	volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-	volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+	if Makie.current_backend() == GLMakie
 
-	volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-	volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+		volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+		volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
 
-	volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-	volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+		volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+		volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
 
-	volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-	volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+		volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+		volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
 
-	return display(fig)
+		volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
+		volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+	
+	else
+
+		field_mesh = [ getmesh(skyrmion.pion_field[:,:,:,a], iso_value, skyrmion.x) for a in 1:4 ]
+		Makie.mesh!(ax11,field_mesh[1], shading=false )
+		Makie.mesh!(ax12,field_mesh[2], shading=false )
+		Makie.mesh!(ax21,field_mesh[3], shading=false )
+		Makie.mesh!(ax22,field_mesh[4], shading=false )
+
+	end
+
+	return fig
 
 end
-
-
-
 
 
 
@@ -105,60 +122,65 @@ Can accept any arguments used in `Axis3` from the `Makie` package. See more: [].
 
 """
 function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs...)
-    
+
 	x = skyrmion.x
-	lp = skyrmion.lp
 
 	BD = Baryon(skyrmion,density=true)
-	bdmax = maximum(BD)
-    bdmin = minimum(BD)
+	(bdmin, bdmax) = extrema(BD)
+
+	if bdmax == bdmin == 0
+		error("There is nothing to plot. You're likely trying to plot the vacuum.")
+	end
+
 	if iso_value == 0.0
 		iso_value = (bdmax + bdmin)/4.0
 	end
 
-    println("iso_value = ", iso_value)
-
     if iso_value > bdmax || iso_value < bdmin
-        error("Your iso_value is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
+        error("Your iso_value, ", iso_value, " is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
         return
     end
+	println("iso_value = ", iso_value)
 
 	BDmesh = getmesh(BD, iso_value, x)
-	obBD = Observable(BDmesh)
 
-	if juggling == false
-		skcolormap = make_color_map(skyrmion, BDmesh)
-	else
+	if juggling
 		skcolormap = make_color_map_juggle(skyrmion, BDmesh)
+	else
+		skcolormap = make_color_map(skyrmion, BDmesh)
 	end
 
+	the_aspect = get_aspect_based_on_density(BDmesh)
+
     fig = Figure()
-
-	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
-	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
-
 
 	ax = Axis3(fig[1,1], aspect = the_aspect ; kwargs...)
 
         Makie.mesh!(ax,BDmesh,
         	color = skcolormap,
         	shading=false,
-
         	)
 
 
-	return display(fig)
+	return fig
+
+end
+
+function get_aspect_based_on_density(mesh)
+
+	the_extrema = [ extrema( [ mesh[a][1][b] for a in 1:size(mesh)[1] ] ) for b in 1:3 ]
+	return ntuple( a -> the_extrema[a][2] - the_extrema[a][1], Val(3) )
 
 end
 
 function getmesh(a_density, iso_value,x)
 
-	points,faces = isosurface(a_density, MarchingCubes(iso=iso_value), origin= [ x[1][1], x[2][1], x[3][1] ],  widths = [ x[1][end] - x[1][1], x[2][end] - x[2][1], x[3][end] - x[3][1] ]  )#, samples=(24,24,24) )
+	points,faces = isosurface(a_density, MarchingCubes(iso=iso_value), origin= [ x[1][1], x[2][1], x[3][1] ],  widths = [ x[1][end] - x[1][1], x[2][end] - x[2][1], x[3][end] - x[3][1] ]  )
 
 	Npts = size(points)[1]
 	Nfaces = size(faces)[1]
 
-    pointsaspoints = fill(Point3f(1.0,1.0,1.0),Npts);
+    pointsaspoints = fill(Point3f(0.0,0.0,0.0), Npts);
 	facesagain = TriangleFace{Int}[faces[a] for a in 1:Nfaces]
 
 	for i in 1:Npts
@@ -174,47 +196,25 @@ function make_color_map_juggle(skyrmion, BDmesh)
 	x = skyrmion.x
 
     ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:3 ]
+
     Npts = size(coordinates(BDmesh))[1]
-    pion_field_on_mesh = zeros(3, Npts)
 
 	the_color_function = zeros(RGB{Float64}, Npts)
 
 	cube_faces = [ [1.0,0.0,0.0], [-1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,-1.0,0.0], [0.0,0.0,1.0], [0.0,0.0,-1.0] ]
-	distances = zeros(6)
+	face_color_map = [ Colors.RGB(1.0,0.0,0.0), Colors.RGB(0.0,1.0,0.0) , Colors.RGB(0.0,0.0,1.0), Colors.RGB(1.0,1.0,0.0), Colors.RGB(0.0,1.0,1.0), Colors.RGB(1.0,0.0,1.0) ]
 
-	which_is_min = 1
+	for (a,vertex) in enumerate(coordinates(BDmesh))
 
-    a=1
-	for vertex in coordinates(BDmesh)
+		pion_field_on_mesh = [ ϕinterp[b](vertex[1],vertex[2],vertex[3]) for b in 1:3 ] 
 
-	    for b in 1:3
-	        pion_field_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
-	    end
-
-		for c in 1:6
-			distances[c] = 0.0
-			for b in 1:3
-				distances[c] += (pion_field_on_mesh[b,a] - cube_faces[c][b])^2
-			end
+		distances = zeros(6)
+		for c in 1:6, b in 1:3
+			distances[c] += (pion_field_on_mesh[b] - cube_faces[c][b])^2
 		end
 
-		which_is_min = findmin( distances )[2]
+		the_color_function[a] = face_color_map[findmin( distances )[2]]
 
-		if which_is_min == 1
-			the_color_function[a] = Colors.RGB(1.0,0.0,0.0)
-		elseif which_is_min == 2
-			the_color_function[a] = Colors.RGB(0.0,1.0,0.0)
-		elseif which_is_min == 3
-			the_color_function[a] = Colors.RGB(0.0,0.0,1.0)
-		elseif which_is_min == 4
-			the_color_function[a] = Colors.RGB(1.0,1.0,0.0)
-		elseif which_is_min == 5
-			the_color_function[a] = Colors.RGB(0.0,1.0,1.0)
-		else
-			the_color_function[a] = Colors.RGB(1.0,0.0,1.0)
-		end
-
-	    a += 1
 	end
 
 	return the_color_function 
@@ -225,267 +225,20 @@ function make_color_map(skyrmion, BDmesh)
 	x = skyrmion.x
 
     ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:3 ]
+
     Npts = size(coordinates(BDmesh))[1]
+
     pion_field_on_mesh = zeros(3, Npts)
-
-    a=1
-	for vertex in coordinates(BDmesh)
-	    for b in 1:3
+	for (a,vertex) in enumerate(coordinates(BDmesh)), b in 1:3
 	        pion_field_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
-	    end
-	    a += 1
 	end
 
-	maxp = maximum(pion_field_on_mesh[3,:])
-	minp = minimum(pion_field_on_mesh[3,:])
+	(minp, maxp) = extrema(pion_field_on_mesh[3,:])
+    p3color = (pion_field_on_mesh[3,:] .- minp)./(maxp - minp)
 
-   p3color = (pion_field_on_mesh[3,:] .- minp)./(maxp - minp)
-
-	return [ Colors.HSL( 360*(atan.(pion_field_on_mesh[1,a], -pion_field_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ];
+	return [ Colors.HSL( 360*(atan.(pion_field_on_mesh[1,a], -pion_field_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ]
 
 end
-
-
-"""
-	interactive_flow(my_skyrmion; iso_value=2.0, kwargs...)
-    
-Initialises a interface, used for dynamics. Requires GLMakie to be active. Once activated, can interactively apply a gradient flow or arrested newton flow to the initial skyrme field `my_skyrmion'.
-
-"""
-function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
-
-	which_flow = 1
-
-	skd = 0.0 .* similar(my_skyrmion.pion_field)
-
-	juggling=false
-	x = my_skyrmion.x
-	lp = my_skyrmion.lp
-
-	active_button_color = :white
-	active_button_strokecolor = :red
-
-	not_active_button_color = :lightgray
-	not_active_button_strokecolor = :gray
-
-	BD = Baryon(my_skyrmion, density=true)
-
-	BDmesh = getmesh(BD, iso_value, x)
-	skcolormap = make_color_map(my_skyrmion, BDmesh)
-
-	obBD = Observable(BDmesh)
-	obCM = Observable(skcolormap)
-
-	obBD[] = BDmesh
-	obCM[] = skcolormap
-
-
-	fig = Figure(clear=true)
-
-
-	g_skyrmion = fig[1,1] =GridLayout()
-	g_info = fig[1,2] = GridLayout(tellwidth=true, tellheight=true, valign=:top)
-
-	g_plotting_options = g_info[1,1] = GridLayout(tellwidth=false, tellheight=false, halign=:left, valign=:top)
-	g_dynamics = g_info[2,1] = GridLayout(tellwidth=false, tellheight=false, halign=:left, valign=:center)
-	g_export = g_info[3,1] = GridLayout(tellwidth=false, tellheight=false, halign=:left, valign=:bottom)
-
-
-	Label(g_plotting_options[1,1:2], text="Plotting options", font = :bold, halign=:left)
-	Label(g_plotting_options[2,1], text="Isosurface:  ", halign=:left)
-	bd_tb = Textbox(g_plotting_options[2,2]; stored_string=string(iso_value),validator = Float64, tellwidth=false, halign=:left)
-
-	Label(g_dynamics[1,1:2], text="Dynamics", font = :bold, halign=:left)
-	
-	gf_button = Button(g_dynamics[2,1]; label="Grad flow", tellwidth=true, halign=:left, font="Courier")
-	an_button = Button(g_dynamics[2,2]; label="Ar N flow", tellwidth=true, halign=:left, font="Courier")
-	newt_button = Button(g_dynamics[3,1]; label="Newt flow", tellwidth=true, halign=:left, font="Courier")
-	full_button = Button(g_dynamics[3,2]; label="no  no no", tellwidth=true, halign=:left, font="Courier")
-	
-	gf_button.strokecolor = active_button_strokecolor
-	gf_button.buttoncolor = active_button_color
-
-	an_button.strokecolor = not_active_button_strokecolor
-	an_button.buttoncolor = not_active_button_color
-
-	newt_button.strokecolor = not_active_button_strokecolor
-	newt_button.buttoncolor = not_active_button_color
-
-	full_button.strokecolor = not_active_button_strokecolor
-	full_button.buttoncolor = not_active_button_color
-
-	Label(g_dynamics[4,1], text="Steps: ",halign=:right)
-	flow_tb = Textbox(g_dynamics[4,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
-
-	Label(g_dynamics[5,1], text="dt: ",halign=:right)
-	dt_tb = Textbox(g_dynamics[5,2]; placeholder=string(0.0),validator = Float64, tellwidth=false, halign=:left)
-
-	flow_button = Button(g_dynamics[6,1:2]; label="Flow!", tellwidth=false, halign=:center, font=:bold, width=220)
-
-
-	export_tb = Textbox(g_export[1,1]; stored_string="image_1.png", tellwidth=false, halign=:left)
-	export_button = Button(g_export[1,2]; label="Picture", tellwidth=false, halign=:right, font=:bold)
-
-
-
-	the_extrema = [ extrema( [ BDmesh[a][1][b] for a in 1:size(BDmesh)[1] ] ) for b in 1:3 ]
-	the_aspect = ( the_extrema[1][2] - the_extrema[1][1], the_extrema[2][2] - the_extrema[2][1], the_extrema[3][2] - the_extrema[3][1] )
-
-	ax = Axis3(g_skyrmion[1,1], aspect = the_aspect, tellwidth=true; kwargs...)#, height=950, width=950 )
-
-
-	Makie.mesh!(ax,obBD,
-				color = obCM,
-				shading=false
-	)
-
-	colsize!(fig.layout, 2, Fixed(220))
-
-
-	rowgap!(g_dynamics,10.0)
-	rowgap!(g_plotting_options,10.0)
-
-	colgap!(g_dynamics,5.0)
-
-	
-
-	on(bd_tb.stored_string) do s
-
-		iso_val = parse(Float64,to_value(bd_tb.displayed_string))
-
-		BD = Baryon(my_skyrmion,density=true)
-		BDmesh = getmesh(BD, parse(Float64,s), x)
-		skcolormap = make_color_map(my_skyrmion, BDmesh)
-
-		obBD[] = BDmesh
-		obCM[] = skcolormap
-
-		sleep(0.001)
-	end
-
-	on(gf_button.clicks) do clicks
-		
-		which_flow = 1
-
-		gf_button.strokecolor = active_button_strokecolor
-		gf_button.buttoncolor = active_button_color
-
-		an_button.strokecolor = not_active_button_strokecolor
-		an_button.buttoncolor = not_active_button_color
-
-		newt_button.strokecolor = not_active_button_strokecolor
-		newt_button.buttoncolor = not_active_button_color
-
-		full_button.strokecolor = not_active_button_strokecolor
-		full_button.buttoncolor = not_active_button_color
-
-	end
-	on(an_button.clicks) do clicks
-		
-		which_flow = 2
-
-		an_button.strokecolor = active_button_strokecolor
-		an_button.buttoncolor = active_button_color
-
-		gf_button.strokecolor = not_active_button_strokecolor
-		gf_button.buttoncolor = not_active_button_color
-
-		newt_button.strokecolor = not_active_button_strokecolor
-		newt_button.buttoncolor = not_active_button_color
-
-		full_button.strokecolor = not_active_button_strokecolor
-		full_button.buttoncolor = not_active_button_color
-
-	end
-	on(newt_button.clicks) do clicks
-		
-		which_flow = 3
-
-		newt_button.strokecolor = active_button_strokecolor
-		newt_button.buttoncolor = active_button_color
-
-		gf_button.strokecolor = not_active_button_strokecolor
-		gf_button.buttoncolor = not_active_button_color
-
-		an_button.strokecolor = not_active_button_strokecolor
-		an_button.buttoncolor = not_active_button_color
-
-		full_button.strokecolor = not_active_button_strokecolor
-		full_button.buttoncolor = not_active_button_color
-
-	end
-	on(full_button.clicks) do clicks
-		
-		which_flow = 4
-
-		full_button.strokecolor = active_button_strokecolor
-		full_button.buttoncolor = active_button_color
-
-		gf_button.strokecolor = not_active_button_strokecolor
-		gf_button.buttoncolor = not_active_button_color
-
-		an_button.strokecolor = not_active_button_strokecolor
-		an_button.buttoncolor = not_active_button_color
-
-		newt_button.strokecolor = not_active_button_strokecolor
-		newt_button.buttoncolor = not_active_button_color
-
-	end
-
-	on(export_button.clicks) do clicks
-
-		save( to_value(export_tb.displayed_string), fig)
-
-	end
-
-
-	on(flow_button.clicks) do clicks
-
-		dt = parse(Float64,to_value(dt_tb.displayed_string))
-
-		total_runs = deepcopy(parse(Int64, to_value(flow_tb.displayed_string)))
-		iso_val = deepcopy(parse(Float64,to_value(bd_tb.displayed_string)))
-
-		if which_flow == 1
-			if dt == 0.0
-				gradient_flow!(my_skyrmion; steps=total_runs)
-			else
-				gradient_flow!(my_skyrmion; steps=total_runs, dt=dt )
-			end
-		elseif which_flow == 2
-			if dt == 0.0
-				arrested_newton_flow!(my_skyrmion; steps=total_runs )
-			else
-				arrested_newton_flow!(my_skyrmion; steps=total_runs, dt = dt )
-			end
-			
-		elseif which_flow == 3
-			if dt == 0.0
-				newton_flow!(my_skyrmion; ϕd = skd, steps=total_runs )
-			else
-				newton_flow!(my_skyrmion; ϕd = skd, steps=total_runs, dt = dt  )
-			end
-		end
-
-		BD = Baryon(my_skyrmion,density=true)
-		BDmesh = getmesh(BD, iso_val, x)
-		skcolormap = make_color_map(my_skyrmion, BDmesh)
-
-
-		obBD[] = BDmesh
-		obCM[] = skcolormap
-
-		sleep(0.001)
-
-	end
-
-	display(GLMakie.Screen(),fig)
-
-	return
-
-end
-
-
 
 
 #=

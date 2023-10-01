@@ -1,9 +1,8 @@
 module Skyrmions3D
 
 
-using Makie
-using GLMakie, CairoMakie
-using Optimization, OptimizationOptimJL, ForwardDiff, Symbolics
+using Makie, CairoMakie
+using Optimization, OptimizationOptimJL, ForwardDiff, Symbolics, Requires
 
 using Meshing, GeometryBasics, Interpolations, Colors, StaticArrays, LinearAlgebra
 
@@ -22,12 +21,20 @@ include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!, get_close_ADHM_data
 
 include("plotting.jl")
-export plot_field, plot_baryon_density, interactive_flow, plot_overview, plot_scan
+export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan
  
 include("derivatives.jl")
 
 include("diff.jl")
 export gradient_flow!, arrested_newton_flow!
+
+function __init__()
+	CairoMakie.activate!()
+	@require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" include("plottingGPU.jl")
+	@require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" export interactive_flow, activate_GLMakie
+	@require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" println("You have GLMakie installed. Interactive plotting is supported.")
+	@require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" GLMakie.activate!(); 
+end
 
 
 """
