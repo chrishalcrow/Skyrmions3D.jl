@@ -49,7 +49,6 @@ Plots the pion fields and a baryon density of `skyrmion`.
 """
 function plot_overview(skyrmion; iso_value = 0.5)
     
-    
 	x = skyrmion.x
 
 	BD = Baryon(skyrmion,density=true)
@@ -92,7 +91,15 @@ function plot_overview(skyrmion; iso_value = 0.5)
 	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
 	)
 
-	if Makie.current_backend() == GLMakie
+	if Makie.current_backend() == CairoMakie
+
+		field_mesh = [ getmesh(skyrmion.pion_field[:,:,:,a], iso_value, skyrmion.x) for a in 1:4 ]
+		Makie.mesh!(ax11,field_mesh[1], shading=false )
+		Makie.mesh!(ax12,field_mesh[2], shading=false )
+		Makie.mesh!(ax21,field_mesh[3], shading=false )
+		Makie.mesh!(ax22,field_mesh[4], shading=false )
+	
+	else
 
 		volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
 		volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
@@ -105,14 +112,6 @@ function plot_overview(skyrmion; iso_value = 0.5)
 
 		volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
 		volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
-	
-	else
-
-		field_mesh = [ getmesh(skyrmion.pion_field[:,:,:,a], iso_value, skyrmion.x) for a in 1:4 ]
-		Makie.mesh!(ax11,field_mesh[1], shading=false )
-		Makie.mesh!(ax12,field_mesh[2], shading=false )
-		Makie.mesh!(ax21,field_mesh[3], shading=false )
-		Makie.mesh!(ax22,field_mesh[4], shading=false )
 
 	end
 

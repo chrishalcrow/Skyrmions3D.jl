@@ -7,6 +7,6 @@ using Test
 @testset "Properties tests" begin include("do_properties_tests.jl") end
 @testset "Transform tests" begin include("do_transform_tests.jl") end
 @testset "Plotting tests" begin include("do_plotting_tests.jl") end
-@testset "Plotting tests" begin include("do_diff_tests.jl") end
+@testset "Flow tests" begin include("do_diff_tests.jl") end
 
 
