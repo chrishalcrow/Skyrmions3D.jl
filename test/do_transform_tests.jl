@@ -65,3 +65,12 @@ center_skyrmion!(a_skyrmion)
 
 Skyrmions3D.set_dirichlet_boudary!(b_skyrmion, vac=[2.0,0.2,-0.3,0.5])
 @test b_skyrmion.pion_field[1,1,1,:] == [2.0,0.2,-0.3,0.5]
+
+
+p1(z) = z; q1(z) = 1; f1(r) = 4*atan(exp(-r));
+p2(z) = z^2; q2(z) = 1; f2(r) = 4*atan(exp(-0.7*r));
+X_list = [ [ p1, q1, f1, [0.0,0.0,1.5], 0.0, [0.0,0.0,1.0], 0.0, [0.0,0.0,1.0] ], [ p2, q2, f2, [0.0,0.0,-1.5], pi, [1.0,0.0,0.0], 0.0, [0.0,0.0,1.0] ] ]
+
+make_RM_product!(a_skyrmion, X_list)
+
+@test sum(a_skyrmion.pion_field[3,3,3,:].^2) ≈ 1.0

@@ -282,24 +282,6 @@ function compute_current(sk; label="NULL", indices=[0,0], density=false, moment=
                         current_density[a,b,i,j,k] += 0.25*trace_su2_ijkl(Tiap,Lia,Gia,Lia,a,c,b,c)*rm
                     end
                 end
-
-            elseif label == "energy"
-
-                Lia = getLka(p,dp)
-
-                for a in aindices, b in bindices
-                    
-                    current_density[a,b,i,j,k] += 3*2/3*(sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
-                    
-                    current_density[a,b,i,j,k] -= 0.5*trace_su2_ij(Lia,Lia,a,b)*rm
-                  
-                    for c in 1:3
-
-                       current_density[a,b,i,j,k] -= 1/16.0*trace_su2_ijkl(Lia,Lia,Lia,Lia,a,c,b,c)*rm
-           
-                    end
-                    
-                end
                 
 
             elseif label == "stress"
@@ -470,23 +452,6 @@ function getLka(p,dp)
     )
 
 end
-
-
-function make_levi_civita()
-
-    epsilon = zeros(3,3,3)
-	
-	epsilon[1,2,3] = 1.0
-	epsilon[1,3,2] = -1.0
-	epsilon[2,3,1] = 1.0
-	epsilon[2,1,3] = -1.0
-	epsilon[3,1,2] = 1.0
-	epsilon[3,2,1] = -1.0
-
-    return epsilon
-
-end
-
 
 function trace_su2_ij(Lia,Lib,i,j)
     return -2.0*(Lia[1,i]*Lib[1,j] + Lia[2,i]*Lib[2,j] + Lia[3,i]*Lib[3,j])

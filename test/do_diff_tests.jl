@@ -36,6 +36,11 @@ arrested_newton_flow!(a_skyrmion,steps=5)
 newer_energy = Energy(a_skyrmion)
 @test newer_energy < new_energy
 
+initial_energy = Energy(a_skyrmion)
+newton_flow!(a_skyrmion,steps=5)
+new_energy = Energy(a_skyrmion)
+@test new_energy < initial_energy
+
 
 
 

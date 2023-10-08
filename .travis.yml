@@ -1,5 +1,8 @@
 language: julia
 julia:
   - 1.9
+branches:
+  only: 
+    - main
 
 coveralls: true

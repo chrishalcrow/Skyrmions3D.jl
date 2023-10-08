@@ -148,48 +148,6 @@ function getBj(dp)
 
 end
 
-function orthog_skd_and_sk!(skd,sk)
-
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-
-            skd_dot_sk = 0.0
-            for a in 1:4
-                skd_dot_sk += skd[i,j,k,a]*sk.pion_field[i,j,k,a]
-            end
-
-            for a in 1:4
-                skd[i,j,k,a] -=  skd_dot_sk*sk.pion_field[i,j,k,a]
-            end
-
-        end
-    end
-
-end
-
-function orthog_skd_and_sk_and_normer!(skd,sk)
-
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
-
-            skd_dot_sk = 0.0
-            sk_dot_sk = 0.0
-            for a in 1:4
-                skd_dot_sk += skd[i,j,k,a]*sk.pion_field[i,j,k,a]
-                sk_dot_sk += sk.pion_field[i,j,k,a]^2
-            end
-
-            sk_dot_sk /= sqrt( sk_dot_sk) 
-            for a in 1:4
-                skd[i,j,k,a] -=  skd_dot_sk*sk.pion_field[i,j,k,a]
-                sk.pion_field[i,j,k,a] /=  sk_dot_sk 
-            end
-
-        end
-    end
-
-end
-
 function EnergyANF(sk, ED)
 
     Threads.@threads for k in sk.sum_grid[3]
@@ -519,30 +477,6 @@ function newton_flow_for_n_steps!(ϕ,ϕd,dt,n)
     for _ in 1:n
         newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
     end
-
-end
-
-function L2_err(A)
-
-    errtot = 0.0
-
-    for i in eachindex(A)
-        errtot += A[i]^2
-    end
-
-    return errtot
-
-end
-
-function abs_err(A)
-
-    errtot = 0.0
-
-    for i in eachindex(A)
-        errtot += abs(A[i])
-    end
-
-    return errtot
 
 end
 
