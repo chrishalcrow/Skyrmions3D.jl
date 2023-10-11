@@ -26,6 +26,9 @@ set_dirichlet!(a_skyrmion)
 @test center_of_mass(a_skyrmion) == [0.0,0.0,0.0]
 
 @test rms_baryon(a_skyrmion) == 0.0
+@test rms_baryon(a_skyrmion, component=1) == 0.0
+@test rms_baryon(a_skyrmion, component=2) == 0.0
+@test rms_baryon(a_skyrmion, component=3) == 0.0
 
 @test compute_current(a_skyrmion, label="uMOI") == zeros(3,3)
 @test compute_current(a_skyrmion, label="wMOI") == zeros(3,3)

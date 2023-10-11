@@ -3,4 +3,5 @@ image_1.png
 data.csv
 hello.png
 docs/build/
-.ipynb_checkpoints/
+ipynb_checkpoints/
+scripts/

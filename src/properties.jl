@@ -85,11 +85,11 @@ Compute baryon number of `skyrmion`.
 Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density.
 
 """
-function Baryon(sk; density=false, moment = 0)
+function Baryon(sk; density=false, moment = 0, component = 0)
 
     BD = zeros(sk.lp[1],sk.lp[2],sk.lp[3])
     
-    get_baryon_density!(BD,sk,moment=moment)
+    get_baryon_density!(BD,sk,moment=moment, component = component)
 
     if density == false
         bartot = sum(BD)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(2.0*pi^2)
@@ -100,14 +100,26 @@ function Baryon(sk; density=false, moment = 0)
     
 end 
 
-function get_baryon_density!(baryon_density, sk ;moment=0)
+function get_baryon_density!(baryon_density, sk ;moment=0, component = 0)
+
+    vc = zeros(3)
+
+    if component == 0
+        vc = [1,1,1]
+    elseif component == 1
+        vc = [1,0,0]
+    elseif  component == 2
+        vc = [0,1,0]
+    elseif  component == 3
+        vc = [0,0,1]
+    end    
 
     Threads.@threads for k in sk.sum_grid[3]
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             pp = getX(sk,i,j,k)
             dp = getDP(sk ,i, j, k )
-            rm = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )^moment
+            rm = sqrt( vc[1]*sk.x[1][i]^2 + vc[2]*sk.x[2][j]^2 + vc[3]*sk.x[3][k]^2 )^moment
             
             baryon_density[i,j,k] = barypt(dp,pp) * rm
 
@@ -162,21 +174,33 @@ end
 
 Compute root mean square charge radius of a skyrmion, using the baryon density.
 """
-function rms_baryon(sk)
+function rms_baryon(sk; component = 0)
 
     B0 = Baryon(sk; moment = 0)
     if B0 == 0.0
         return 0.0
     end
 
+    rms = sqrt(Baryon(sk; moment = 2, component=component)/B0)
+
     if sk.physical == false
-        return sqrt(Baryon(sk; moment = 2)/B0)
+        return rms
     else
-        return ( sqrt(Baryon(sk; moment = 2)/B0)*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
+        return ( rms*197.327*(2.0/(sk.ee*sk.Fpi)), "fm" )
     end
 
 end
 
+function sphericity(my_skyrmion)
+
+    (λ1,λ2,λ3) = sort(eigvals(compute_current(my_skyrmion, label="vMOI")))
+
+    Δ1 = (λ2 - λ1)/(λ2 + λ1)
+    Δ2 = (λ3 - λ2)/(λ3 + λ2)
+
+    return sqrt( Δ2^2 + Δ1^2 )
+
+end
 
 """
     compute_current(skyrmion; label="uMOI", indices=[0,0], density = false, moment=0)

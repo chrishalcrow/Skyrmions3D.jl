@@ -172,7 +172,7 @@ Applies an arrested Newton flow to `skyrmion` whose initial time derivative fiel
 
 See also [`gradient_flow!`, `newton_flow!`]
 """
-function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/10.0, steps=1, tolerance = 0.0, checks = max(100,steps), print_stuff = true, max_steps=Inf)
+function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/10.0, steps=1, tolerance = 0.0, checks = max(100,steps), print_stuff = true, max_steps=Inf, method="RK4")
 
     if tolerance == 0 && checks > steps
         checks = steps
@@ -191,7 +191,7 @@ function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), d
     counter = 0
     while counter < steps && counter < max_steps
 
-        arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp,dEdp2,dEdp3,dEdp4,dt,energy_density,checks, EnergyANF(ϕ,energy_density))
+        arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp,dEdp2,dEdp3,dEdp4,dt,energy_density,checks, EnergyANF(ϕ,energy_density), method)
         error = max_abs_err(dEdp)
         counter += checks
 
@@ -213,23 +213,28 @@ function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), d
     return
 
 end
- 
-function arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp1,dEdp2,dEdp3,dEdp4,dt,energy_density,n, initial_energy)
+
+function arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp1,dEdp2,dEdp3,dEdp4,dt,energy_density,n, initial_energy, method)
 
     new_energy = initial_energy
     
     for _ in 1:n
 
         old_energy = new_energy
-        old_pion_field .= ϕ.pion_field
+        old_pion_field .= deepcopy(ϕ.pion_field)
 
-        newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
+        if method == "RK4"
+            newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
+        elseif method == "leapfrog"
+            leapfrog_for_1_step!(ϕ,ϕd,dEdp1,dEdp2,dt)
+        end
+
         new_energy = EnergyANF(ϕ,energy_density)
 
         if new_energy > old_energy
 
             fill!(ϕd, 0.0);
-            ϕ.pion_field .= old_pion_field;
+            ϕ.pion_field .= deepcopy(old_pion_field);
 
             if new_energy > 1.2*old_energy
                 error("Suspected numerical blow-up. Please use smaller dt. Currently, dt = ", dt)
@@ -240,6 +245,46 @@ function arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp1,dEdp2
     end
 
 end
+
+
+function leapfrog_for_1_step!(sk,skd,dEdp1,dEdp2,dt)
+
+    getdEdp!(sk, dEdp1)
+    sk.pion_field .+= dt.*(skd .+ (0.5*dt).*dEdp1) ;
+
+    getdEdp!(sk, dEdp2)
+    skd .+= (0.5*dt).*(dEdp1 .+ dEdp2)
+
+    orthog_skd_and_norm!(sk,skd)
+
+end
+
+function orthog_skd_and_norm!(sk, skd)
+
+    Threads.@threads for k in sk.sum_grid[3]
+        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+
+            sk_dot_skd = 0.0
+            sk_dot_sk = 0.0
+
+            for a in 1:4
+                sk_dot_skd += sk.pion_field[i,j,k,a]*skd[i,j,k,a]
+                sk_dot_sk += sk.pion_field[i,j,k,a]^2
+            end
+
+            sk_dot_sq = sqrt(sk_dot_sk)
+
+            for a in 1:4
+                skd[i,j,k,a] -= sk_dot_skd*sk.pion_field[i,j,k,a]
+                sk.pion_field[i,j,k,a] /= sk_dot_sq
+            end
+
+        end
+    end
+
+end
+                
+
 
 # The newton flow code sacrifices beauty for optimization. Each RK4 step updates the 
 # fields ready for the next step, meaning we only need two fields in memory.
@@ -437,6 +482,8 @@ end
 
 
 
+
+
 """
     newton_flow!(skyrmion; skyrmion_dot, steps = n, dt=ls^2/80.0, frequency_of_printing = freq, print_stuff = true)
     
@@ -482,7 +529,7 @@ end
 
 function max_abs_err(A)
 
-    return maximum(abs.(A)) 
+    return maximum(abs, A)
 
 end
 

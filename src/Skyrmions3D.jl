@@ -15,7 +15,7 @@ export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rot
 export product_approx, product_approx!, center_skyrmion!
 
 include("properties.jl")
-export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview
+export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview, sphericity
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
