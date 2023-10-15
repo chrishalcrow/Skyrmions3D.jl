@@ -24,7 +24,6 @@ The product is taken pairwise in order. E.g. for a list of 3 skyrmions, we first
 """
 function make_RM_product!(sk, Xs)
 
-    x = sk.x
     lp = sk.lp
     ls = sk.ls
 
@@ -32,9 +31,9 @@ function make_RM_product!(sk, Xs)
 
     a=1
     if size(Xs[a])[1] == 8
-        make_rational_map!(sk, Xs[a][1], Xs[a][2], Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
+        make_rational_map!(sk, Xs[a][1], Xs[a][2], Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]   )
     else
-        make_rational_map!(sk, Xs[a][1],Xs[a][2], X = Xs[a][3], iTH = Xs[a][4], i_n = Xs[a][5], jTH = Xs[a][6], j_n = Xs[a][7]  )
+        make_rational_map!(sk, Xs[a][1],Xs[a][2], X = Xs[a][3], iTH = Xs[a][4], i_n = Xs[a][5], jTH = Xs[a][6], j_n = Xs[a][7],  print_things=false)
     end
 
     for a in 2:size(Xs)[1]
@@ -42,7 +41,7 @@ function make_RM_product!(sk, Xs)
         if size(Xs[a])[1] == 8
             make_rational_map!(temp_sk, Xs[a][1],Xs[a][2],Xs[a][3], X = Xs[a][4], iTH = Xs[a][5], i_n = Xs[a][6], jTH = Xs[a][7], j_n = Xs[a][8]  )
         else
-            make_rational_map!(temp_sk, Xs[a][1],Xs[a][2], X = Xs[a][3], iTH = Xs[a][4], i_n = Xs[a][5], jTH = Xs[a][6], j_n = Xs[a][7]  )
+            make_rational_map!(temp_sk, Xs[a][1],Xs[a][2], X = Xs[a][3], iTH = Xs[a][4], i_n = Xs[a][5], jTH = Xs[a][6], j_n = Xs[a][7], print_things=false)
         end
 
         product_approx!(sk, temp_sk)
@@ -119,13 +118,17 @@ function make_rational_map!(skyrmion, pfn, qfn, prof; X=[0.0,0.0,0.0], iTH=0.0, 
     
 end
 
-function make_rational_map!(skyrmion, pfn, qfn; baryon=0.0, X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0] )
+function make_rational_map!(skyrmion, pfn, qfn; baryon=0.0, X=[0.0,0.0,0.0], iTH=0.0, i_n = [0.0,0.0,1.0], jTH = 0.0, j_n = [0.0,0.0,0.0], print_things=true)
 
-    if baryon == 0.0
+    if baryon == 0.0 
         baryon1 = abs( (log(pfn(10000)) - log(pfn(1)))/log(10000) )
         baryon2 = abs( (log(qfn(10000)) - log(qfn(1)))/log(10000) )
         baryon = max( round(baryon1), round(baryon2) )
-        println("I think your baryon number is ", baryon, ". If it is not, include '; baryon=B' in your argument.")
+
+        if print_things == true
+            println("I think your baryon number is ", baryon, ". If it is not, include '; baryon=B' in your argument.")
+        end
+
     end
     
     R(z) = pfn(z)/qfn(z)

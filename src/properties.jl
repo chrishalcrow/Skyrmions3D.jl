@@ -217,6 +217,7 @@ The possible currents are (currently):
 - `wAxial`: the w-axial moment of inertia.
 - `NoetherIso`: the Noether vector current.
 - `NoetherAxial`: the Noether axial current.
+- `stress`: the stress tensor.
 
 """
 function compute_current(sk; label="NULL", indices=[0,0], density=false, moment=0  )

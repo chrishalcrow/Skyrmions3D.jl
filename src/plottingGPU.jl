@@ -55,7 +55,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 	gf_button = Button(g_dynamics[2,1]; label="Grad flow", tellwidth=true, halign=:left, font="Courier")
 	an_button = Button(g_dynamics[2,2]; label="Ar N flow", tellwidth=true, halign=:left, font="Courier")
 	newt_button = Button(g_dynamics[3,1]; label="Newt flow", tellwidth=true, halign=:left, font="Courier")
-	full_button = Button(g_dynamics[3,2]; label="no  no no", tellwidth=true, halign=:left, font="Courier")
+	#full_button = Button(g_dynamics[3,2]; label="no  no no", tellwidth=true, halign=:left, font="Courier")
 	
 	gf_button.strokecolor = active_button_strokecolor
 	gf_button.buttoncolor = active_button_color
@@ -66,8 +66,8 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 	newt_button.strokecolor = not_active_button_strokecolor
 	newt_button.buttoncolor = not_active_button_color
 
-	full_button.strokecolor = not_active_button_strokecolor
-	full_button.buttoncolor = not_active_button_color
+	#full_button.strokecolor = not_active_button_strokecolor
+	#full_button.buttoncolor = not_active_button_color
 
 	Label(g_dynamics[4,1], text="Steps: ",halign=:right)
 	flow_tb = Textbox(g_dynamics[4,2]; placeholder="100",validator = Int64, tellwidth=false, halign=:left)
@@ -102,11 +102,8 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 
 	colgap!(g_dynamics,5.0)
 
-	
 
 	on(bd_tb.stored_string) do s
-
-		iso_val = parse(Float64,to_value(bd_tb.displayed_string))
 
 		BD = Baryon(my_skyrmion,density=true)
 		BDmesh = getmesh(BD, parse(Float64,s), x)
@@ -131,8 +128,8 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		newt_button.strokecolor = not_active_button_strokecolor
 		newt_button.buttoncolor = not_active_button_color
 
-		full_button.strokecolor = not_active_button_strokecolor
-		full_button.buttoncolor = not_active_button_color
+		#full_button.strokecolor = not_active_button_strokecolor
+		#full_button.buttoncolor = not_active_button_color
 
 	end
 	on(an_button.clicks) do clicks
@@ -148,8 +145,8 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		newt_button.strokecolor = not_active_button_strokecolor
 		newt_button.buttoncolor = not_active_button_color
 
-		full_button.strokecolor = not_active_button_strokecolor
-		full_button.buttoncolor = not_active_button_color
+		#full_button.strokecolor = not_active_button_strokecolor
+		#full_button.buttoncolor = not_active_button_color
 
 	end
 	on(newt_button.clicks) do clicks
@@ -165,11 +162,11 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		an_button.strokecolor = not_active_button_strokecolor
 		an_button.buttoncolor = not_active_button_color
 
-		full_button.strokecolor = not_active_button_strokecolor
-		full_button.buttoncolor = not_active_button_color
+		#full_button.strokecolor = not_active_button_strokecolor
+		#full_button.buttoncolor = not_active_button_color
 
 	end
-	on(full_button.clicks) do clicks
+	#=on(full_button.clicks) do clicks
 		
 		which_flow = 4
 
@@ -185,7 +182,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		newt_button.strokecolor = not_active_button_strokecolor
 		newt_button.buttoncolor = not_active_button_color
 
-	end
+	end=#
 
 	on(export_button.clicks) do clicks
 
@@ -225,7 +222,6 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 		BD = Baryon(my_skyrmion,density=true)
 		BDmesh = getmesh(BD, iso_val, x)
 		skcolormap = make_color_map(my_skyrmion, BDmesh)
-
 
 		obBD[] = BDmesh
 		obCM[] = skcolormap
