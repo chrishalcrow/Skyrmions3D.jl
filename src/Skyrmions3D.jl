@@ -6,7 +6,7 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
-export Skyrmion, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!, set_lattice!
+export Skyrmion, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
 
@@ -263,6 +263,8 @@ function set_lattice!(skyrmion, lp, ls)
     end
 
 	println("Your new lattice has ", lp[1],"*",lp[2],"*",lp[3]," points with lattice spacing [",ls[1],", ",ls[2],", ",ls[3],"].")
+
+	sky_temp = nothing
 
 end
 
