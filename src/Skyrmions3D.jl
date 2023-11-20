@@ -6,7 +6,7 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
-export Skyrmion, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
+export Skyrmion, get_grid, get_field, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
 
@@ -68,6 +68,33 @@ end
 Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet" ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), sum_grid(lp, boundary_conditions), boundary_conditions )
 
 Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , boundary_conditions="dirichlet") = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp[1],boundary_conditions), index_grid(lp[2],boundary_conditions), index_grid(lp[3],boundary_conditions), sum_grid(lp,boundary_conditions), boundary_conditions )
+
+
+"""
+    get_field(skyrmion::Skyrmion)
+
+Returns an array of pion fields `[π1, π2, π3, π0]`, which can be used in integrals.
+"""
+function get_field(skyrmion::Skyrmion)
+
+	return [ skyrmion.pion_field[:,:,:,a] for a in 1:4 ]
+
+end
+
+"""
+    get_grid(skyrmion::Skyrmion)
+
+Returns an array of 3D arrays `[x, y, z]`, which can be used in integrals.
+"""
+function get_grid(skyrmion::Skyrmion)
+
+	x_grid = [ skyrmion.x[1][i] for i in 1:skyrmion.lp[1], j in 1:skyrmion.lp[2], k in 1:skyrmion.lp[3] ]
+	y_grid = [ skyrmion.x[2][j] for i in 1:skyrmion.lp[1], j in 1:skyrmion.lp[2], k in 1:skyrmion.lp[3] ]
+	z_grid = [ skyrmion.x[3][k] for i in 1:skyrmion.lp[1], j in 1:skyrmion.lp[2], k in 1:skyrmion.lp[3] ]
+
+	return (x_grid, y_grid, z_grid)
+
+end
 
 mutable struct profile
     field::Vector{Float64}
