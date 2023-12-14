@@ -315,8 +315,6 @@ function compute_current(sk; label="NULL", indices=[0,0], density=false, moment=
 
                 for a in aindices, b in bindices
 
-                    
-                    
                     current_density[a,b,i,j,k] -= 2.0*(sk.mpi^2)*(1.0 - p[4])*KD[a,b]*rm
                     
                     current_density[a,b,i,j,k] -= trace_su2_ij(Lia,Lia,a,b)*rm

@@ -199,10 +199,6 @@ end
 
 
 
-
-
-
-
 """
 	set_Fpi!(skyrmion::Skyrmion, Fpi)
 
@@ -230,7 +226,7 @@ end
 """
     set_physical!(skyrmion::Skyrmion, is_physical; Fpi=Fpi, ee=ee)
 
-Sets `skyrmion` to use physical units with `Fpi` MeV and skyrme coupling `ee`, when `is_physical` is `true`.
+Sets `skyrmion` to use physical units, when `is_physical` is `true`.
 Also used to turn off physical units by setting is_physical=false
 """
 function set_physical!(skyrmion::Skyrmion, physical::Bool; Fpi=skyrmion.Fpi, ee=skyrmion.ee)
@@ -238,8 +234,8 @@ function set_physical!(skyrmion::Skyrmion, physical::Bool; Fpi=skyrmion.Fpi, ee=
 	skyrmion.physical = physical
 
 	if skyrmion.physical == true
-		println("Fpi = ", skyrmion.Fpi, ",  e = ", skyrmion.ee, " and m = ", skyrmion.mpi)
-		println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee*skyrmion.mpi/2.0, ", length unit = ", 197.327*2.0/(skyrmion.ee*skyrmion.Fpi), "and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
+		println("Fpi = ", skyrmion.Fpi, ", e = ", skyrmion.ee, " and m = ", skyrmion.mpi)
+		println("Hence, mpi = ", skyrmion.Fpi*skyrmion.ee*skyrmion.mpi/2.0, ", length unit = ", 197.327*2.0/(skyrmion.ee*skyrmion.Fpi), " and energy unit = ", skyrmion.Fpi/(4.0*skyrmion.ee))
 	end
 
 end

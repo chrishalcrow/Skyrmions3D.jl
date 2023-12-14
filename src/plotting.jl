@@ -152,7 +152,7 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs
         error("Your iso_value, ", iso_value, " is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
         return
     end
-	println("iso_value = ", iso_value)
+	println("iso_value is ", iso_value)
 
 	BDmesh = getmesh(BD, iso_value, x)
 
@@ -248,6 +248,6 @@ function make_color_map(skyrmion, BDmesh)
 	(minp, maxp) = extrema(pion_field_on_mesh[3,:])
     p3color = (pion_field_on_mesh[3,:] .- minp)./(maxp - minp)
 
-	return [ Colors.HSL( 360*(atan.(pion_field_on_mesh[1,a], -pion_field_on_mesh[2,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ]
+	return [ Colors.HSL( 360*(atan.(-pion_field_on_mesh[2,a], -pion_field_on_mesh[1,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ]
 
 end
