@@ -65,8 +65,7 @@ mutable struct Skyrmion
     metric_var::Float64
 end
 
-# Define the Skyrmion constructors
-function Skyrmion(lp::Int64, ls::Float64; Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet", metric_var=1.0)
+function Skyrmion(lp::Int64, ls::Float64; Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0], mpi=0.0, boundary_conditions="dirichlet", metric_var=1.0)
     return Skyrmion(vacuum_skyrmion(lp, lp, lp, vac),
                     [lp, lp, lp],
                     [ls, ls, ls],
