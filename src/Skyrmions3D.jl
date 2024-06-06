@@ -48,28 +48,59 @@ Create a skyrme field with `lp` lattice points and `ls` lattice spacing.
 
 """
 mutable struct Skyrmion
-	pion_field::Array{Float64, 4}
-	lp::Vector{Int64}
-	ls::Vector{Float64}
-	x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
-	mpi::Float64
-	Fpi::Float64
-	ee::Float64
-	physical::Bool
-	dirichlet::Bool
-	index_grid_x::Vector{Int64}
-	index_grid_y::Vector{Int64}
-	index_grid_z::Vector{Int64}
-	sum_grid::Vector{UnitRange{Int64}}
-	boundary_conditions::String
-	metric_var::Float64
+    pion_field::Array{Float64, 4}
+    lp::Vector{Int64}
+    ls::Vector{Float64}
+    x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
+    mpi::Float64
+    Fpi::Float64
+    ee::Float64
+    physical::Bool
+    dirichlet::Bool
+    index_grid_x::Vector{Int64}
+    index_grid_y::Vector{Int64}
+    index_grid_z::Vector{Int64}
+    sum_grid::Vector{UnitRange{Int64}}
+    boundary_conditions::String
+    metric_variation::Float64
 end
 
+# Step 2: Modify the Skyrmion constructors
+function Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet", metric_variation=1.0)
+    return Skyrmion(vacuum_skyrmion(lp,lp,lp,vac),
+                    [lp,lp,lp],
+                    [ls,ls,ls],
+                    [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ],
+                    mpi,
+                    Fpi,
+                    ee,
+                    false,
+                    is_dirichlet(boundary_conditions),
+                    index_grid(lp,boundary_conditions),
+                    index_grid(lp,boundary_conditions),
+                    index_grid(lp,boundary_conditions),
+                    sum_grid(lp, boundary_conditions),
+                    boundary_conditions,
+                    metric_variation)
+end
 
-Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet", metric_var = 1.0) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), sum_grid(lp, boundary_conditions), boundary_conditions,metric_var)
-
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , boundary_conditions="dirichlet", metric_var = 1.0) = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp[1],boundary_conditions), index_grid(lp[2],boundary_conditions), index_grid(lp[3],boundary_conditions), sum_grid(lp,boundary_conditions), boundary_conditions,metric_var)
-
+function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet", metric_variation=1.0)
+    return Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac),
+                    lp,
+                    ls,
+                    [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)/2.0 for a in 1:3 ],
+                    mpi,
+                    Fpi,
+                    ee,
+                    false,
+                    is_dirichlet(boundary_conditions),
+                    index_grid(lp[1],boundary_conditions),
+                    index_grid(lp[2],boundary_conditions),
+                    index_grid(lp[3],boundary_conditions),
+                    sum_grid(lp,boundary_conditions),
+                    boundary_conditions,
+                    metric_variation)
+end
 
 """
     get_field(skyrmion::Skyrmion)
@@ -121,8 +152,8 @@ end
 Sets the metric variation to `metric_var`.
 """
 
-function set_metric_var!(sk::Skyrmion, metric_var)
-    sk.metric_var = metric_var
+function set_metric_variation!(sk::Skyrmion, metric_variation)
+    sk.metric_variation = metric_variation
 end
 
 """
