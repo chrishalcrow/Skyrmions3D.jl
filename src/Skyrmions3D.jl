@@ -62,12 +62,13 @@ mutable struct Skyrmion
 	index_grid_z::Vector{Int64}
 	sum_grid::Vector{UnitRange{Int64}}
 	boundary_conditions::String
+	metric_variation::Float64
 end
 
 
-Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet" ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), sum_grid(lp, boundary_conditions), boundary_conditions )
+Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet" ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), sum_grid(lp, boundary_conditions), boundary_conditions, metric_variation=1 )
 
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , boundary_conditions="dirichlet") = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp[1],boundary_conditions), index_grid(lp[2],boundary_conditions), index_grid(lp[3],boundary_conditions), sum_grid(lp,boundary_conditions), boundary_conditions )
+Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , boundary_conditions="dirichlet") = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp[1],boundary_conditions), index_grid(lp[2],boundary_conditions), index_grid(lp[3],boundary_conditions), sum_grid(lp,boundary_conditions), boundary_conditions, metric_variation=1 )
 
 
 """
@@ -114,6 +115,9 @@ function is_dirichlet(boundary_conditions)
 	end
 end
 
+function set_metric_variation!(sk::Skyrmion, metric_variation=1)
+    sk.metric_variation = metric_variation
+end
 
 """
     set_mpi!(skyrmion::Skyrmion, mpi)
