@@ -5,6 +5,6 @@ GLMakie.activate!()
 Makie.inline!(false)
 display(plot( rand(3), rand(3) ) )
 
-nuc = Skyrmion( [40, 40, 40], [0.2, 0.2, 0.2], mpi = 1.0, Fpi=186, ee=4.0, boundary_conditions="periodic")
+nuc = Skyrmion( [40, 40, 40], [0.2, 0.2, 0.2], mpi = 1.0, Fpi=186, ee=4.0)
 set_metric_variation!(nuc,2)
 overview(nuc)
