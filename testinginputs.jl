@@ -6,5 +6,5 @@ Makie.inline!(false)
 display(plot( rand(3), rand(3) ) )
 
 nuc = Skyrmion( [40, 40, 40], [0.2, 0.2, 0.2] )
-set_metric_variation!(nuc,2)
+set_metric_var(nuc,2)
 overview(nuc)
