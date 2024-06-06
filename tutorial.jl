@@ -11,7 +11,7 @@
 # type ']',which will enter "package mode", then type
 # "add https://github.com/chrishalcrow/Skyrmions3D.jl.git"
 
-]add https://github.com/chrishalcrow/Skyrmions3D.jl.git
+#]add https://github.com/Imzeep/Skyrmions3D.jl
 
 using Skyrmions3D
 
