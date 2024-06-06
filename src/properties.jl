@@ -19,7 +19,7 @@ function overview(sk)
     println("With physical constants Fpi = ", sk.Fpi, " and e = ", sk.ee,",")
     println("the energy and length units are ", round(sk.Fpi/(4*sk.ee),sigdigits=4), " MeV and ", round(hbar*2/(sk.ee*sk.Fpi),sigdigits=4), " fm." )
     println("So physical E = ", round(12*pi*pi*Energy(sk)*sk.Fpi/(4*sk.ee), sigdigits=5), " MeV." )
-    println("   Baryon rms = ", round(rms_baryon(sk)*2*hbar/(sk.ee*sk.Fpi), sigdigits=5), " fm." ) 
+    println("   Baryontest rms = ", round(rms_baryon(sk)*2*hbar/(sk.ee*sk.Fpi), sigdigits=5), " fm." ) 
 
 end
 
