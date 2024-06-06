@@ -6,7 +6,7 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
-export Skyrmion, get_grid, get_field, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
+export Skyrmion, get_grid, get_field, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical, set_metric_var!
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
 
@@ -52,6 +52,7 @@ mutable struct Skyrmion
     lp::Vector{Int64}
     ls::Vector{Float64}
     x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
+    metric_var::Float64
     mpi::Float64
     Fpi::Float64
     ee::Float64
@@ -62,14 +63,14 @@ mutable struct Skyrmion
     index_grid_z::Vector{Int64}
     sum_grid::Vector{UnitRange{Int64}}
     boundary_conditions::String
-    metric_var::Float64
 end
 
-function Skyrmion(lp::Int64, ls::Float64; Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0], mpi=0.0, boundary_conditions="dirichlet", metric_var=1.0)
+function Skyrmion(lp::Int64, ls::Float64; metric_var=1.0, Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0], mpi=0.0, boundary_conditions="dirichlet")
     return Skyrmion(vacuum_skyrmion(lp, lp, lp, vac),
                     [lp, lp, lp],
                     [ls, ls, ls],
                     [-ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3],
+                    metric_var,
                     mpi,
                     Fpi,
                     ee,
@@ -79,15 +80,15 @@ function Skyrmion(lp::Int64, ls::Float64; Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0]
                     index_grid(lp, boundary_conditions),
                     index_grid(lp, boundary_conditions),
                     sum_grid(lp, boundary_conditions),
-                    boundary_conditions,
-                    metric_var)
+                    boundary_conditions)
 end
 
-function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet", metric_var=1.0)
+function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; metric_var=1.0, Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet")
     return Skyrmion(vacuum_skyrmion(lp[1], lp[2], lp[3], vac),
                     lp,
                     ls,
                     [-ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)/2.0 for a in 1:3],
+                    metric_var,
                     mpi,
                     Fpi,
                     ee,
@@ -97,8 +98,7 @@ function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi=180, ee=4.0, vac=[
                     index_grid(lp[2], boundary_conditions),
                     index_grid(lp[3], boundary_conditions),
                     sum_grid(lp, boundary_conditions),
-                    boundary_conditions,
-                    metric_var)
+                    boundary_conditions)
 end
 
 
