@@ -115,6 +115,12 @@ function is_dirichlet(boundary_conditions)
 	end
 end
 
+"""
+    set_metric_var!(sk::Skyrmion, metric_var)
+
+Sets the metric variation to `metric_var`.
+"""
+
 function set_metric_var!(sk::Skyrmion, metric_var)
     sk.metric_var = metric_var
 end
