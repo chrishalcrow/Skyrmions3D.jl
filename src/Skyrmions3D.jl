@@ -62,45 +62,46 @@ mutable struct Skyrmion
     index_grid_z::Vector{Int64}
     sum_grid::Vector{UnitRange{Int64}}
     boundary_conditions::String
-    metric_variation::Float64
+    metric_var::Float64
 end
 
-# Step 2: Modify the Skyrmion constructors
-function Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet", metric_variation=1.0)
-    return Skyrmion(vacuum_skyrmion(lp,lp,lp,vac),
-                    [lp,lp,lp],
-                    [ls,ls,ls],
-                    [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ],
+# Define the Skyrmion constructors
+function Skyrmion(lp::Int64, ls::Float64; Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet", metric_var=1.0)
+    return Skyrmion(vacuum_skyrmion(lp, lp, lp, vac),
+                    [lp, lp, lp],
+                    [ls, ls, ls],
+                    [-ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3],
                     mpi,
                     Fpi,
                     ee,
                     false,
                     is_dirichlet(boundary_conditions),
-                    index_grid(lp,boundary_conditions),
-                    index_grid(lp,boundary_conditions),
-                    index_grid(lp,boundary_conditions),
+                    index_grid(lp, boundary_conditions),
+                    index_grid(lp, boundary_conditions),
+                    index_grid(lp, boundary_conditions),
                     sum_grid(lp, boundary_conditions),
                     boundary_conditions,
-                    metric_variation)
+                    metric_var)
 end
 
-function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet", metric_variation=1.0)
-    return Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac),
+function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet", metric_var=1.0)
+    return Skyrmion(vacuum_skyrmion(lp[1], lp[2], lp[3], vac),
                     lp,
                     ls,
-                    [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)/2.0 for a in 1:3 ],
+                    [-ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)/2.0 for a in 1:3],
                     mpi,
                     Fpi,
                     ee,
                     false,
                     is_dirichlet(boundary_conditions),
-                    index_grid(lp[1],boundary_conditions),
-                    index_grid(lp[2],boundary_conditions),
-                    index_grid(lp[3],boundary_conditions),
-                    sum_grid(lp,boundary_conditions),
+                    index_grid(lp[1], boundary_conditions),
+                    index_grid(lp[2], boundary_conditions),
+                    index_grid(lp[3], boundary_conditions),
+                    sum_grid(lp, boundary_conditions),
                     boundary_conditions,
-                    metric_variation)
+                    metric_var)
 end
+
 
 """
     get_field(skyrmion::Skyrmion)
@@ -152,8 +153,8 @@ end
 Sets the metric variation to `metric_var`.
 """
 
-function set_metric_variation!(sk::Skyrmion, metric_variation)
-    sk.metric_variation = metric_variation
+function set_metric_var!(sk::Skyrmion, metric_var::Float64)
+    sk.metric_var = metric_var
 end
 
 """
