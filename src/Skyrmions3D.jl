@@ -6,7 +6,7 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
-export Skyrmion, get_grid, get_field, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical, set_metric_var!
+export Skyrmion, get_grid, get_field, set_metric!, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
 
@@ -52,7 +52,7 @@ mutable struct Skyrmion
     lp::Vector{Int64}
     ls::Vector{Float64}
     x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
-    metric_var::Float64
+    metric::Float64
     mpi::Float64
     Fpi::Float64
     ee::Float64
@@ -65,12 +65,12 @@ mutable struct Skyrmion
     boundary_conditions::String
 end
 
-function Skyrmion(lp::Int64, ls::Float64; metric_var=1.0, Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0], mpi=0.0, boundary_conditions="dirichlet")
+function Skyrmion(lp::Int64, ls::Float64; metric=1.0, Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0], mpi=0.0, boundary_conditions="dirichlet")
     return Skyrmion(vacuum_skyrmion(lp, lp, lp, vac),
                     [lp, lp, lp],
                     [ls, ls, ls],
                     [-ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3],
-                    metric_var,
+                    metric,
                     mpi,
                     Fpi,
                     ee,
@@ -83,12 +83,12 @@ function Skyrmion(lp::Int64, ls::Float64; metric_var=1.0, Fpi=180, ee=4.0, vac=[
                     boundary_conditions)
 end
 
-function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; metric_var=1.0, Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet")
+function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; metric=1.0, Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet")
     return Skyrmion(vacuum_skyrmion(lp[1], lp[2], lp[3], vac),
                     lp,
                     ls,
                     [-ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)/2.0 for a in 1:3],
-                    metric_var,
+                    metric,
                     mpi,
                     Fpi,
                     ee,
@@ -152,8 +152,8 @@ end
 Sets the metric variation to `metric_var`.
 """
 
-function set_metric_var!(sk::Skyrmion, metric_var::Float64)
-    sk.metric_var = metric_var
+function set_metric!(sk::Skyrmion, metric)
+    sk.metric = metric
 end
 
 """
