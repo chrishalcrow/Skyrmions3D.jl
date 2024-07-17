@@ -1,3 +1,4 @@
+using StaticArrays
 """
     gradient_flow!(skyrmion; steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true)
     
@@ -87,7 +88,7 @@ function getdEdp_np!(sk, dEdp)
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
                     
             p, dp, ddp1, ddp2 = getders_local_np(sk,i,j,k)
-            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
 
         end
     end
@@ -100,28 +101,97 @@ function getdEdp_p!(sk, dEdp)
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
                     
             p, dp, ddp1, ddp2 = getders_local_p(sk,i,j,k)
-            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
 
         end
     end
 
 end
 
-function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k)
+function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
 
     Aj = getAj(dp,ddp1,ddp2)
     Bj = getBj(dp)
+    b_t = get_berger_grad_e2_star(p,dp,ddp1,alpha)
+    c_t = get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, ddp2::SMatrix{3,4,Float64}, alpha::Float64)
 
     @inbounds for a in 1:4
-        dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a]
+        dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a] + b_t[a] + c_t[a]
     end
     dEdp[i,j,k,4] += mpi^2
+
 
     @inbounds DEdotpion_field = dEdp[i,j,k,1]*p[1] + dEdp[i,j,k,2]*p[2] + dEdp[i,j,k,3]*p[3] + dEdp[i,j,k,4]*p[4]
 
     for a in 1:4
         dEdp[i,j,k,a] -= p[a]*DEdotpion_field
     end
+
+end
+
+function get_berger_grad_e2_star(p::SVector{4,Float64}, dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, alpha::Float64)
+
+    p1, p2, p3, p4 = p
+    dp11, dp12, dp13, dp14 = dp[1,1], dp[1,2], dp[1,3], dp[1,4]
+    dp21, dp22, dp23, dp24 = dp[2,1], dp[2,2], dp[2,3], dp[2,4]
+    dp31, dp32, dp33, dp34 = dp[3,1], dp[3,2], dp[3,3], dp[3,4]
+
+    L3_1 = (p4*dp13 - p3*dp14 + p1*dp12 - p2*dp11)
+    L3_2 = (p4*dp23 - p3*dp24 + p1*dp22 - p2*dp21)
+    L3_3 = (p4*dp33 - p3*dp34 + p1*dp32 - p2*dp31)
+
+    sqd_term = (p4*(ddp1[1,3] + ddp1[2,3] + ddp1[3,3])) - (p3*(ddp1[1,4] + ddp1[2,4] + ddp1[3,4])) + (p1*(ddp1[1,2] + ddp1[2,2] + ddp1[3,2])) - (p2*(ddp1[1,1] + ddp1[2,1] + ddp1[3,1]))
+
+    ωd1_L3 = @SVector [dp13, dp12, -dp11, -dp14]
+    ωd2_L3 = @SVector [dp23, dp22, -dp21, -dp24]
+    ωd3_L3 = @SVector [dp33, dp32, -dp31, -dp34]
+
+    ωp = @SVector [p3, p2, -p1, -p4]
+
+    result = (1-alpha^2) * (2*(L3_1*ωd1_L3 + L3_2*ωd2_L3 + L3_3*ωd3_L3) + sqd_term*ωp)
+    
+    return result
+end
+
+function get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, ddp2::SMatrix{3,4,Float64}, alpha::Float64)
+
+    dp11, dp12, dp13, dp14 = dp[1,1], dp[1,2], dp[1,3], dp[1,4]
+    dp21, dp22, dp23, dp24 = dp[2,1], dp[2,2], dp[2,3], dp[2,4]
+    dp31, dp32, dp33, dp34 = dp[3,1], dp[3,2], dp[3,3], dp[3,4]
+
+    ddp11, ddp12, ddp13, ddp14 = ddp1[1,1], ddp1[1,2], ddp1[1,3], ddp1[1,4]
+    ddp21, ddp22, ddp23, ddp24 = ddp1[2,1], ddp1[2,2], ddp1[2,3], ddp1[2,4]
+    ddp31, ddp32, ddp33, ddp34 = ddp1[3,1], ddp1[3,2], ddp1[3,3], ddp1[3,4]
+
+    dm11, dm12, dm13, dm14 = ddp2[1,1], ddp2[1,2], ddp2[1,3], ddp2[1,4]
+    dm21, dm22, dm23, dm24 = ddp2[2,1], ddp2[2,2], ddp2[2,3], ddp2[2,4]
+    dm31, dm32, dm33, dm34 = ddp2[3,1], ddp2[3,2], ddp2[3,3], ddp2[3,4]
+
+    ωd1_L3 = @SVector [dp13, dp12, -dp11, -dp14] #i=1
+    ωd2_L3 = @SVector [dp23, dp22, -dp21, -dp24] #i=2
+    ωd3_L3 = @SVector [dp33, dp32, -dp31, -dp34] #i=3
+
+    t1_1 = (ddp14 + ddp24 + ddp34) * dp13 - (ddp13 + ddp23 + ddp33) * dp14 + (ddp11 + ddp21 + ddp31) * dp12 - (ddp12 + ddp22 + ddp32) * dp11
+    t1_2 = (ddp14 + ddp24 + ddp34) * dp23 - (ddp13 + ddp23 + ddp33) * dp24 + (ddp11 + ddp21 + ddp31) * dp22 - (ddp12 + ddp22 + ddp32) * dp21
+    t1_3 = (ddp14 + ddp24 + ddp34) * dp33 - (ddp13 + ddp23 + ddp33) * dp34 + (ddp11 + ddp21 + ddp31) * dp12 - (ddp12 + ddp22 + ddp32) * dp31
+
+    v = t1_1 * ωd1_L3 + t1_2 * ωd2_L3 + ωd3_L3 * t1_3
+
+    s11 = (dp14*ddp13 - dp13*ddp14 + dp11*ddp12 - dp12*ddp11) # j = 1 , i = 1
+    s21 = (dp24*dm33 - dp23*dm34 + dp21*dm32 - dp22*dm31) # j = 2 , i = 1
+    s31 = (dp34*dm23 - dp33*dm24 + dp31*dm22 - dp32*dm21) # j = 3 , i = 1
+
+    s12 = (dp14*dm33 - dp13*dm34 + dp11*dm32 -dp12*dm31) # j = 1 , i = 2
+    s22 = (dp24*ddp23 - dp23*ddp24 + dp21*ddp22 - dp22*ddp21) # j = 2 , i = 2
+    s32 = (dp34*dm13 - dp33*dm14 + dp31*dm12 -dp32*dm11) # j = 3 , i = 2
+
+    s13 = (dp14*dm23 - dp13*dm24 + dp11*dm22 - dp12*dm21) # j = 1 , i = 3
+    s23 = (dp24*dm13 - dp23*dm14 + dp21*dm12 - dp22*dm11) # j = 2 , i = 3
+    s33 = (dp34*ddp33 -dp33*ddp34 +dp31*ddp32 -dp32*ddp31) # j = 3, i = 3
+
+    w = (s11 + s21 + s31)*ωd1_L3 + (s12 + s22 + s32)*ωd2_L3 + (s13 + s23 + s33)*ωd3_L3
+
+    return -2(1-alpha^2)*(v+w)
 
 end
 
@@ -154,7 +224,7 @@ function EnergyANF(sk, ED)
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
 
             dp = getDP(sk ,i, j, k )
-            ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi)
+            ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi, sk.metric)
 
         end
     end    
@@ -316,7 +386,7 @@ function getdEdp1!(sk, dEdp, sk2, skd, dt)
         
             p, dp, ddp1, ddp2 = getders_local_np(sk,i,j,k)
 
-            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
 
             for a in 1:4
                 sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt)*skd[i,j,k,a]
@@ -334,7 +404,7 @@ function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
         
             p, dp, ddp1, ddp2 = getders_local_np(sk2,i,j,k)
 
-            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
 
             for a in 1:4
                 sk.pion_field[i,j,k,a] = p[a] + (0.5*dt)^2*dEdp1[i,j,k,a]
@@ -352,7 +422,7 @@ function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
         
             p, dp, ddp1, ddp2 = getders_local_np(sk,i,j,k)
 
-            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
 
             for a in 1:4
                 sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt).*skd[i,j,k,a] + (0.5*dt)^2*(4.0*dEdp2[i,j,k,a] - dEdp1[i,j,k,a])
