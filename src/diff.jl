@@ -686,7 +686,7 @@ end
 function e2s_gradient_flow_1_step!(phi,dEdp,dt)
 
     getdE2sdp!(phi,dEdp)
-    phi.pion_field .+= dt.*dEdp;
+    phi.pion_field .-= dt.*dEdp
     normer!(phi)
 
 end
