@@ -26,7 +26,7 @@ export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot
 include("derivatives.jl")
 
 include("diff.jl")
-export gradient_flow!, arrested_newton_flow!, newton_flow!
+export gradient_flow!, arrested_newton_flow!, newton_flow!, e2sgradient_flow!
 
 function __init__()
 	CairoMakie.activate!()

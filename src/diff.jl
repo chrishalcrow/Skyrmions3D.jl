@@ -112,11 +112,11 @@ function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
 
     Aj = getAj(dp,ddp1,ddp2)
     Bj = getBj(dp)
-    b_t = get_berger_grad_e2_star(p,dp,ddp1,alpha)
-    c_t = get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, ddp2::SMatrix{3,4,Float64}, alpha::Float64)
+    b_t = get_berger_grad_e2_star(p,dp,ddp1)
+    #c_t = get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, ddp2::SMatrix{3,4,Float64}, alpha::Float64)
 
     @inbounds for a in 1:4
-        dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a] + b_t[a] + c_t[a]
+        dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a] -0.5*(alpha^2 -1)*b_t[a] #+ c_t[a]
     end
     dEdp[i,j,k,4] += mpi^2
 
@@ -129,7 +129,7 @@ function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
 
 end
 
-function get_berger_grad_e2_star(p::SVector{4,Float64}, dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, alpha::Float64)
+function get_berger_grad_e2_star(p::SVector{4,Float64}, dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64})
 
     p1, p2, p3, p4 = p
     dp11, dp12, dp13, dp14 = dp[1,1], dp[1,2], dp[1,3], dp[1,4]
@@ -148,7 +148,7 @@ function get_berger_grad_e2_star(p::SVector{4,Float64}, dp::SMatrix{3,4,Float64}
 
     ωp = @SVector [p3, p2, -p1, -p4]
 
-    result = (1-alpha^2) * (2*(L3_1*ωd1_L3 + L3_2*ωd2_L3 + L3_3*ωd3_L3) + sqd_term*ωp)
+    result = (4*(L3_1*ωd1_L3 + L3_2*ωd2_L3 + L3_3*ωd3_L3) + 2*sqd_term*ωp)
     
     return result
 end
@@ -603,3 +603,90 @@ function max_abs_err(A)
 
 end
 
+function e2sgradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0, tolerance = 0.0, checks = max(100,steps), print_stuff = true, dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), max_steps = Inf )
+
+    if tolerance == 0 && checks > steps
+        checks = steps
+    end
+    
+    if print_stuff == true
+        println("initial: energy: ", Energy(ϕ) )
+
+    end
+
+    counter = 0
+    prev_error = 1.0e9
+    
+    while counter < steps && counter < max_steps
+        
+        e2s_gradient_flow_for_n_steps!(ϕ,dEdp,checks,dt)
+        
+        err = max_abs_err(dEdp)
+        if err > 3*prev_error
+            error("Suspected numerical blowup. Please use a smaller dt. Currently, dt = ", dt)
+        end
+        prev_error = err
+
+        counter += checks
+        
+        if print_stuff == true
+            println("after ", counter, " steps, error = ", round(err, sigdigits=4), " Energy = ", Energy(ϕ), " dt = ", dt)
+        end
+
+        if tolerance != 0.0    # => we are in tol mode    
+            if err < tolerance
+                counter = steps + 1    # => end the while loop
+            else
+                steps += checks    # => continue the while loop
+            end
+        end
+
+    end
+
+    if print_stuff == true
+        println("final energy: ", Energy(ϕ) )
+    end
+
+    return
+
+end
+
+function dE2sdp_pt!(dEdp,p,dp,ddp1,i,j,k)
+    
+    grad_e2s = get_berger_grad_e2_star(p,dp,ddp1)
+
+    for a in 1:4
+        dEdp[i,j,k,a] = grad_e2s[a]
+    end
+
+    DEdotpf = dEdp[i,j,k,1]*p[1] + dEdp[i,j,k,2]*p[2] + dEdp[i,j,k,3]*p[3] + dEdp[i,j,k,4]*p[4]
+
+    for a in 1:4
+        dEdp[i,j,k,a] -= p[a]*DEdotpf
+    end
+end
+
+function getdE2sdp!(sk,dEdp)
+    Threads.@threads for k in sk.sum_grid[3]
+        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            p,dp,ddp1,ddp2 = getders_local_np(sk,i,j,k)
+
+            dE2sdp_pt!(dEdp,p,dp,ddp1,i,j,k)
+        end
+    end
+end
+
+function e2s_gradient_flow_for_n_steps!(phi,dEdp,n,dt)
+    for _ in 1:n
+        e2s_gradient_flow_1_step!(phi,dEdp,dt)
+    end
+end
+
+function e2s_gradient_flow_1_step!(phi,dEdp,dt)
+
+    getdE2sdp!(phi,dEdp)
+    phi.pion_field .+= dt.*dEdp;
+    normer!(phi)
+
+end

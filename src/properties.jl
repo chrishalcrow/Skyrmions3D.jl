@@ -87,7 +87,9 @@ function engpt(dp,p,mpi,alpha)
     e_2_star = (L3_1)^2 + (L3_2)^2 + (L3_3)^2
     e_4_star = (LB12)^2 + (LB13)^2 + (LB23)^2
 
-    return e_0 + e_2 + e_4 + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
+    #e_0 + e_2 + e_4 + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
+
+    return e_2_star
 
 end
 
