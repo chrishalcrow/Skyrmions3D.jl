@@ -89,7 +89,7 @@ function engpt(dp,p,mpi,alpha)
 
     #e_0 + e_2 + e_4 + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
 
-    return e_2_star
+    return e_0 + e_2 + e_4 + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
 
 end
 

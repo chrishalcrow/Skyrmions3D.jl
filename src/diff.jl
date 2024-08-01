@@ -113,12 +113,12 @@ function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
     Aj = getAj(dp,ddp1,ddp2)
     Bj = getBj(dp)
     b_t = get_berger_grad_e2_star(p,dp,ddp1)
-    #c_t = get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, ddp2::SMatrix{3,4,Float64}, alpha::Float64)
+    c_t = get_berger_grad_e4_star(dp, ddp1, ddp2)
 
     @inbounds for a in 1:4
-        dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a] -0.5*(alpha^2 -1)*b_t[a] #+ c_t[a]
+        dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a] -0.5*(alpha^2 -1)*b_t[a] -0.5*(alpha^2 -1)*c_t[a]
     end
-    dEdp[i,j,k,4] += mpi^2
+    #dEdp[i,j,k,4] += mpi^2
 
 
     @inbounds DEdotpion_field = dEdp[i,j,k,1]*p[1] + dEdp[i,j,k,2]*p[2] + dEdp[i,j,k,3]*p[3] + dEdp[i,j,k,4]*p[4]
@@ -129,7 +129,7 @@ function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
 
 end
 
-function get_berger_grad_e2_star(p::SVector{4,Float64}, dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64})
+function get_berger_grad_e2_star(p, dp, ddp1)
 
     p1, p2, p3, p4 = p
     dp11, dp12, dp13, dp14 = dp[1,1], dp[1,2], dp[1,3], dp[1,4]
@@ -142,18 +142,18 @@ function get_berger_grad_e2_star(p::SVector{4,Float64}, dp::SMatrix{3,4,Float64}
 
     sqd_term = (p4*(ddp1[1,3] + ddp1[2,3] + ddp1[3,3])) - (p3*(ddp1[1,4] + ddp1[2,4] + ddp1[3,4])) + (p1*(ddp1[1,2] + ddp1[2,2] + ddp1[3,2])) - (p2*(ddp1[1,1] + ddp1[2,1] + ddp1[3,1]))
 
-    ωd1_L3 = @SVector [dp13, dp12, -dp11, -dp14]
-    ωd2_L3 = @SVector [dp23, dp22, -dp21, -dp24]
-    ωd3_L3 = @SVector [dp33, dp32, -dp31, -dp34]
+    t1 = @SVector [dp12, -dp11, -dp14, dp13]
+    t2 = @SVector [dp22, -dp21, -dp24, dp23]
+    t3 = @SVector [dp32, -dp31, -dp34, dp33]
 
-    ωp = @SVector [p3, p2, -p1, -p4]
+    wp =  @SVector [p2, -p1, -p4, p3]
 
-    result = (4*(L3_1*ωd1_L3 + L3_2*ωd2_L3 + L3_3*ωd3_L3) + 2*sqd_term*ωp)
+    result = (4*(L3_1*t1 + L3_2*t2 + L3_3*t3) + 2*sqd_term*wp)
     
     return result
 end
 
-function get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Float64}, ddp2::SMatrix{3,4,Float64}, alpha::Float64)
+function get_berger_grad_e4_star(dp, ddp1, ddp2)
 
     dp11, dp12, dp13, dp14 = dp[1,1], dp[1,2], dp[1,3], dp[1,4]
     dp21, dp22, dp23, dp24 = dp[2,1], dp[2,2], dp[2,3], dp[2,4]
@@ -167,15 +167,15 @@ function get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Flo
     dm21, dm22, dm23, dm24 = ddp2[2,1], ddp2[2,2], ddp2[2,3], ddp2[2,4]
     dm31, dm32, dm33, dm34 = ddp2[3,1], ddp2[3,2], ddp2[3,3], ddp2[3,4]
 
-    ωd1_L3 = @SVector [dp13, dp12, -dp11, -dp14] #i=1
-    ωd2_L3 = @SVector [dp23, dp22, -dp21, -dp24] #i=2
-    ωd3_L3 = @SVector [dp33, dp32, -dp31, -dp34] #i=3
+    s1 = @SVector [dp12, -dp11, -dp14, dp13]
+    s2 = @SVector [dp22, -dp21, -dp24, dp23]
+    s3 = @SVector [dp32, -dp31, -dp34, dp33]
 
-    t1_1 = (ddp14 + ddp24 + ddp34) * dp13 - (ddp13 + ddp23 + ddp33) * dp14 + (ddp11 + ddp21 + ddp31) * dp12 - (ddp12 + ddp22 + ddp32) * dp11
-    t1_2 = (ddp14 + ddp24 + ddp34) * dp23 - (ddp13 + ddp23 + ddp33) * dp24 + (ddp11 + ddp21 + ddp31) * dp22 - (ddp12 + ddp22 + ddp32) * dp21
-    t1_3 = (ddp14 + ddp24 + ddp34) * dp33 - (ddp13 + ddp23 + ddp33) * dp34 + (ddp11 + ddp21 + ddp31) * dp12 - (ddp12 + ddp22 + ddp32) * dp31
+    t1_1 = (ddp14 + ddp24 + ddp34)*dp13 - (ddp13 + ddp23 + ddp33)*dp14 + (ddp11 + ddp21 + ddp31)*dp12 - (ddp12 + ddp22 + ddp32)* dp11
+    t1_2 = (ddp14 + ddp24 + ddp34)*dp23 - (ddp13 + ddp23 + ddp33)*dp24 + (ddp11 + ddp21 + ddp31)*dp22 - (ddp12 + ddp22 + ddp32)* dp21
+    t1_3 = (ddp14 + ddp24 + ddp34)*dp33 - (ddp13 + ddp23 + ddp33)*dp34 + (ddp11 + ddp21 + ddp31)*dp32 - (ddp12 + ddp22 + ddp32)* dp31
 
-    v = t1_1 * ωd1_L3 + t1_2 * ωd2_L3 + ωd3_L3 * t1_3
+    v = t1_1*s1 + t1_2*s2 + t1_3*s3
 
     s11 = (dp14*ddp13 - dp13*ddp14 + dp11*ddp12 - dp12*ddp11) # j = 1 , i = 1
     s21 = (dp24*dm33 - dp23*dm34 + dp21*dm32 - dp22*dm31) # j = 2 , i = 1
@@ -187,11 +187,11 @@ function get_berger_grad_e4_star(dp::SMatrix{3,4,Float64}, ddp1::SMatrix{3,4,Flo
 
     s13 = (dp14*dm23 - dp13*dm24 + dp11*dm22 - dp12*dm21) # j = 1 , i = 3
     s23 = (dp24*dm13 - dp23*dm14 + dp21*dm12 - dp22*dm11) # j = 2 , i = 3
-    s33 = (dp34*ddp33 -dp33*ddp34 +dp31*ddp32 -dp32*ddp31) # j = 3, i = 3
+    s33 = (dp34*ddp33 - dp33*ddp34 +dp31*ddp32 -dp32*ddp31) # j = 3, i = 3
 
-    w = (s11 + s21 + s31)*ωd1_L3 + (s12 + s22 + s32)*ωd2_L3 + (s13 + s23 + s33)*ωd3_L3
+    w = (s11 + s21 + s31)*s1+ (s12 + s22 + s32)*s2 + (s13 + s23 + s33)*s3
 
-    return -2(1-alpha^2)*(v+w)
+    return -2*(v+w)
 
 end
 
@@ -651,6 +651,8 @@ function e2sgradient_flow!(ϕ; steps = 1, dt=((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3)
 
 end
 
+
+
 function dE2sdp_pt!(dEdp,p,dp,ddp1,i,j,k)
     
     grad_e2s = get_berger_grad_e2_star(p,dp,ddp1)
@@ -659,11 +661,16 @@ function dE2sdp_pt!(dEdp,p,dp,ddp1,i,j,k)
         dEdp[i,j,k,a] = grad_e2s[a]
     end
 
+    if i == j == k == 31
+        print(grad_e2s)
+    end
+
     DEdotpf = dEdp[i,j,k,1]*p[1] + dEdp[i,j,k,2]*p[2] + dEdp[i,j,k,3]*p[3] + dEdp[i,j,k,4]*p[4]
 
     for a in 1:4
         dEdp[i,j,k,a] -= p[a]*DEdotpf
     end
+
 end
 
 function getdE2sdp!(sk,dEdp)
@@ -673,6 +680,8 @@ function getdE2sdp!(sk,dEdp)
             p,dp,ddp1,ddp2 = getders_local_np(sk,i,j,k)
 
             dE2sdp_pt!(dEdp,p,dp,ddp1,i,j,k)
+
+
         end
     end
 end
@@ -686,6 +695,8 @@ end
 function e2s_gradient_flow_1_step!(phi,dEdp,dt)
 
     getdE2sdp!(phi,dEdp)
+    maxpoint = findmax(dEdp)
+    #print(maxpoint , "\n")
     phi.pion_field .-= dt.*dEdp
     normer!(phi)
 
