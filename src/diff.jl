@@ -224,7 +224,7 @@ function EnergyANF(sk, ED)
         @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
 
             dp = getDP(sk ,i, j, k )
-            ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,4],sk.mpi, sk.metric)
+            ED[i,j,k] = engpt(dp,sk.pion_field[i,j,k,:],sk.mpi, sk.metric)
 
         end
     end    
@@ -285,7 +285,7 @@ function arrested_newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), d
 end
 
 function arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp1,dEdp2,dEdp3,dEdp4,dt,energy_density,n, initial_energy, method)
-
+    alpha = ϕ.metric
     new_energy = initial_energy
     
     for _ in 1:n
@@ -294,7 +294,7 @@ function arrested_newton_flow_for_n_steps!(ϕ,sk2,ϕd,old_pion_field,dEdp1,dEdp2
         old_pion_field .= deepcopy(ϕ.pion_field)
 
         if method == "RK4"
-            newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
+            newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt,alpha)
         elseif method == "leapfrog"
             leapfrog_for_1_step!(ϕ,ϕd,dEdp1,dEdp2,dt)
         end
@@ -362,31 +362,31 @@ end
 # we only rethread 4 times for an RK4 method. This means we need four seperate
 # update functions, and four more for different boundary conditions.
 
-function newton_flow_for_1_step!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt)
+function newton_flow_for_1_step!(sk, sk2, skd ,dEdp1, dEdp2, dEdp3, dEdp4, dt, alpha)
 
     if sk.boundary_conditions == "dirichlet"
-        getdEdp1!(sk, dEdp1, sk2, skd, dt)
-        getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
-        getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
-        getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
+        getdEdp1!(sk, dEdp1, sk2, skd, dt, alpha)
+        getdEdp2!(sk2, dEdp2, sk, dEdp1, dt, alpha)
+        getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt, alpha)
+        getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt, alpha)
     else
-        getdEdp1_p!(sk, dEdp1, sk2, skd, dt)
-        getdEdp2_p!(sk2, dEdp2, sk, dEdp1, dt)
-        getdEdp3_p!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
-        getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
+        getdEdp1_p!(sk, dEdp1, sk2, skd, dt, alpha)
+        getdEdp2_p!(sk2, dEdp2, sk, dEdp1, dt, alpha)
+        getdEdp3_p!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt, alpha)
+        getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt, alpha)
     end
 
    
 end
 
-function getdEdp1!(sk, dEdp, sk2, skd, dt)
+function getdEdp1!(sk, dEdp, sk2, skd, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_np(sk,i,j,k)
 
-            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
+            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k, alpha)
 
             for a in 1:4
                 sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt)*skd[i,j,k,a]
@@ -397,14 +397,14 @@ function getdEdp1!(sk, dEdp, sk2, skd, dt)
 
 end
 
-function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
+function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_np(sk2,i,j,k)
 
-            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
+            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k, alpha)
 
             for a in 1:4
                 sk.pion_field[i,j,k,a] = p[a] + (0.5*dt)^2*dEdp1[i,j,k,a]
@@ -415,14 +415,14 @@ function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
 
 end
 
-function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
+function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_np(sk,i,j,k)
 
-            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k, sk.metric)
+            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k, alpha)
 
             for a in 1:4
                 sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt).*skd[i,j,k,a] + (0.5*dt)^2*(4.0*dEdp2[i,j,k,a] - dEdp1[i,j,k,a])
@@ -434,13 +434,13 @@ function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
 
 end
 
-function getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
+function getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_np(sk2,i,j,k)
-            getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k,alpha)
 
             skd_dot_sk = 0.0
             sk_dot_sk = 0.0
@@ -465,14 +465,14 @@ function getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
 end
 
 
-function getdEdp1_p!(sk, dEdp, sk2, skd, dt)
+function getdEdp1_p!(sk, dEdp, sk2, skd, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_p(sk,i,j,k)
 
-            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k, alpha)
 
             for a in 1:4
                 sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt)*skd[i,j,k,a]
@@ -483,14 +483,14 @@ function getdEdp1_p!(sk, dEdp, sk2, skd, dt)
 
 end
 
-function getdEdp2_p!(sk2, dEdp2, sk, dEdp1, dt)
+function getdEdp2_p!(sk2, dEdp2, sk, dEdp1, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_p(sk2,i,j,k)
 
-            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp2, p, dp, ddp1, ddp2, sk.mpi, i, j, k, alpha)
 
             for a in 1:4
                 sk.pion_field[i,j,k,a] = p[a] + (0.5*dt)^2*dEdp1[i,j,k,a]
@@ -501,14 +501,14 @@ function getdEdp2_p!(sk2, dEdp2, sk, dEdp1, dt)
 
 end
 
-function getdEdp3_p!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
+function getdEdp3_p!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_p(sk,i,j,k)
 
-            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp3, p, dp, ddp1, ddp2, sk.mpi, i, j, k, alpha)
 
             for a in 1:4
                 sk2.pion_field[i,j,k,a] = p[a] + (0.5*dt).*skd[i,j,k,a] + (0.5*dt)^2*(4.0*dEdp2[i,j,k,a] - dEdp1[i,j,k,a])
@@ -520,13 +520,13 @@ function getdEdp3_p!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
 
 end
 
-function getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
+function getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt, alpha)
 
     Threads.@threads for k in sk.sum_grid[3]
         @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
         
             p, dp, ddp1, ddp2 = getders_local_p(sk2,i,j,k)
-            getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
+            getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k,alpha)
 
             skd_dot_sk = 0.0
             sk_dot_sk = 0.0
@@ -562,7 +562,7 @@ Applies a newton flow to `skyrmion` whose initial time derivative field is skyrm
 See also [`gradient_flow!`, `arrested_newton_flow!`]
 """
 function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1]/20.0, steps=1, print_stuff = true, frequency_of_printing = steps)
-
+    alpha = ϕ.metric
     if print_stuff == true
         println("intial energy: ", Energy(ϕ))
     end
@@ -570,7 +570,7 @@ function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1
     counter = 0
     while counter < steps
 
-        newton_flow_for_n_steps!(ϕ,ϕd,dt,frequency_of_printing)
+        newton_flow_for_n_steps!(ϕ,ϕd,dt,frequency_of_printing,alpha)
         counter += frequency_of_printing
 
         if print_stuff == true 
@@ -583,7 +583,7 @@ function newton_flow!(ϕ; ϕd=zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4), dt=ϕ.ls[1
 
 end
 
-function newton_flow_for_n_steps!(ϕ,ϕd,dt,n)
+function newton_flow_for_n_steps!(ϕ,ϕd,dt,n,alpha)
 
     dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
     dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
@@ -592,7 +592,7 @@ function newton_flow_for_n_steps!(ϕ,ϕd,dt,n)
     sk2 = deepcopy(ϕ)
 
     for _ in 1:n
-        newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt)
+        newton_flow_for_1_step!(ϕ,sk2,ϕd,dEdp1,dEdp2,dEdp3,dEdp4,dt,alpha)
     end
 
 end
