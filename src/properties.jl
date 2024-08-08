@@ -64,7 +64,7 @@ function get_energy_density!(density, sk ;moment=0)
             dp = getDP(sk ,i, j, k )
             rm = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )^moment
 
-            density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,:],sk.mpi) * rm
+            density[i,j,k] = engpt(dp,sk.pion_field[i,j,k,:],sk.mpi,sk.metric) * rm
 
         
         end
@@ -72,7 +72,10 @@ function get_energy_density!(density, sk ;moment=0)
 
 end
 
-function engpt(dp,p,mpi)
+function engpt(dp,p,mpi,alpha)
+
+    c = (alpha/1.0343)^2 - 1 
+
     L3_1 = p[4] * dp[1,3] - p[3] * dp[1,4] + p[1] * dp[1,2] - p[2] * dp[1,1]
     L3_2 = p[4] * dp[2,3] - p[3] * dp[2,4] + p[1] * dp[2,2] - p[2] * dp[2,1]
     L3_3 = p[4] * dp[3,3] - p[3] * dp[3,4] + p[1] * dp[3,2] - p[2] * dp[3,1]
@@ -84,12 +87,12 @@ function engpt(dp,p,mpi)
     e_0 = 2*mpi^2*(1 - p[4])
     e_2 = (dp[1,1]^2 + dp[1,2]^2 + dp[1,3]^2 + dp[1,4]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,3]^2 + dp[3,4]^2)
     e_4 = (dp[1,4]^2*dp[2,1]^2 + dp[1,4]^2*dp[2,2]^2 + dp[1,4]^2*dp[2,3]^2 + dp[1,1]^2*(dp[2,2]^2 + dp[2,3]^2) - 2*dp[1,1]*dp[1,4]*dp[2,1]*dp[2,4] + dp[1,1]^2*dp[2,4]^2 + dp[1,4]^2*dp[3,1]^2 + dp[2,2]^2*dp[3,1]^2 + dp[2,3]^2*dp[3,1]^2 + dp[2,4]^2*dp[3,1]^2 - 2*dp[2,1]*dp[2,2]*dp[3,1]*dp[3,2] + dp[1,1]^2*dp[3,2]^2 + dp[1,4]^2*dp[3,2]^2 + dp[2,1]^2*dp[3,2]^2 + dp[2,3]^2*dp[3,2]^2 + dp[2,4]^2*dp[3,2]^2 - 2*dp[2,1]*dp[2,3]*dp[3,1]*dp[3,3] - 2*dp[2,2]*dp[2,3]*dp[3,2]*dp[3,3] + dp[1,1]^2*dp[3,3]^2 + dp[1,4]^2*dp[3,3]^2 + dp[2,1]^2*dp[3,3]^2 + dp[2,2]^2*dp[3,3]^2 + dp[2,4]^2*dp[3,3]^2 - 2*(dp[1,1]*dp[1,4]*dp[3,1] + dp[2,4]*(dp[2,1]*dp[3,1] + dp[2,2]*dp[3,2] + dp[2,3]*dp[3,3]))*dp[3,4] + (dp[1,1]^2 + dp[2,1]^2 + dp[2,2]^2 + dp[2,3]^2)*dp[3,4]^2 + dp[1,3]^2*(dp[2,1]^2 + dp[2,2]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,2]^2 + dp[3,4]^2) + dp[1,2]^2*(dp[2,1]^2 + dp[2,3]^2 + dp[2,4]^2 + dp[3,1]^2 + dp[3,3]^2 + dp[3,4]^2) - 2*dp[1,2]*(dp[1,1]*(dp[2,1]*dp[2,2] + dp[3,1]*dp[3,2]) + dp[1,3]*(dp[2,2]*dp[2,3] + dp[3,2]*dp[3,3]) + dp[1,4]*(dp[2,2]*dp[2,4] + dp[3,2]*dp[3,4])) - 2*dp[1,3]*(dp[1,1]*(dp[2,1]*dp[2,3] + dp[3,1]*dp[3,3]) + dp[1,4]*(dp[2,3]*dp[2,4] + dp[3,3]*dp[3,4])))
+    e_0_star = 2*mpi^2*((c/2)*(p[3])^2)
     e_2_star = (L3_1)^2 + (L3_2)^2 + (L3_3)^2
     e_4_star = (LB12)^2 + (LB13)^2 + (LB23)^2
 
-    #e_0 + e_2 + e_4 + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
 
-    return e_0 + e_2 + e_4 + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
+    return e_0 + e_2 + e_4 + e_0_star + (alpha^2 - 1)*e_2_star + (alpha^2 -1)*e_4_star
 
 end
 
