@@ -1,0 +1,26 @@
+using Skyrmions3D
+using GLMakie
+using CSV
+using DataFrames
+GLMakie.activate!()
+Makie.inline!(false)
+
+
+nuc = Skyrmion([60, 60, 60], [0.2, 0.2, 0.2], mpi = 0, Fpi = 130, ee = 6.5, boundary_conditions = "dirichlet")
+
+p1(z) = z
+q1(z) = 1
+f1(r) = 4 * atan(exp(-r))
+
+make_rational_map!(nuc, p1, q1, f1)
+
+results = DataFrame(Metric = Float64[], Energy = Float64[])
+
+for metric in 0:0.05:5
+    set_metric!(nuc, metric)
+    arrested_newton_flow!(nuc, tolerance = 0.01, checks = 50,dt=0.005)
+    energy = Energy(nuc)
+    push!(results, (Metric = metric, Energy = energy))
+end
+
+CSV.write("B1M0energy_vs_metric.csv", results)
