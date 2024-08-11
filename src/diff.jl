@@ -110,6 +110,7 @@ end
 
 function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
 
+    c = (alpha)^2 - 1
     Aj = getAj(dp,ddp1,ddp2)
     Bj = getBj(dp)
     b_t = get_berger_grad_e2_star(p,dp,ddp1)
@@ -118,7 +119,8 @@ function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
     @inbounds for a in 1:4
         dEdp[i,j,k,a] = Aj[1]*dp[1,a] + Aj[2]*dp[2,a] + Aj[3]*dp[3,a] + Bj[1]*ddp1[1,a] + Bj[2]*ddp1[2,a] + Bj[3]*ddp1[3,a] + Bj[4]*ddp2[1,a] + Bj[5]*ddp2[2,a] + Bj[6]*ddp2[3,a] -0.5*(alpha^2 -1)*b_t[a] -0.5*(alpha^2 -1)*c_t[a]
     end
-    dEdp[i,j,k,4] += mpi^2
+    dEdp[i,j,k,3] += - c*p[3]*mpi^2
+    dEdp[i,j,k,4] += mpi^2 
 
 
     @inbounds DEdotpion_field = dEdp[i,j,k,1]*p[1] + dEdp[i,j,k,2]*p[2] + dEdp[i,j,k,3]*p[3] + dEdp[i,j,k,4]*p[4]
