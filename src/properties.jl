@@ -74,7 +74,7 @@ end
 
 function engpt(dp,p,mpi,alpha)
 
-    c = (alpha/1.0343)^2 - 1 
+    c = (alpha)^2 - 1 
 
     L3_1 = p[4] * dp[1,3] - p[3] * dp[1,4] + p[1] * dp[1,2] - p[2] * dp[1,1]
     L3_2 = p[4] * dp[2,3] - p[3] * dp[2,4] + p[1] * dp[2,2] - p[2] * dp[2,1]

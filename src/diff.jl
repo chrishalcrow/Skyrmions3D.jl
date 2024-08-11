@@ -110,7 +110,7 @@ end
 
 function getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, mpi, i, j, k, alpha)
 
-    c = (alpha/1.0343)^2 - 1
+    c = (alpha)^2 - 1
     Aj = getAj(dp,ddp1,ddp2)
     Bj = getBj(dp)
     b_t = get_berger_grad_e2_star(p,dp,ddp1)
