@@ -3,7 +3,7 @@ using GLMakie
 GLMakie.activate!()
 Makie.inline!(false)
 
-nuc = Skyrmion([60, 60, 60], [0.2, 0.2, 0.2], mpi = 0.58, Fpi=167, ee=6.5, boundary_conditions="dirichlet")
+nuc = Skyrmion([60, 60, 60], [0.2, 0.2, 0.2], mpi = 0.5, Fpi=130, ee=6.5, boundary_conditions="dirichlet")
 overview(nuc)
 
 p1(z) = z;
@@ -13,8 +13,13 @@ f1(r) = 4*atan(exp(-r));
 make_rational_map!(nuc,p1,q1,f1)
 Baryon(nuc)
 Energy(nuc)
+Berger_Isospin(nuc)
 
-set_metric!(nuc,0)
+compute_current(nuc; label="uMOI", indices=[0,0], density = false, moment=0)
+
+
+
+set_metric!(nuc,1)
 Energy(nuc)
 
 gradient_flow!(nuc,tolerance=0.1,checks=50, dt = 0.0004)

@@ -15,7 +15,7 @@ export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rot
 export product_approx, product_approx!, center_skyrmion!
 
 include("properties.jl")
-export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview, sphericity
+export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview, sphericity, Berger_Isospin
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
@@ -26,7 +26,7 @@ export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot
 include("derivatives.jl")
 
 include("diff.jl")
-export gradient_flow!, arrested_newton_flow!, newton_flow!, e2sgradient_flow!
+export gradient_flow!, arrested_newton_flow!, newton_flow!
 
 function __init__()
 	CairoMakie.activate!()

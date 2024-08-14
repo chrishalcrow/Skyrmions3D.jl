@@ -499,3 +499,151 @@ end
 function trace_su2_ijkl(L1,L2,L3,L4,i,j,k,l)
     return -8.0*(L1[i,1]*(L2[j,2]*(-(L3[k,2]*L4[l,1]) + L3[k,1]*L4[l,2]) + L2[j,3]*(-(L3[k,3]*L4[l,1]) + L3[k,1]*L4[l,3])) + L1[i,3]*(L2[j,1]*(L3[k,3]*L4[l,1] - L3[k,1]*L4[l,3]) + L2[j,2]*(L3[k,3]*L4[l,2] - L3[k,2]*L4[l,3])) + L1[i,2]*(L2[j,1]*(L3[k,2]*L4[l,1] - L3[k,1]*L4[l,2]) + L2[j,3]*(-(L3[k,3]*L4[l,2]) + L3[k,2]*L4[l,3])))
 end
+
+function Berger_Isospin(sk)
+
+    ID = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
+
+    get_BT_density!(ID,sk)
+
+    total = sum(ID)*sk.ls[1]*sk.ls[2]*sk.ls[3]
+
+    return total
+
+end    
+
+function get_BT_density!(density, sk)
+
+    for k in sk.sum_grid[3]
+        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            dp = getDP(sk ,i, j, k )
+
+            density[i,j,k] = BT_engpt(sk,dp,i,j,k,sk.metric) 
+
+        end
+    end
+
+end
+
+function left_t(p,dp)
+    
+    p0 = p[4]
+    p1 = p[1]
+    p2 = p[2]
+    p3 = p[3]
+    phi = [p1, p2, p3]
+
+    c = zeros(3,3)
+    dp_s = dp[:, 1:3]  
+    dp_t = dp[:, 4]    
+
+    for a in 1:3
+        v = dp_s[a,:]
+        v0 = dp_t[a]
+        c[a,:] = (p0 * v) - (v0 * phi) + [(phi[2] * v[3] - phi[3] * v[2]),
+        (phi[3] * v[1] - phi[1] * v[3]),
+        (phi[1] * v[2] - phi[2] * v[1])]
+    end
+
+    return c
+end
+
+function get_left_currents(p,dp)
+
+    lc = left_t(p,dp)
+
+    L_1 = lc[1,:]
+    L_2 = lc[2,:]
+    L_3 = lc[3,:]
+
+    return (L_1,L_2,L_3)
+end
+
+function b_metric_su2(alpha,u,v)
+   
+    met_su2 = u[1]*v[1]+u[2]*v[2]+(alpha^2)*(u[3]*v[3])
+
+    return met_su2
+end
+
+function lie_bracket(x, y)
+    return [-2 * (x[2] * y[3] - x[3] * y[2]),
+            -2 * (x[3] * y[1] - x[1] * y[3]),
+            -2 * (x[1] * y[2] - x[2] * y[1])]
+end
+
+function T2_energy(alpha,L_0)
+
+    return  b_metric_su2(alpha,L_0,L_0)
+
+end
+
+function T4_energy(alpha,L0,L1,L2,L3)
+    t01 = lie_bracket(L0,L1)
+    t02 = lie_bracket(L0,L2)
+    t03 = lie_bracket(L0,L3)
+
+    v = t01 + t02 + t03
+    
+    return (1/4) * b_metric_su2(alpha,v,v)
+end    
+
+function BT_engpt(sk,dp,i,j,k,alpha)
+
+    p = sk.pion_field[i,j,k,:]
+
+    LC = get_left_currents(p,dp)
+
+    L_0 = (2 * (p[4]*p[2] + p[3]*p[1]), 2 * (-p[4]*p[1] + p[3]*p[2]), 2 * (-(p[1])^2 - (p[2])^2))
+    L_1 = LC[1]
+    L_2 = LC[2]
+    L_3 = LC[3]
+
+    T2 = T2_energy(alpha,L_0)
+    T4 = T4_energy(alpha,L_0,L_1,L_2,L_3)
+    
+    return 2*(T2+T4)
+
+end
+
+"""
+function Berger_Isospin(sk; density=false, moment=0)
+
+    BD = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
+
+    get_i_density!(BD,sk,moment=moment)
+
+    if density == false
+        bengtot = sum(BD)*sk.ls[1]*sk.ls[2]*sk.ls[3]
+        if sk.physical == false
+            return bengtot
+        else
+            if moment == 0
+                return (bengtot*sk.Fpi/(4.0*sk.ee), "MeV" )
+            else
+                return (bengtot*sk.Fpi*(197.327*2.0/(sk.ee*sk.Fpi))/(4.0*sk.ee), "MeV fm^"*string(moment))
+            end
+        end
+    else
+        return BD
+    end
+
+end 
+
+function get_i_density!(density, sk ;moment=0)
+
+    Threads.@threads for k in sk.sum_grid[3]
+        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+        
+            dp = getDP(sk ,i, j, k )
+            rm = sqrt( sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2 )^moment
+
+            density[i,j,k] = BT_engpt(sk,dp,i,j,k,sk.metric) 
+
+        
+        end
+    end
+
+end
+"""
