@@ -6,7 +6,7 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
-export Skyrmion, get_grid, get_field, set_metric!, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical
+export Skyrmion, get_grid, get_field, set_metric!, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
 
