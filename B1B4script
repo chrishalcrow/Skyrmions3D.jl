@@ -37,7 +37,7 @@ p4(z) = z^4 + 2.0*sqrt(3.0)*im*z^2 + 1.0;
 q4(z) = z^4 - 2.0*sqrt(3.0)*im*z^2 + 1.0;
 f4(r) = pi*exp( -(r.^3)./12.0 )
 
-nuc4 =  Skyrmion([60, 60, 60], [0.2, 0.2, 0.2], mpi = 0.58, Fpi=167, ee=6.5, boundary_conditions="dirichlet")
+nuc4 =  Skyrmion([120, 120, 120], [0.1/1.2, 0.1/1.2, 0.1/1.2], mpi = 0.5, Fpi=167, ee=6.5, boundary_conditions="dirichlet")
 overview(nuc4)
 
 make_rational_map!(nuc4, p4, q4, f4)

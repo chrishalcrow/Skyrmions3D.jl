@@ -604,3 +604,66 @@ function max_abs_err(A)
     return maximum(abs, A)
 
 end
+
+
+function lin_interpolate(U, point)
+    phi = U.pion_field
+
+    x = point[1]
+    y = point[2]
+    z = point[3]
+
+    x0 = floor(Int64,x)
+    x1 = ceil(Int64,x)
+    y0 = floor(Int64,y)
+    y1 = ceil(Int64,y)
+    z0 = floor(Int64,z)
+    z1 = ceil(Int64,z)
+
+    f_000 = phi[x0, y0, z0, :]
+    f_100 = phi[x1, y0, z0, :]
+    f_010 = phi[x0, y1, z0, :]
+    f_001 = phi[x0, y0, z1, :]
+    f_110 = phi[x1, y1, z0, :]
+    f_101 = phi[x1, y0, z1, :]
+    f_011 = phi[x0, y1, z1, :]
+    f_111 = phi[x1, y1, z1, :]
+
+    if x1 == x0
+        x_d = 0.0
+    else
+        x_d = (x - x0) / (x1 - x0)
+    end
+
+    if y1 == y0
+        y_d = 0.0
+    else
+        y_d = (y - y0) / (y1 - y0)
+    end
+
+    if z1 == z0
+        z_d = 0.0
+    else
+        z_d = (z - z0) / (z1 - z0)
+    end
+
+    c00 = f_000 * (1 - x_d) + f_100 * x_d
+    c01 = f_001 * (1 - x_d) + f_101 * x_d
+    c10 = f_010 * (1 - x_d) + f_110 * x_d
+    c11 = f_011 * (1 - x_d) + f_111 * x_d
+
+    c0 = c00 * (1 - y_d) + c10 * y_d
+    c1 = c01 * (1 - y_d) + c11 * y_d
+
+    c = c0 * (1 - z_d) + c1 * z_d
+
+    cdotphi = c[1]*phi[1] + c[2]*phi[2] + c[3]*phi[3] + c[4]*phi[4]
+
+    for i in 1:4
+        c[i] -= phi[i]*cdotphi
+    end
+
+    return c 
+
+end
+
