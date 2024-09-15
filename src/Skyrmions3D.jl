@@ -21,7 +21,7 @@ include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
 
 include("plotting.jl")
-export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan
+export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan, axial_symmetry_plot
  
 include("derivatives.jl")
 

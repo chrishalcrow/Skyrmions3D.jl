@@ -284,9 +284,9 @@ function axial_symmetry_plot(sk, u, v, a, r; points=50, field = 4)
         i_field[i, :] = field_values
     end
 
-    xvals = (x_lps * nuc.ls[1]) .- 0.5*bl[1]
-    yvals = (y_lps * nuc.ls[2]) .- 0.5*bl[2]
-    zvals = (z_lps * nuc.ls[3]) .- 0.5*bl[3]
+    xvals = (x_lps * sk.ls[1]) .- 0.5*bl[1]
+    yvals = (y_lps * sk.ls[2]) .- 0.5*bl[2]
+    zvals = (z_lps * sk.ls[3]) .- 0.5*bl[3]
 
     fig = Figure(resolution = (800, 600), fontsize = 14)
     ax = Axis3(fig[1, 1], title="Circle with Field Value", xlabel="X", ylabel="Y", zlabel="Z")
