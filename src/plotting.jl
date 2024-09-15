@@ -251,3 +251,49 @@ function make_color_map(skyrmion, BDmesh)
 	return [ Colors.HSL( 360*(atan.(-pion_field_on_mesh[2,a], -pion_field_on_mesh[1,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ]
 
 end
+
+function axial_symmetry_plot(sk, u, v, a, r; points=50, field = 4)
+    bl = sk.ls.*sk.lp
+    origin = (0.5 * sk.lp + [0.5, 0.5, 0.5]) 
+    
+    u = normalize(u)
+    v = normalize(v)
+
+    t_int = range(0, 2*pi, length=points)
+
+    function c(t)
+        return a*u + r*(v*cos(t) + cross(u,v)*sin(t)) 
+    end
+
+    i_field = zeros(Float64, points, 4)
+
+    x_lps = Float64[]
+    y_lps = Float64[]
+    z_lps = Float64[]
+
+    for i in 1:points
+ 
+        p = origin + c(t_int[i])
+
+        push!(x_lps, p[1])
+        push!(y_lps, p[2])
+        push!(z_lps, p[3])
+
+        field_values = lin_interpolate(sk, p)
+
+        i_field[i, :] = field_values
+    end
+
+    xvals = (x_lps * nuc.ls[1]) .- 0.5*bl[1]
+    yvals = (y_lps * nuc.ls[2]) .- 0.5*bl[2]
+    zvals = (z_lps * nuc.ls[3]) .- 0.5*bl[3]
+
+    fig = Figure(resolution = (800, 600), fontsize = 14)
+    ax = Axis3(fig[1, 1], title="Circle with Field Value", xlabel="X", ylabel="Y", zlabel="Z")
+
+    lines!(ax, xvals, yvals, zvals, color=:blue, linewidth=2, label="Circle Path")
+
+    scatter!(ax, xvals, yvals, i_field[:, field], markersize=10, color=:red, label="Field Value")
+
+    display(fig)
+end
