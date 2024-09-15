@@ -6,7 +6,7 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
-export Skyrmion, get_grid, get_field, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
+export Skyrmion, get_grid, get_field, set_metric!, set_mpi!,  set_lattice!, set_Fpi!, set_ee!, set_physical!
 export set_periodic!, set_dirichlet!, set_neumann!
 export check_if_normalised, normer!, normer
 
@@ -15,18 +15,18 @@ export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rot
 export product_approx, product_approx!, center_skyrmion!
 
 include("properties.jl")
-export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview, sphericity
+export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview, sphericity, Berger_Isospin
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
 
 include("plotting.jl")
-export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan
+export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan, axial_symmetry_plot
  
 include("derivatives.jl")
 
 include("diff.jl")
-export gradient_flow!, arrested_newton_flow!, newton_flow!
+export gradient_flow!, arrested_newton_flow!, newton_flow!, lin_interpolate
 
 function __init__()
 	CairoMakie.activate!()
@@ -48,26 +48,58 @@ Create a skyrme field with `lp` lattice points and `ls` lattice spacing.
 
 """
 mutable struct Skyrmion
-	pion_field::Array{Float64, 4}
-	lp::Vector{Int64}
-	ls::Vector{Float64}
-	x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
-	mpi::Float64
-	Fpi::Float64
-	ee::Float64
-	physical::Bool
-	dirichlet::Bool
-	index_grid_x::Vector{Int64}
-	index_grid_y::Vector{Int64}
-	index_grid_z::Vector{Int64}
-	sum_grid::Vector{UnitRange{Int64}}
-	boundary_conditions::String
+    pion_field::Array{Float64, 4}
+    lp::Vector{Int64}
+    ls::Vector{Float64}
+    x::Vector{StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int64}}
+    metric::Float64
+    mpi::Float64
+    Fpi::Float64
+    ee::Float64
+    physical::Bool
+    dirichlet::Bool
+    index_grid_x::Vector{Int64}
+    index_grid_y::Vector{Int64}
+    index_grid_z::Vector{Int64}
+    sum_grid::Vector{UnitRange{Int64}}
+    boundary_conditions::String
 end
 
+function Skyrmion(lp::Int64, ls::Float64; metric=1.0, Fpi=180, ee=4.0, vac=[0.0,0.0,0.0,1.0], mpi=0.0, boundary_conditions="dirichlet")
+    return Skyrmion(vacuum_skyrmion(lp, lp, lp, vac),
+                    [lp, lp, lp],
+                    [ls, ls, ls],
+                    [-ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3],
+                    metric,
+                    mpi,
+                    Fpi,
+                    ee,
+                    false,
+                    is_dirichlet(boundary_conditions),
+                    index_grid(lp, boundary_conditions),
+                    index_grid(lp, boundary_conditions),
+                    index_grid(lp, boundary_conditions),
+                    sum_grid(lp, boundary_conditions),
+                    boundary_conditions)
+end
 
-Skyrmion(lp::Int64, ls::Float64; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0, boundary_conditions="dirichlet" ) = Skyrmion(vacuum_skyrmion(lp,lp,lp,vac) ,[lp,lp,lp],[ls,ls,ls], [ -ls*(lp - 1)/2.0 : ls : ls*(lp - 1)/2.0 for a in 1:3 ] , mpi, Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), index_grid(lp,boundary_conditions), sum_grid(lp, boundary_conditions), boundary_conditions )
-
-Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; Fpi = 180, ee = 4.0, vac = [0.0,0.0,0.0,1.0], mpi = 0.0 , boundary_conditions="dirichlet") = Skyrmion(vacuum_skyrmion(lp[1],lp[2],lp[3],vac) ,lp, ls, [ -ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)./2.0 for a in 1:3 ], mpi ,Fpi, ee, false, is_dirichlet(boundary_conditions),index_grid(lp[1],boundary_conditions), index_grid(lp[2],boundary_conditions), index_grid(lp[3],boundary_conditions), sum_grid(lp,boundary_conditions), boundary_conditions )
+function Skyrmion(lp::Vector{Int64}, ls::Vector{Float64}; metric=1.0, Fpi=180, ee=4.0, vac=[0.0, 0.0, 0.0, 1.0], mpi=0.0, boundary_conditions="dirichlet")
+    return Skyrmion(vacuum_skyrmion(lp[1], lp[2], lp[3], vac),
+                    lp,
+                    ls,
+                    [-ls[a]*(lp[a] - 1)/2.0 : ls[a] : ls[a]*(lp[a] - 1)/2.0 for a in 1:3],
+                    metric,
+                    mpi,
+                    Fpi,
+                    ee,
+                    false,
+                    is_dirichlet(boundary_conditions),
+                    index_grid(lp[1], boundary_conditions),
+                    index_grid(lp[2], boundary_conditions),
+                    index_grid(lp[3], boundary_conditions),
+                    sum_grid(lp, boundary_conditions),
+                    boundary_conditions)
+end
 
 
 """
@@ -114,6 +146,15 @@ function is_dirichlet(boundary_conditions)
 	end
 end
 
+"""
+    set_metric_var!(sk::Skyrmion, metric_var)
+
+Sets the metric variation to `metric_var`.
+"""
+
+function set_metric!(sk::Skyrmion, metric)
+    sk.metric = metric
+end
 
 """
     set_mpi!(skyrmion::Skyrmion, mpi)
