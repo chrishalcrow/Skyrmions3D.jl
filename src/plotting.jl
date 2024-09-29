@@ -30,7 +30,7 @@ function plot_field(skyrmion; component=3, iso_value = 0.5, kwargs...)
 			)
 
 		Makie.mesh!(ax,field_mesh,
-			shading=false,
+			shading=NoShading,
 		)
 
 		return fig
@@ -71,7 +71,7 @@ function plot_overview(skyrmion; iso_value = 0.5)
 
 	Makie.mesh!(ax,BDmesh,
 		color = skcolormap,
-		shading=false,
+		shading=NoShading,
 		)
 
     ax11 = Axis3(fig[2,1], 
@@ -94,10 +94,10 @@ function plot_overview(skyrmion; iso_value = 0.5)
 	if Makie.current_backend() == CairoMakie
 
 		field_mesh = [ getmesh(skyrmion.pion_field[:,:,:,a], iso_value, skyrmion.x) for a in 1:4 ]
-		Makie.mesh!(ax11,field_mesh[1], shading=false )
-		Makie.mesh!(ax12,field_mesh[2], shading=false )
-		Makie.mesh!(ax21,field_mesh[3], shading=false )
-		Makie.mesh!(ax22,field_mesh[4], shading=false )
+		Makie.mesh!(ax11,field_mesh[1], shading=NoShading )
+		Makie.mesh!(ax12,field_mesh[2], shading=NoShading )
+		Makie.mesh!(ax21,field_mesh[3], shading=NoShading )
+		Makie.mesh!(ax22,field_mesh[4], shading=NoShading )
 	
 	else
 
@@ -170,7 +170,7 @@ function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs
 
         Makie.mesh!(ax,BDmesh,
         	color = skcolormap,
-        	shading=false,
+        	shading=NoShading,
         	)
 
 
@@ -187,7 +187,7 @@ end
 
 function getmesh(a_density, iso_value,x)
 
-	points,faces = isosurface(a_density, MarchingCubes(iso=iso_value), origin= [ x[1][1], x[2][1], x[3][1] ],  widths = [ x[1][end] - x[1][1], x[2][end] - x[2][1], x[3][end] - x[3][1] ]  )
+	points,faces = isosurface(a_density, MarchingCubes(iso=iso_value), -1:1, -1:1, -1:1)
 
 	Npts = size(points)[1]
 	Nfaces = size(faces)[1]

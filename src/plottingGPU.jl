@@ -91,7 +91,7 @@ function interactive_flow(my_skyrmion; iso_value=2.0, kwargs... )
 
 	Makie.mesh!(ax,obBD,
 				color = obCM,
-				shading=false
+				shading=NoShading
 	)
 
 	colsize!(fig.layout, 2, Fixed(220))
