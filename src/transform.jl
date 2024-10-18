@@ -360,3 +360,28 @@ function set_dirichlet_boudary!(sk; vac=[0.0,0.0,0.0,1.0])
     end
     
 end
+
+"""
+    evaluate_skevaluate_sk(skyrmion,y)
+
+Evaluates the Skyrme field at the spatial position y, using some fancy interpolation method
+
+"""
+
+function evaluate_sk(skyrmion,y)
+
+    x = skyrmion.x
+    vac = [0.0,0.0,0.0,1.0]
+    phi=vac
+
+    phiinterp = [ extrapolate(scale(interpolate( skyrmion.pion_field[:,:,:,a] , BSpline(Quadratic()) ), (x[1],x[2],x[3]) ), Throw()) for a in 1:4 ]
+
+    if x[1][1] < y[1] < x[1][end] && x[2][1] < y[2] < x[2][end] && x[3][1] < y[3] < x[3][end]
+        for a in 1:4   
+            phi[a] = phiinterp[a](y[1], y[2], y[3])
+        end
+    end
+
+    return phi/sqrt(phi'*phi)
+
+end

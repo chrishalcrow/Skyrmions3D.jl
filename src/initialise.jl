@@ -231,25 +231,36 @@ function R_from_axis_angle(th, n)
         return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
     end
 
-    if n == [0.0,0.0,0.0]
+    normn=norm(n)
+
+    if normn == 0.0
         println("ERROR: your vector is zero.")
         return [ 1.0 0 0 ; 0 1.0 0 ; 0 0 1.0 ]
     end
 
-    n1 = n[1]
-    n2 = n[2]
-    n3 = n[3]
+    n=n/normn
+    normv=0.0
 
-    normer = sqrt( n1^2 + n2^2 + n3^2 )
+    while normv == 0.0
 
-    n1 /= normer
-    n2 /= normer
-    n3 /= normer
+        v =rand(3)
 
-     return [ n1^2 + (n2^2 + n3^2)*cos(th) 2*sin(th/2.0)*(-(n3*cos(th/2.0 + n1*n3*sin(th/2.0)))) 2*sin(th/2.0)*(n2*cos(th/2.0) + n1*n3*sin(th/2.0)) ;  2*sin(th/2.0)*(n3*cos(th/2.0) + n1*n2*sin(th/2.0)) n2^2 + (n1^2 + n3^2)*cos(th) n2*n3 - n2*n3*cos(th) - n1*sin(th) ; 2*n1*n3*sin(th/2.0)^2 - n2*sin(th) 2*sin(th/2.0)*(n1*cos(th/2.0) + n2*n3*sin(th/2.0)) n3^2 + (n1^2 + n2^2)*cos(th) ]
-        
+        v=cross(n,v)
+
+        normv=norm(v)
+
+    end
+
+    v=v/normv
+    u=cross(v,n)
+    u=u/norm(u)
+    M=[u v n]
+    R=[cos(th) sin(th) 0.0; -sin(th) cos(th) 0.0; 0.0 0.0 1.0]
+
+    return M*R*transpose(M)
 
 end
+
 
 function make_ADHM!(an_ADHM_skyrmion, LM)
     B = size(LM)[2]
