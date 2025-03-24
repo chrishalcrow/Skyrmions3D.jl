@@ -7,6 +7,10 @@ makedocs(
     authors  = "Chris Halcrow",
     pages = [
         "Home" => "index.md",
+        "Create Skyrmion" => "making_skyrmions.md",
+        "Transform and Combine" => "transform.md",
+        "Compute properties" => "properties.md",
+        "Flow" => "flow.md",
         "API" => "api.md"
     ]
 )

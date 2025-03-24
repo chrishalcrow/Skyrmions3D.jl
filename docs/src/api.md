@@ -21,6 +21,13 @@ set_Fpi!
 set_ee!
 ```
 
+## Getters and checkers
+```@docs
+get_grid
+check_if_normalised
+get_field
+```
+
 ## Create
 
 ```@docs
@@ -53,12 +60,14 @@ Energy
 Baryon
 center_of_mass
 compute_current
+rms_baryon
 ```
 
 ## Flow
 
 ```@docs
 gradient_flow!
+newton_flow!
 arrested_newton_flow!
 ```
 
@@ -66,10 +75,7 @@ arrested_newton_flow!
 
 ```@docs
 plot_overview
+plot_field
 plot_baryon_density
 interactive_flow
 ```
-
-
-
-
