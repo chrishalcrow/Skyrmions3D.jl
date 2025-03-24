@@ -11,6 +11,11 @@ makedocs(
         "Transform and Combine" => "transform.md",
         "Compute properties" => "properties.md",
         "Flow" => "flow.md",
+        "Visualise" => "visualisation.md",
         "API" => "api.md"
     ]
+)
+
+deploydocs(;
+    repo="github.com/chrishalcrow/Skyrmions3D.jl"
 )
