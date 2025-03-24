@@ -76,7 +76,7 @@ Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
 See also [`translate_sk!`]
 """
-function translate_sk(skyrmion, X)
+function translate_sk(skyrmion; X=[0.0,0.0,0.0])
 
     x = skyrmion.x
     lp = skyrmion.lp
@@ -108,7 +108,7 @@ Translates `skyrmion` by the 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
 See also [`translate_sk`]
 """
-function translate_sk!(skyrmion,X)
+function translate_sk!(skyrmion; X=[0.0,0.0,0.0])
 
     x = skyrmion.x
     lp = skyrmion.lp
@@ -136,22 +136,22 @@ function translate_sk!(skyrmion,X)
 end
 
 """
-    isorotate_sk!(skyrmion,θ,n)
+    isorotate_sk!(skyrmion,theta,n)
 
-Isorotates `skyrmion` by `θ` around the vector `n`. The given vector is automatically normalised.
+Isorotates `skyrmion` by `theta` around the vector `n`. The given vector is automatically normalised.
 
 See also [`isorotate_sk!`]
 
 
 """
-function isorotate_sk!(skyrmion,θ,n)
+function isorotate_sk!(skyrmion,theta,n)
 
     if n == [0.0, 0.0, 0.0]
         error("Your vector is zero.")
         return
     end
 
-    rotation_matrix = R_from_axis_angle(θ,n)
+    rotation_matrix = R_from_axis_angle(theta,n)
 
     lp = skyrmion.lp
 
@@ -180,20 +180,20 @@ function isorotate_sk!(skyrmion,θ,n)
 end
 
 """
-    isorotate_sk(skyrmion,θ,n) -> isorotated_skyrmion
+    isorotate_sk(skyrmion,theta,n) -> isorotated_skyrmion
 
-Returns `skyrmion` isorotated by `θ` around the vector `n`. The given vector is automatically normalised.
+Returns `skyrmion` isorotated by `theta` around the vector `n`. The given vector is automatically normalised.
 
 See also [`isorotate_sk!`]
 """
-function isorotate_sk(skyrmion,θ,n)
+function isorotate_sk(skyrmion;theta=0,n=[0,0,1])
 
     if n == [0.0, 0.0, 0.0]
         error("Your vector is zero.")
         return
     end
 
-    rotation_matrix = R_from_axis_angle(θ,n)
+    rotation_matrix = R_from_axis_angle(theta,n)
 
     tempsk = deepcopy(skyrmion)
 
@@ -221,20 +221,20 @@ end
 
 
 """
-    rotate_sk!(skyrmion,θ,n)
+    rotate_sk!(skyrmion,theta,n)
 
-Rotates `skyrmion` by `θ` around the vector `n`. The given vector is automatically normalised.
+Rotates `skyrmion` by `theta` around the vector `n`. The given vector is automatically normalised.
 
 See also [`rotate_sk`]
 """
-function rotate_sk!(skyrmion,θ,n)
+function rotate_sk!(skyrmion;theta=0,n=[0,0,1])
 
     if n == [0.0, 0.0, 0.0]
         error("Your vector is zero.")
         return
     end
 
-    rotation_matrix = R_from_axis_angle(θ,n)
+    rotation_matrix = R_from_axis_angle(theta,n)
 
     lp = skyrmion.lp
     x = skyrmion.x
@@ -270,20 +270,20 @@ end
 
 
 """
-    rotate_sk(skyrmion,θ,n) -> rotated_skyrmion
+    rotate_sk(skyrmion,theta,n) -> rotated_skyrmion
 
-Returns `skyrmion` rotated by `θ` around the vector `n`. The given vector is automatically normalised.
+Returns `skyrmion` rotated by `theta` around the vector `n`. The given vector is automatically normalised.
 
 See also [`rotate_sk!`]
 """
-function rotate_sk(skyrmion,θ,n)
+function rotate_sk(skyrmion;theta=0,n=[0,0,1])
 
     if n == [0.0, 0.0, 0.0]
         error("Your vector is zero.")
         return
     end
 
-    rotation_matrix = R_from_axis_angle(θ,n)
+    rotation_matrix = R_from_axis_angle(theta,n)
 
     lp = skyrmion.lp
     x = skyrmion.x
@@ -325,17 +325,11 @@ function center_skyrmion!(sk)
 
     for _ in 1:5
         current_CoM = center_of_mass(sk)
-        translate_sk!(sk,-current_CoM)
+        translate_sk!(sk,X=-current_CoM)
     end
     
 end
 
-"""
-    set_dirichlet!(skyrmion; vac = [0.0,0.0,0.0,1.0])
-
-    Sets the boundary of `skyrmion` equal to `vac`, with default value `[0.0, 0.0, 0.0, 1.0]`
-
-"""
 function set_dirichlet_boudary!(sk; vac=[0.0,0.0,0.0,1.0])
 
     for i in 1:sk.lp[1], j in 1:sk.lp[2]

@@ -22,6 +22,9 @@ export make_rational_map!, make_RM_product!, make_ADHM!
 
 include("plotting.jl")
 export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan
+
+include("plottingGPU.jl")
+export interactive_flow
  
 include("derivatives.jl")
 
@@ -370,14 +373,6 @@ end
 
 
 
-"""
-    setgrid(lp, ls)
-
-Compute a Cartesian lattice with `lp` lattice points and `ls` lattice spacing.
-
-`lp` and `ls` should be 3-vectors
-
-"""
 function setgrid(lp,ls)
 
 	x = [zeros(lp[1]), zeros(lp[2]), zeros(lp[3])]

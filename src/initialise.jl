@@ -262,7 +262,7 @@ function R_from_axis_angle(th, n)
 end
 
 
-function make_ADHM!(an_ADHM_skyrmion, LM)
+function make_ADHM!(an_ADHM_skyrmion, LM; tsteps=42)
     B = size(LM)[2]
     make_ADHM!(an_ADHM_skyrmion, LM[1,1:B], LM[2:B+1,1:B])
 end
@@ -270,7 +270,7 @@ end
 """
     make_ADHM!(skyrmion, L, M )
     
-Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M can be given by `Bx4` and `BxBx4` arrays or as `B` and `BxB` arrays of Quaternions, from the `GLMakie` package.
+Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M should be given by `B` and `BxB` arrays of Quaternions, from the `GLMakie` package.
 
 # Example of data
 ```
@@ -289,39 +289,27 @@ M[2,2] = Quaternion(-1.0, 0.0, 0.0, 0.0)
 ```
 
 """
-function make_ADHM!(an_ADHM_skyrmion, L, M)
+function make_ADHM!(an_ADHM_skyrmion, L, M; tsteps=42)
 
     B = size(L)[1]
 
     L_final = zeros(B,4)
     M_final = zeros(B,B,4)
 
-    if typeof(L[end]) == Quaternion{Float64}
+    #if typeof(L[end]) == Quaternion{Float64}
 
-        for a in 1:B
-            L_final[a,1] = L[a][4]
-            L_final[a,2] = L[a][1]
-            L_final[a,3] = L[a][2]
-            L_final[a,4] = L[a][3]
-        end
-    else
-        for a in 1:B, c in 1:4
-            L_final[a,c] = L[a,c]
-        end
+    for a in 1:B
+        L_final[a,1] = L[a].v3
+        L_final[a,2] = L[a].s
+        L_final[a,3] = L[a].v1
+        L_final[a,4] = L[a].v2
     end
 
-    if typeof(M[end]) == Quaternion{Float64}
-
-        for a in 1:B, b in 1:B
-            M_final[a,b,1] = M[a,b][4]
-            M_final[a,b,2] = M[a,b][1]
-            M_final[a,b,3] = M[a,b][2]
-            M_final[a,b,4] = M[a,b][3]
-        end
-    else
-        for a in 1:B, b in 1:B, c in 1:4
-            M_final[a,b,c] = M[a,b,c]
-        end
+    for a in 1:B, b in 1:B
+        M_final[a,b,1] = M[a,b].v3
+        M_final[a,b,2] = M[a,b].s
+        M_final[a,b,3] = M[a,b].v1
+        M_final[a,b,4] = M[a,b].v2
     end
 
     tsteps = 42
@@ -343,6 +331,7 @@ end
 
 function ADHMpt(L,M,y,B,tsteps,ctL,stL)
 
+    # We use pre-allocated matrices for speed so that matrix multiplication algorithms can use special methods for different sizes. Bizarrely, this was the only way I could figure out to make the compiler know which size of matrix it was getting. Rnm = zeros( MMatrix{B,B,Float64} ) does not work!
     if B == 2
         Rnm = zeros( MMatrix{2,2,Float64} )
     elseif B == 3

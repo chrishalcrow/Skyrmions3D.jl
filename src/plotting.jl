@@ -180,7 +180,7 @@ end
 
 function get_aspect_based_on_density(mesh)
 
-	the_extrema = [ extrema( [ mesh[a][1][b] for a in 1:size(mesh)[1] ] ) for b in 1:3 ]
+	the_extrema = [ extrema( [ mesh[a][1][b] for a in 1:size(mesh.faces)[1] ] ) for b in 1:3 ]
 	return ntuple( a -> the_extrema[a][2] - the_extrema[a][1], Val(3) )
 
 end
@@ -199,7 +199,7 @@ function getmesh(a_density, iso_value,x)
 	    pointsaspoints[i] = Point3f(points[i][1], points[i][2], points[i][3])
 	end
 
-	return GeometryBasics.Mesh(meta(pointsaspoints), facesagain)
+	return GeometryBasics.Mesh(pointsaspoints, facesagain)
 
 end
 
