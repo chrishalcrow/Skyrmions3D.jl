@@ -16,7 +16,7 @@ Now go into package mode by typing `]`. Now something like `@(v1.11) >` should a
 
 When installing the package, Julia will install all other packages `Skyrmions3D` depends on. This might take a little while.
 
-Once it's installed, go back to the Julia REPL (either by typing backspace from package mode, or by typing `julia` into your base terminal). You can now "use" Skyrmions3D by typing `using Skyrmoions3D`. If this works, you've installed the package!
+Once it's installed, go back to the Julia REPL (either by typing backspace from package mode, or by typing `julia` into your base terminal). You can now "use" Skyrmions3D by typing `using Skyrmions3D`. If this works, you've installed the package!
 
 If you have any problems installing the package, please post an [issue on the github page](https://github.com/chrishalcrow/Skyrmions3D.jl/issues).
 
@@ -31,3 +31,15 @@ I have also made [one](https://youtu.be/TI5huk6Rqos) or [two](https://youtu.be/H
 ### Authors
 
 I am Chris Halcrow, a research software engineer at the University of Edinburgh. I would love there to be more authors of this package. Please join in.
+
+### Contributing
+
+There are many way to contribute to `Skyrmions3D`. These include
+
+* adding examples to the documentation,
+* fixing bugs and typos,
+* implementing new skyrmions types. 
+
+If you want to do any of the above, first [raise an issue on the github page](https://github.com/chrishalcrow/Skyrmions3D.jl/issues) to discuss the idea with others. To then make the change, fork the `Skyrmions3D` repository on github, make the edits to your fork of the code, and then open a pull request. Lots of details of how to complete this process are available [from GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork). 
+
+ 
