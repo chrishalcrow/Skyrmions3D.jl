@@ -40,6 +40,8 @@ There are many way to contribute to `Skyrmions3D`. These include
 * fixing bugs and typos,
 * implementing new skyrmions types. 
 
-If you want to do any of the above, first [raise an issue on the github page](https://github.com/chrishalcrow/Skyrmions3D.jl/issues) to discuss the idea with others. To then make the change, fork the `Skyrmions3D` repository on github, make the edits to your fork of the code, and then open a pull request. Lots of details of how to complete this process are available [from GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork). 
+If you want to do any of the above, first [raise an issue on the github page](https://github.com/chrishalcrow/Skyrmions3D.jl/issues) to discuss the idea with others. To then make the change, fork the `Skyrmions3D` repository on github, make the edits to your fork of the code, and then open a pull request. Lots of details of how to complete this process are available [from GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork).
+
+If you would like further guidance on best practices in coding, see the [Julia style guide](https://docs.julialang.org/en/v1/manual/style-guide/) and the [Numerics for Solitons](https://chrishalcrow.github.io/NumericsForSolitons/) webpage. 
 
  
