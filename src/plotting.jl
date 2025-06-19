@@ -1,5 +1,5 @@
 function activate_CairoMakie()
-	CairoMakie.activate!()
+    CairoMakie.activate!()
 end
 
 
@@ -9,34 +9,39 @@ end
 Plots an isosurface of constant value, `skyrme_field[component] = iso_value`
 
 """
-function plot_field(skyrmion; component=3, iso_value = 0.5, kwargs...)
-    
-    
-	pion_field_to_be_plotted = skyrmion.pion_field[:,:,:,component]
+function plot_field(skyrmion; component = 3, iso_value = 0.5, kwargs...)
 
-	println(minimum(pion_field_to_be_plotted) ,", ", iso_value ,", ", maximum(pion_field_to_be_plotted) )
 
-	if minimum(pion_field_to_be_plotted) < iso_value < maximum(pion_field_to_be_plotted) 
+    pion_field_to_be_plotted = skyrmion.pion_field[:, :, :, component]
 
-		fig = Figure()
+    println(
+        minimum(pion_field_to_be_plotted),
+        ", ",
+        iso_value,
+        ", ",
+        maximum(pion_field_to_be_plotted),
+    )
 
-		field_mesh = getmesh(pion_field_to_be_plotted, iso_value, skyrmion.x)
-		
+    if minimum(pion_field_to_be_plotted) < iso_value < maximum(pion_field_to_be_plotted)
 
-		ax = Axis3(fig[1,1], 
-			title= "Isosurface ϕ" * string(component) * " = ±" * string(iso_value),
-			aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3]),
-			kwargs...
-			)
+        fig = Figure()
 
-		Makie.mesh!(ax,field_mesh,
-			shading=NoShading,
-		)
+        field_mesh = getmesh(pion_field_to_be_plotted, iso_value, skyrmion.x)
 
-		return fig
-	else
-		error("Your iso value is out of range")
-	end
+
+        ax = Axis3(
+            fig[1, 1],
+            title = "Isosurface ϕ" * string(component) * " = ±" * string(iso_value),
+            aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+            kwargs...,
+        )
+
+        Makie.mesh!(ax, field_mesh, shading = NoShading)
+
+        return fig
+    else
+        error("Your iso value is out of range")
+    end
 
 end
 
@@ -48,74 +53,148 @@ Plots the pion fields and a baryon density of `skyrmion`.
 
 """
 function plot_overview(skyrmion; iso_value = 0.5)
-    
-	x = skyrmion.x
 
-	BD = Baryon(skyrmion,density=true)
-	(bdmin, bdmax) = extrema(BD)
-	Biso_value = (bdmax - bdmin)/2.0
-	if Biso_value == 0
-		error("Cannot plot. You are likely plotting the vacuum state.")
-	end
+    x = skyrmion.x
 
-	BDmesh = getmesh(BD, Biso_value, x)
+    BD = Baryon(skyrmion, density = true)
+    (bdmin, bdmax) = extrema(BD)
+    Biso_value = (bdmax - bdmin)/2.0
+    if Biso_value == 0
+        error("Cannot plot. You are likely plotting the vacuum state.")
+    end
 
-	skcolormap = make_color_map(skyrmion, BDmesh)
+    BDmesh = getmesh(BD, Biso_value, x)
 
-	the_aspect = get_aspect_based_on_density(BDmesh)
+    skcolormap = make_color_map(skyrmion, BDmesh)
+
+    the_aspect = get_aspect_based_on_density(BDmesh)
 
 
-	fig = Figure()
+    fig = Figure()
 
-	ax = Axis3(fig[1,1:2], aspect = the_aspect, title="Baryon density" )
+    ax = Axis3(fig[1, 1:2], aspect = the_aspect, title = "Baryon density")
 
-	Makie.mesh!(ax,BDmesh,
-		color = skcolormap,
-		shading=NoShading,
-		)
+    Makie.mesh!(ax, BDmesh, color = skcolormap, shading = NoShading)
 
-    ax11 = Axis3(fig[2,1], 
-    	title= "Isosurface ϕ" * string(1) * " = ±" * string(iso_value),
-    	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
+    ax11 = Axis3(
+        fig[2, 1],
+        title = "Isosurface ϕ" * string(1) * " = ±" * string(iso_value),
+        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
     )
-	ax12 = Axis3(fig[2,2], 
-	title= "Isosurface ϕ" * string(2) * " = " * string(iso_value),
-	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
-	)
-	ax21 = Axis3(fig[3,1], 
-	title= "Isosurface ϕ" * string(3) * " = " * string(iso_value),
-	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
-	)
-	ax22 = Axis3(fig[3,2], 
-	title= "Isosurface ϕ" * string(4) * " = " * string(iso_value),
-	aspect = (skyrmion.lp[1],skyrmion.lp[2],skyrmion.lp[3])
-	)
+    ax12 = Axis3(
+        fig[2, 2],
+        title = "Isosurface ϕ" * string(2) * " = " * string(iso_value),
+        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+    )
+    ax21 = Axis3(
+        fig[3, 1],
+        title = "Isosurface ϕ" * string(3) * " = " * string(iso_value),
+        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+    )
+    ax22 = Axis3(
+        fig[3, 2],
+        title = "Isosurface ϕ" * string(4) * " = " * string(iso_value),
+        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+    )
 
-	if Makie.current_backend() == CairoMakie
+    if Makie.current_backend() == CairoMakie
 
-		field_mesh = [ getmesh(skyrmion.pion_field[:,:,:,a], iso_value, skyrmion.x) for a in 1:4 ]
-		Makie.mesh!(ax11,field_mesh[1], shading=NoShading )
-		Makie.mesh!(ax12,field_mesh[2], shading=NoShading )
-		Makie.mesh!(ax21,field_mesh[3], shading=NoShading )
-		Makie.mesh!(ax22,field_mesh[4], shading=NoShading )
-	
-	else
+        field_mesh =
+            [getmesh(skyrmion.pion_field[:, :, :, a], iso_value, skyrmion.x) for a = 1:4]
+        Makie.mesh!(ax11, field_mesh[1], shading = NoShading)
+        Makie.mesh!(ax12, field_mesh[2], shading = NoShading)
+        Makie.mesh!(ax21, field_mesh[3], shading = NoShading)
+        Makie.mesh!(ax22, field_mesh[4], shading = NoShading)
 
-		volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-		volume!(ax11, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,1], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+    else
 
-		volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-		volume!(ax12, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,2], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+        volume!(
+            ax11,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 1],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = iso_value,
+        )
+        volume!(
+            ax11,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 1],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = -iso_value,
+        )
 
-		volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-		volume!(ax21, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,3], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+        volume!(
+            ax12,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 2],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = iso_value,
+        )
+        volume!(
+            ax12,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 2],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = -iso_value,
+        )
 
-		volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = iso_value )
-		volume!(ax22, x[1],x[2],x[3],skyrmion.pion_field[:,:,:,4], algorithm = :iso, isorange = 0.2, isovalue = -iso_value )
+        volume!(
+            ax21,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 3],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = iso_value,
+        )
+        volume!(
+            ax21,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 3],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = -iso_value,
+        )
 
-	end
+        volume!(
+            ax22,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 4],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = iso_value,
+        )
+        volume!(
+            ax22,
+            x[1],
+            x[2],
+            x[3],
+            skyrmion.pion_field[:, :, :, 4],
+            algorithm = :iso,
+            isorange = 0.2,
+            isovalue = -iso_value,
+        )
 
-	return fig
+    end
+
+    return fig
 
 end
 
@@ -135,119 +214,150 @@ Can accept any arguments used in `Axis3` from the `Makie` package. See more: [].
 """
 function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs...)
 
-	x = skyrmion.x
+    x = skyrmion.x
 
-	BD = Baryon(skyrmion,density=true)
-	(bdmin, bdmax) = extrema(BD)
+    BD = Baryon(skyrmion, density = true)
+    (bdmin, bdmax) = extrema(BD)
 
-	if bdmax == bdmin == 0
-		error("There is nothing to plot. You are likely trying to plot the vacuum.")
-	end
+    if bdmax == bdmin == 0
+        error("There is nothing to plot. You are likely trying to plot the vacuum.")
+    end
 
-	if iso_value == 0.0
-		iso_value = (bdmax + bdmin)/4.0
-	end
+    if iso_value == 0.0
+        iso_value = (bdmax + bdmin)/4.0
+    end
 
     if iso_value > bdmax || iso_value < bdmin
-        error("Your iso_value, ", iso_value, " is out of range. The baryon density of your skymion has a minimum ", bdmin, " and maximum ", bdmax)
+        error(
+            "Your iso_value, ",
+            iso_value,
+            " is out of range. The baryon density of your skymion has a minimum ",
+            bdmin,
+            " and maximum ",
+            bdmax,
+        )
         return
     end
-	println("iso_value is ", iso_value)
+    println("iso_value is ", iso_value)
 
-	BDmesh = getmesh(BD, iso_value, x)
+    BDmesh = getmesh(BD, iso_value, x)
 
-	if juggling
-		skcolormap = make_color_map_juggle(skyrmion, BDmesh)
-	else
-		skcolormap = make_color_map(skyrmion, BDmesh)
-	end
+    if juggling
+        skcolormap = make_color_map_juggle(skyrmion, BDmesh)
+    else
+        skcolormap = make_color_map(skyrmion, BDmesh)
+    end
 
-	the_aspect = get_aspect_based_on_density(BDmesh)
+    the_aspect = get_aspect_based_on_density(BDmesh)
 
     fig = Figure()
 
-	ax = Axis3(fig[1,1], aspect = the_aspect ; kwargs...)
+    ax = Axis3(fig[1, 1], aspect = the_aspect; kwargs...)
 
-        Makie.mesh!(ax,BDmesh,
-        	color = skcolormap,
-        	shading=NoShading,
-        	)
+    Makie.mesh!(ax, BDmesh, color = skcolormap, shading = NoShading)
 
 
-	return fig
+    return fig
 
 end
 
 function get_aspect_based_on_density(mesh)
 
-	the_extrema = [ extrema( [ mesh[a][1][b] for a in 1:size(mesh.faces)[1] ] ) for b in 1:3 ]
-	return ntuple( a -> the_extrema[a][2] - the_extrema[a][1], Val(3) )
+    the_extrema = [extrema([mesh[a][1][b] for a = 1:size(mesh.faces)[1]]) for b = 1:3]
+    return ntuple(a -> the_extrema[a][2] - the_extrema[a][1], Val(3))
 
 end
 
-function getmesh(a_density, iso_value,x)
+function getmesh(a_density, iso_value, x)
 
-	points,faces = isosurface(a_density, MarchingCubes(iso=iso_value), -1:1, -1:1, -1:1)
+    points, faces = isosurface(a_density, MarchingCubes(iso = iso_value), -1:1, -1:1, -1:1)
 
-	Npts = size(points)[1]
-	Nfaces = size(faces)[1]
+    Npts = size(points)[1]
+    Nfaces = size(faces)[1]
 
-    pointsaspoints = fill(Point3f(0.0,0.0,0.0), Npts);
-	facesagain = TriangleFace{Int}[faces[a] for a in 1:Nfaces]
+    pointsaspoints = fill(Point3f(0.0, 0.0, 0.0), Npts);
+    facesagain = TriangleFace{Int}[faces[a] for a = 1:Nfaces]
 
-	for i in 1:Npts
-	    pointsaspoints[i] = Point3f(points[i][1], points[i][2], points[i][3])
-	end
+    for i = 1:Npts
+        pointsaspoints[i] = Point3f(points[i][1], points[i][2], points[i][3])
+    end
 
-	return GeometryBasics.Mesh(pointsaspoints, facesagain)
+    return GeometryBasics.Mesh(pointsaspoints, facesagain)
 
 end
 
 function make_color_map_juggle(skyrmion, BDmesh)
 
-	x = skyrmion.x
+    x = skyrmion.x
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:3 ]
+    ϕinterp = [
+        linear_interpolation((x[1], x[2], x[3]), skyrmion.pion_field[:, :, :, a]) for
+        a = 1:3
+    ]
 
     Npts = size(coordinates(BDmesh))[1]
 
-	the_color_function = zeros(RGB{Float64}, Npts)
+    the_color_function = zeros(RGB{Float64}, Npts)
 
-	cube_faces = [ [1.0,0.0,0.0], [-1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,-1.0,0.0], [0.0,0.0,1.0], [0.0,0.0,-1.0] ]
-	face_color_map = [ Colors.RGB(1.0,0.0,0.0), Colors.RGB(0.0,1.0,0.0) , Colors.RGB(0.0,0.0,1.0), Colors.RGB(1.0,1.0,0.0), Colors.RGB(0.0,1.0,1.0), Colors.RGB(1.0,0.0,1.0) ]
+    cube_faces = [
+        [1.0, 0.0, 0.0],
+        [-1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, -1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, -1.0],
+    ]
+    face_color_map = [
+        Colors.RGB(1.0, 0.0, 0.0),
+        Colors.RGB(0.0, 1.0, 0.0),
+        Colors.RGB(0.0, 0.0, 1.0),
+        Colors.RGB(1.0, 1.0, 0.0),
+        Colors.RGB(0.0, 1.0, 1.0),
+        Colors.RGB(1.0, 0.0, 1.0),
+    ]
 
-	for (a,vertex) in enumerate(coordinates(BDmesh))
+    for (a, vertex) in enumerate(coordinates(BDmesh))
 
-		pion_field_on_mesh = [ ϕinterp[b](vertex[1],vertex[2],vertex[3]) for b in 1:3 ] 
+        pion_field_on_mesh = [ϕinterp[b](vertex[1], vertex[2], vertex[3]) for b = 1:3]
 
-		distances = zeros(6)
-		for c in 1:6, b in 1:3
-			distances[c] += (pion_field_on_mesh[b] - cube_faces[c][b])^2
-		end
+        distances = zeros(6)
+        for c = 1:6, b = 1:3
+            distances[c] += (pion_field_on_mesh[b] - cube_faces[c][b])^2
+        end
 
-		the_color_function[a] = face_color_map[findmin( distances )[2]]
+        the_color_function[a] = face_color_map[findmin(distances)[2]]
 
-	end
+    end
 
-	return the_color_function 
+    return the_color_function
 end
 
 function make_color_map(skyrmion, BDmesh)
 
-	x = skyrmion.x
+    x = skyrmion.x
 
-    ϕinterp = [ linear_interpolation((x[1],x[2],x[3]), skyrmion.pion_field[:,:,:,a] )  for a in 1:3 ]
+    ϕinterp = [
+        linear_interpolation((x[1], x[2], x[3]), skyrmion.pion_field[:, :, :, a]) for
+        a = 1:3
+    ]
 
     Npts = size(coordinates(BDmesh))[1]
 
     pion_field_on_mesh = zeros(3, Npts)
-	for (a,vertex) in enumerate(coordinates(BDmesh)), b in 1:3
-	        pion_field_on_mesh[b,a] = ϕinterp[b](vertex[1],vertex[2],vertex[3])
-	end
+    for (a, vertex) in enumerate(coordinates(BDmesh)), b = 1:3
+        pion_field_on_mesh[b, a] = ϕinterp[b](vertex[1], vertex[2], vertex[3])
+    end
 
-	(minp, maxp) = extrema(pion_field_on_mesh[3,:])
-    p3color = (pion_field_on_mesh[3,:] .- minp)./(maxp - minp)
+    (minp, maxp) = extrema(pion_field_on_mesh[3, :])
+    p3color = (pion_field_on_mesh[3, :] .- minp) ./ (maxp - minp)
 
-	return [ Colors.HSL( 360*(atan.(-pion_field_on_mesh[2,a], -pion_field_on_mesh[1,a]) .+ pi)./(2pi) , 1, p3color[a] ) for a in 1:Npts ]
+    return [
+        Colors.HSL(
+            360*(atan.(-pion_field_on_mesh[2, a], -pion_field_on_mesh[1, a]) .+ pi) ./
+            (2pi),
+            1,
+            p3color[a],
+        ) for a = 1:Npts
+    ]
 
 end
