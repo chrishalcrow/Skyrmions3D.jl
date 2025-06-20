@@ -49,6 +49,7 @@ rotate_sk
 isorotate_sk!
 isorotate_sk
 center_skyrmion!
+evaluate_sk
 normer
 normer!
 ```

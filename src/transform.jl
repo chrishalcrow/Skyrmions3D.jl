@@ -414,7 +414,7 @@ function set_dirichlet_boudary!(sk; vac = [0.0, 0.0, 0.0, 1.0])
 end
 
 """
-    evaluate_skevaluate_sk(skyrmion, y)
+    evaluate_sk(skyrmion, y)
 
 Evaluates the Skyrme field at the spatial position `y`, using some fancy interpolation method.
 

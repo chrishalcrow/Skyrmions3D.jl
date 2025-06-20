@@ -13,7 +13,7 @@ export check_if_normalised, normer!, normer
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
-export product_approx, product_approx!, center_skyrmion!
+export product_approx, product_approx!, center_skyrmion!, evaluate_sk
 
 include("properties.jl")
 export Energy, get_energy_density!, Baryon, get_baryon_density!, center_of_mass, rms_baryon, compute_current, overview, sphericity
