@@ -1,6 +1,6 @@
 # Properties
 
-A skyrmion has many properties. In general, `Skyrmions3D` allows you to compute the integrand or integral of the property in question. For all the following examples, if you pass `density=true` you'll get the integrand. You can also get the moment by passing `moment=2`.
+A skyrmion has many properties. In general, `Skyrmions3D` allows you to compute the integrand or integral of the property in question. For all the following examples, if you pass `density=true` you'll get the integrand. You can also get the `n`th moment by passing `moment=n`.
 
 Suppose you have a ``B=4`` cubic skyrmion
 
@@ -47,6 +47,8 @@ skyrmion.physical = true
 Energy(skyrmion)
 >>> (6149.285364807477, "MeV")
 ```
+
+Note that the energy of the skyrmion is dependent both on its underlying pion field (which determines the ernergy density at a point) but also the grid, as the energy is calculated as the sum of the energy density over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
 
 ## Currents
 

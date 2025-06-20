@@ -13,13 +13,14 @@ export check_if_normalised, normer!, normer
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
-export product_approx, product_approx!, center_skyrmion!
+export product_approx, product_approx!, center_skyrmion!, evaluate_sk
 
 include("properties.jl")
-export Energy, Baryon, center_of_mass, rms_baryon, compute_current, overview, sphericity
+export Energy, get_energy_density!, Baryon, get_baryon_density!, center_of_mass, rms_baryon, compute_current, overview, sphericity
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
+export R_from_axis_angle
 
 include("plotting.jl")
 export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan
@@ -105,7 +106,8 @@ Skyrmion(
 """
     get_field(skyrmion::Skyrmion)
 
-Returns an array of pion fields `[π1, π2, π3, π0]`, which can be used in integrals.
+Returns the array of pion fields `[π1, π2, π3, π0]` of `skyrmion`, which can be used in integrals.
+
 """
 function get_field(skyrmion::Skyrmion)
 
@@ -117,6 +119,7 @@ end
     get_grid(skyrmion::Skyrmion)
 
 Returns an array of 3D arrays `[x, y, z]`, which can be used in integrals.
+
 """
 function get_grid(skyrmion::Skyrmion)
 
@@ -160,6 +163,7 @@ end
     set_mpi!(skyrmion::Skyrmion, mpi)
 
 Set the pion mass of `skyrmion` to `mpi`.
+
 """
 function set_mpi!(sk::Skyrmion, mpi)
     sk.mpi = mpi
@@ -178,9 +182,10 @@ function set_bounary_conditions!(sk::Skyrmion, boundary_conditions::String)
 end
 
 """
-	set_periodic!(skyrmion::Skyrmion)
+    set_periodic!(skyrmion::Skyrmion)
 
 Sets the `skyrmion` to have periodic boundary conditions.
+
 """
 function set_periodic!(sk::Skyrmion)
 
@@ -193,9 +198,10 @@ function set_periodic!(sk::Skyrmion)
 end
 
 """
-	set_dirichlet!(skyrmion::Skyrmion)
+    set_dirichlet!(skyrmion::Skyrmion)
 
 Sets the `skyrmion` to have Dirichlet boundary conditions.
+
 """
 function set_neumann!(sk::Skyrmion)
 
@@ -208,9 +214,10 @@ function set_neumann!(sk::Skyrmion)
 end
 
 """
-	set_dirichlet!(skyrmion::Skyrmion)
+    set_dirichlet!(skyrmion::Skyrmion)
 
 Sets the `skyrmion` to have periodic boundary conditions.
+
 """
 function set_dirichlet!(sk::Skyrmion)
 
@@ -226,9 +233,10 @@ end
 
 
 """
-	set_Fpi!(skyrmion::Skyrmion, Fpi)
+    set_Fpi!(skyrmion::Skyrmion, Fpi)
 
 Sets the pion decay constant of `skyrmion` to `Fpi`. 
+
 """
 function set_Fpi!(sk::Skyrmion, Fpi)
 
@@ -238,9 +246,10 @@ end
 
 
 """
-	set_ee!(skyrmion::Skyrmion, ee)
+    set_ee!(skyrmion::Skyrmion, ee)
 
 Sets the Skyrme coupling constant of `skyrmion` to `ee`. 
+
 """
 function set_ee!(sk::Skyrmion, ee)
 
@@ -253,7 +262,9 @@ end
     set_physical!(skyrmion::Skyrmion, is_physical; Fpi=Fpi, ee=ee)
 
 Sets `skyrmion` to use physical units, when `is_physical` is `true`.
-Also used to turn off physical units by setting is_physical=false
+
+Also used to turn off physical units by setting `is_physical=false`.
+
 """
 function set_physical!(
     skyrmion::Skyrmion,
@@ -424,9 +435,9 @@ end
 """
     check_if_normalised(skyrmion)
 
-Check if skyrmion is normalised.
+Check if `skyrmion` is normalised.
 
-Throws an error if any point is not normalised
+Throws an error if any point is not normalised, i.e. the pion field does not have norm 1.
 
 """
 function check_if_normalised(skyrmion)
@@ -457,7 +468,8 @@ end
 
 Normalises `skyrmion`.
 
-See also [`normer`]
+See also [`normer`](@ref). 
+
 """
 function normer!(sk)
 
@@ -470,7 +482,7 @@ end
 
 Returns normalised `skyrmion`.
 
-See also [`normer!`]
+See also [`normer!`](@ref). 
 
 """
 function normer(sk)

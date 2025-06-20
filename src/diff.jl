@@ -1,9 +1,11 @@
 """
-    gradient_flow!(skyrmion; steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true)
+    gradient_flow!(skyrmion; steps=n, tolerance=tol, dt=ls^2/80.0, checks=max(100, steps), print_stuff=true, dEdp=zero_array, max_steps=Inf)
     
 Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`newton_flow!`, `arrested_newton_flow!`]
+`dEdp` is an array, initialised to be the correct shape and 0.0 everywhere, which stores the change in energy density. `print_stuff=true` makes the flow verbose. 
+
+See also [`newton_flow!`](@ref) and [`arrested_newton_flow!`](@ref). 
 
 """
 function gradient_flow!(
@@ -245,11 +247,14 @@ end
 
 
 """
-    arrested_newton_flow!(skyrmion; skyrmion_dot, steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true)
+    arrested_newton_flow!(skyrmion; skyrmion_dot, steps=n, tolerance=tol, dt=ls^2/80.0, checks=max(100, steps), print_stuff=true, max_step=Inf, method="RK4")
     
 Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`gradient_flow!`, `newton_flow!`]
+`print_stuff=true` makes the flow verbose. `method` determines how each timestep is carried out: accepted values are "RK4" or "leapfrog". 
+
+See also [`gradient_flow!`](@ref) and [`newton_flow!`](@ref). 
+
 """
 function arrested_newton_flow!(
     ϕ;
@@ -647,11 +652,12 @@ end
 
 
 """
-    newton_flow!(skyrmion; skyrmion_dot, steps = n, dt=ls^2/80.0, frequency_of_printing = freq, print_stuff = true)
+    newton_flow!(skyrmion; skyrmion_dot, steps=1, dt=ls^2/80.0, frequency_of_printing=steps, print_stuff=true)
     
-Applies a newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The energy is checked every `freq` steps.
+Applies a newton flow to `skyrmion` whose initial time derivative field is `skyrmion_dot` with timestep `dt` for `n` steps. The energy is checked every `frequence_of_printing` steps.
 
-See also [`gradient_flow!`, `arrested_newton_flow!`]
+See also [`gradient_flow!`](@ref) and [`arrested_newton_flow!`](@ref). 
+
 """
 function newton_flow!(
     ϕ;

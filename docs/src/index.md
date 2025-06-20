@@ -16,7 +16,7 @@ Now go into package mode by typing `]`. Now something like `@(v1.11) >` should a
 
 When installing the package, Julia will install all other packages `Skyrmions3D` depends on. This might take a little while.
 
-Once it's installed, go back to the Julia REPL (either by typing backspace from package mode, or by typing `julia` into your base terminal). You can now "use" Skyrmions3D by typing `using Skyrmoions3D`. If this works, you've installed the package!
+Once it's installed, go back to the Julia REPL (either by typing backspace from package mode, or by typing `julia` into your base terminal). You can now "use" Skyrmions3D by typing `using Skyrmions3D`. If this works, you've installed the package!
 
 If you have any problems installing the package, please post an [issue on the github page](https://github.com/chrishalcrow/Skyrmions3D.jl/issues).
 
