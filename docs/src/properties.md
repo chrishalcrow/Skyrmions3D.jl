@@ -1,6 +1,6 @@
 # Properties
 
-A skyrmion has many properties. In general, `Skyrmions3D` allows you to compute the integrand or integral of the property in question. For all the following examples, if you pass `density=true` you'll get the integrand. You can also get the moment by passing `moment=2`.
+A skyrmion has many properties. In general, `Skyrmions3D` allows you to compute the integrand or integral of the property in question. For all the following examples, if you pass `density=true` you'll get the integrand. You can also get the `n`th moment by passing `moment=n`.
 
 Suppose you have a ``B=4`` cubic skyrmion
 
