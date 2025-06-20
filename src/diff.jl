@@ -3,7 +3,7 @@
     
 Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`newton_flow!`, `arrested_newton_flow!`]
+See also [`newton_flow!`, `arrested_newton_flow!`](@ref). 
 
 """
 function gradient_flow!(
@@ -249,7 +249,7 @@ end
     
 Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`gradient_flow!`, `newton_flow!`]
+See also [`gradient_flow!`, `newton_flow!`](@ref). 
 """
 function arrested_newton_flow!(
     ϕ;
@@ -651,7 +651,7 @@ end
     
 Applies a newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The energy is checked every `freq` steps.
 
-See also [`gradient_flow!`, `arrested_newton_flow!`]
+See also [`gradient_flow!`, `arrested_newton_flow!`](@ref). 
 """
 function newton_flow!(
     ϕ;

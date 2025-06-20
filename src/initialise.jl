@@ -324,6 +324,13 @@ function getdpB(p, i)
     return (p.field[i+1] - p.field[i-1])/(2.0*p.ls)
 end
 
+
+"""
+    R_from_axis_angle(th, n)
+
+Creates the rotation matrix which acts via left multiplication on a vector to rotate it by angle `th` about axis `n`. The vector `n` is automatically normalised.
+
+"""
 function R_from_axis_angle(th, n)
 
     if th == 0.0
@@ -367,9 +374,11 @@ function make_ADHM!(an_ADHM_skyrmion, LM; tsteps = 42)
 end
 
 """
-    make_ADHM!(skyrmion, L, M )
+    make_ADHM!(skyrmion, L, M; tsteps=42)
     
 Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M should be given by `B` and `BxB` arrays of Quaternions, from the `GLMakie` package.
+
+`tsteps` determines the number of steps used to numerically compute the holonomy of the ADHM gauge field. 
 
 # Example of data
 ```
