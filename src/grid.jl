@@ -27,11 +27,7 @@ mutable struct Grid
     boundary_conditions::String
 end
 
-Grid(
-    lp::Vector{Int64},
-    ls::Vector{Float64},
-    boundary_conditions::String,
-) = Grid(
+Grid(lp::Vector{Int64}, ls::Vector{Float64}, boundary_conditions::String) = Grid(
     lp,
     ls,
     [(-ls[a]*(lp[a]-1)/2.0):ls[a]:(ls[a]*(lp[a]-1) ./ 2.0) for a = 1:3],

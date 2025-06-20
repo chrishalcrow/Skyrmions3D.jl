@@ -17,4 +17,3 @@ make_rational_map!(a_skyrmion, p, q)
 plot_field(a_skyrmion)
 
 activate_CairoMakie()
-

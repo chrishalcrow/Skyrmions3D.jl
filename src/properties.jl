@@ -93,7 +93,7 @@ function get_energy_density!(density, sk; moment = 0)
 
             dp = getDP(sk, i, j, k)
             rm = sqrt(sk.grid.x[1][i]^2 + sk.grid.x[2][j]^2 + sk.grid.x[3][k]^2)^moment
-            
+
             density[i, j, k] = engpt(dp, sk.pion_field[i, j, k, 4], sk.mpi) * rm
 
 
@@ -223,7 +223,12 @@ function get_baryon_density!(baryon_density, sk; moment = 0, component = 0)
 
             pp = getX(sk, i, j, k)
             dp = getDP(sk, i, j, k)
-            rm = sqrt(vc[1]*sk.grid.x[1][i]^2 + vc[2]*sk.grid.x[2][j]^2 + vc[3]*sk.grid.x[3][k]^2)^moment
+            rm =
+                sqrt(
+                    vc[1]*sk.grid.x[1][i]^2 +
+                    vc[2]*sk.grid.x[2][j]^2 +
+                    vc[3]*sk.grid.x[3][k]^2,
+                )^moment
 
             baryon_density[i, j, k] = barypt(dp, pp) * rm
 
@@ -516,7 +521,8 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
     if density == false
         tot_den = zeros(3, 3)
         for a in aindices, b in bindices
-            tot_den[a, b] = sum(current_density[a, b, :, :, :])*sk.grid.ls[1]*sk.grid.ls[2]*sk.grid.ls[3]
+            tot_den[a, b] =
+                sum(current_density[a, b, :, :, :])*sk.grid.ls[1]*sk.grid.ls[2]*sk.grid.ls[3]
         end
         if indices == [0, 0]
             return tot_den

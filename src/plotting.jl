@@ -99,8 +99,9 @@ function plot_overview(skyrmion; iso_value = 0.5)
 
     if Makie.current_backend() == CairoMakie
 
-        field_mesh =
-            [getmesh(skyrmion.pion_field[:, :, :, a], iso_value, skyrmion.grid.x) for a = 1:4]
+        field_mesh = [
+            getmesh(skyrmion.pion_field[:, :, :, a], iso_value, skyrmion.grid.x) for a = 1:4
+        ]
         Makie.mesh!(ax11, field_mesh[1], shading = NoShading)
         Makie.mesh!(ax12, field_mesh[2], shading = NoShading)
         Makie.mesh!(ax21, field_mesh[3], shading = NoShading)

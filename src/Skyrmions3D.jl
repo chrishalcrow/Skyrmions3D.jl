@@ -59,7 +59,7 @@ Create a skyrme field with `lp` lattice points and `ls` lattice spacing.
 """
 mutable struct Skyrmion
     pion_field::Array{Float64,4}
-	grid::Grid
+    grid::Grid
     mpi::Float64
     Fpi::Float64
     ee::Float64
@@ -77,7 +77,7 @@ Skyrmion(
     boundary_conditions = "dirichlet",
 ) = Skyrmion(
     vacuum_skyrmion(lp, lp, lp, vac),
-    Grid([lp,lp,lp], [ls,ls,ls], boundary_conditions),
+    Grid([lp, lp, lp], [ls, ls, ls], boundary_conditions),
     mpi,
     Fpi,
     ee,
@@ -94,7 +94,7 @@ Skyrmion(
     boundary_conditions = "dirichlet",
 ) = Skyrmion(
     vacuum_skyrmion(lp[1], lp[2], lp[3], vac),
-    Grid([lp[1],lp[2],lp[3]], [ls[1],ls[2],ls[3]], boundary_conditions),
+    Grid([lp[1], lp[2], lp[3]], [ls[1], ls[2], ls[3]], boundary_conditions),
     mpi,
     Fpi,
     ee,
@@ -186,7 +186,7 @@ function set_periodic!(sk::Skyrmion)
 
     sk.grid.dirichlet = false
 
-	set_bounary_conditions!(sk, "periodic")
+    set_bounary_conditions!(sk, "periodic")
 
     println("Periodic boundary conditions activated")
 
@@ -201,7 +201,7 @@ function set_neumann!(sk::Skyrmion)
 
     sk.grid.dirichlet = false
 
-	set_bounary_conditions!(sk, "neumann")
+    set_bounary_conditions!(sk, "neumann")
 
     println("Neumann boundary conditions activated")
 
