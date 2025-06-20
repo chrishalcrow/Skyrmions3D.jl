@@ -6,6 +6,7 @@ Here are all the exported functions of Skyrmions3D.
 
 ```@docs
 Skyrmion
+Grid
 ```
 
 ## Set up the system

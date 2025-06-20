@@ -14,9 +14,9 @@ Suppose we have ``B=4`` rational map skyrmion, but modified so that it doesn't h
 
 ```julia
 using Skyrmions3D
-skyrmion = Skyrmion(30,0.2)
-p4(z) = z^4 + 3*sqrt(3)*im*z^2 + 1
-q4(z) = z^4 - 3*sqrt(3)*im*z^2 + 0
+skyrmion = Skyrmion(60,0.15)
+p4(z) = z^4 + 3*sqrt(2)*im*z^2 + 1
+q4(z) = z^4 - 3*sqrt(2)*im*z^2 + 1
 make_rational_map!(skyrmion, p4, q4)
 ```
 

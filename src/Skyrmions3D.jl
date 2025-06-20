@@ -30,6 +30,7 @@ export interactive_flow
 include("derivatives.jl")
 
 include("grid.jl")
+export Grid
 
 include("diff.jl")
 export gradient_flow!, arrested_newton_flow!, newton_flow!
