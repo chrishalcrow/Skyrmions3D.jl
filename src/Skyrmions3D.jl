@@ -20,6 +20,7 @@ export Energy, get_energy_density!, Baryon, get_baryon_density!, center_of_mass,
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
+export R_from_axis_angle
 
 include("plotting.jl")
 export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan

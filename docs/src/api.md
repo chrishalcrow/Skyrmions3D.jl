@@ -83,3 +83,8 @@ plot_field
 plot_baryon_density
 interactive_flow
 ```
+
+## Helpers
+```@docs
+R_from_axis_angle
+```
