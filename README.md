@@ -9,7 +9,7 @@ A package to create and visualise 3D Skyrmions in the Skyrme model.
 
 A beginners tutorial written in Jupyter notebook can be downloaded from this repo.
 
-The documentation can currently be found [here](http://solitonsatwork.net/chris/Skyrmions3D/).
+The documentation can be found [here]([http://solitonsatwork.net/chris/Skyrmions3D/](https://chrishalcrow.github.io/Skyrmions3D.jl/dev/)).
 
 There are [one](https://youtu.be/HeSs7yVGXR4) or [two](https://youtu.be/TI5huk6Rqos) YouTube videos about the package.
 
