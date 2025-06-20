@@ -24,8 +24,8 @@ The product is taken pairwise in order. E.g. for a list of 3 skyrmions, we first
 """
 function make_RM_product!(sk, Xs)
 
-    lp = sk.lp
-    ls = sk.ls
+    lp = sk.grid.lp
+    ls = sk.grid.ls
 
     temp_sk = Skyrmion(lp, ls)
 
@@ -116,7 +116,7 @@ function make_rational_map!(
     j_n = [0.0, 0.0, 0.0],
 )
 
-    lp, x = skyrmion.lp, skyrmion.x
+    lp, x = skyrmion.grid.lp, skyrmion.grid.x
 
     RI = R_from_axis_angle(iTH, i_n)
     RJ = R_from_axis_angle(jTH, j_n)
@@ -163,7 +163,7 @@ function make_rational_map!(
         end
     end
 
-    if skyrmion.boundary_conditions == "dirichlet"
+    if skyrmion.grid.boundary_conditions == "dirichlet"
         set_dirichlet_boudary!(skyrmion)
     end
 
@@ -1119,6 +1119,8 @@ function make_ADHM!(an_ADHM_skyrmion, L, M; tsteps = 42)
 
     #if typeof(L[end]) == Quaternion{Float64}
 
+    #println("L[1]: ", typeof(L[1].v3))
+
     for a = 1:B
         L_final[a, 1] = L[a].v3
         L_final[a, 2] = L[a].s
@@ -1133,14 +1135,13 @@ function make_ADHM!(an_ADHM_skyrmion, L, M; tsteps = 42)
         M_final[a, b, 4] = M[a, b].v2
     end
 
-    tsteps = 42
     lstime = pi/tsteps
 
     ctL = [cos(lstime*(tint-1)) for tint = 1:(tsteps+1)]
     stL = [sin(lstime*(tint-1)) for tint = 1:(tsteps+1)]
 
-    x = an_ADHM_skyrmion.x
-    lp = an_ADHM_skyrmion.lp
+    x = an_ADHM_skyrmion.grid.x
+    lp = an_ADHM_skyrmion.grid.lp
 
     Threads.@threads for k = 1:lp[3]
         for j = 1:lp[2], i = 1:lp[1]

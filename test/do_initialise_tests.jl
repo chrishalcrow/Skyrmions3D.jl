@@ -5,17 +5,17 @@ a_skyrmion = Skyrmion(5, 0.2)
 the_same_skyrmion = Skyrmion([5, 5, 5], [0.2, 0.2, 0.2])
 
 @test a_skyrmion.pion_field == the_same_skyrmion.pion_field
-@test a_skyrmion.lp == the_same_skyrmion.lp
-@test a_skyrmion.ls == the_same_skyrmion.ls
+@test a_skyrmion.grid.lp == the_same_skyrmion.grid.lp
+@test a_skyrmion.grid.ls == the_same_skyrmion.grid.ls
 @test a_skyrmion.mpi == the_same_skyrmion.mpi
 @test a_skyrmion.Fpi == the_same_skyrmion.Fpi
 @test a_skyrmion.ee == the_same_skyrmion.ee
 @test a_skyrmion.physical == the_same_skyrmion.physical
-@test a_skyrmion.dirichlet == the_same_skyrmion.dirichlet
-@test a_skyrmion.index_grid_x == the_same_skyrmion.index_grid_x
-@test a_skyrmion.index_grid_y == the_same_skyrmion.index_grid_y
-@test a_skyrmion.index_grid_z == the_same_skyrmion.index_grid_z
-@test a_skyrmion.sum_grid == the_same_skyrmion.sum_grid
+@test a_skyrmion.grid.dirichlet == the_same_skyrmion.grid.dirichlet
+@test a_skyrmion.grid.index_grid_x == the_same_skyrmion.grid.index_grid_x
+@test a_skyrmion.grid.index_grid_y == the_same_skyrmion.grid.index_grid_y
+@test a_skyrmion.grid.index_grid_z == the_same_skyrmion.grid.index_grid_z
+@test a_skyrmion.grid.sum_grid == the_same_skyrmion.grid.sum_grid
 
 # setting stuff
 
@@ -30,41 +30,41 @@ set_ee!(a_skyrmion, 3.0)
 
 set_lattice!(a_skyrmion, [6, 4, 7], [0.1, 0.15, 0.25])
 
-@test a_skyrmion.lp[1] == 6
-@test a_skyrmion.lp[2] == 4
-@test a_skyrmion.lp[3] == 7
+@test a_skyrmion.grid.lp[1] == 6
+@test a_skyrmion.grid.lp[2] == 4
+@test a_skyrmion.grid.lp[3] == 7
 
-@test a_skyrmion.ls[1] == 0.1
-@test a_skyrmion.ls[2] == 0.15
-@test a_skyrmion.ls[3] == 0.25
+@test a_skyrmion.grid.ls[1] == 0.1
+@test a_skyrmion.grid.ls[2] == 0.15
+@test a_skyrmion.grid.ls[3] == 0.25
 
-@test a_skyrmion.dirichlet == true
+@test a_skyrmion.grid.dirichlet == true
 
 set_neumann!(a_skyrmion)
-@test a_skyrmion.dirichlet == false
-@test a_skyrmion.boundary_conditions == "neumann"
+@test a_skyrmion.grid.dirichlet == false
+@test a_skyrmion.grid.boundary_conditions == "neumann"
 
-@test a_skyrmion.sum_grid == [1:6, 1:4, 1:7]
+@test a_skyrmion.grid.sum_grid == [1:6, 1:4, 1:7]
 
-@test a_skyrmion.index_grid_x == [2, 1, 1, 2, 3, 4, 5, 6, 6, 5]
-@test a_skyrmion.index_grid_y == [2, 1, 1, 2, 3, 4, 4, 3]
-@test a_skyrmion.index_grid_z == [2, 1, 1, 2, 3, 4, 5, 6, 7, 7, 6]
+@test a_skyrmion.grid.index_grid_x == [2, 1, 1, 2, 3, 4, 5, 6, 6, 5]
+@test a_skyrmion.grid.index_grid_y == [2, 1, 1, 2, 3, 4, 4, 3]
+@test a_skyrmion.grid.index_grid_z == [2, 1, 1, 2, 3, 4, 5, 6, 7, 7, 6]
 
 set_periodic!(a_skyrmion)
-@test a_skyrmion.dirichlet == false
-@test a_skyrmion.boundary_conditions == "periodic"
+@test a_skyrmion.grid.dirichlet == false
+@test a_skyrmion.grid.boundary_conditions == "periodic"
 
-@test a_skyrmion.sum_grid == [1:6, 1:4, 1:7]
+@test a_skyrmion.grid.sum_grid == [1:6, 1:4, 1:7]
 
-@test a_skyrmion.index_grid_x == [5, 6, 1, 2, 3, 4, 5, 6, 1, 2]
-@test a_skyrmion.index_grid_y == [3, 4, 1, 2, 3, 4, 1, 2]
-@test a_skyrmion.index_grid_z == [6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2]
+@test a_skyrmion.grid.index_grid_x == [5, 6, 1, 2, 3, 4, 5, 6, 1, 2]
+@test a_skyrmion.grid.index_grid_y == [3, 4, 1, 2, 3, 4, 1, 2]
+@test a_skyrmion.grid.index_grid_z == [6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2]
 
 set_dirichlet!(a_skyrmion)
-@test a_skyrmion.dirichlet == true
-@test a_skyrmion.boundary_conditions == "dirichlet"
+@test a_skyrmion.grid.dirichlet == true
+@test a_skyrmion.grid.boundary_conditions == "dirichlet"
 
-@test a_skyrmion.sum_grid == [3:4, 3:2, 3:5]
+@test a_skyrmion.grid.sum_grid == [3:4, 3:2, 3:5]
 
 set_physical!(a_skyrmion, true)
 

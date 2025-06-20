@@ -1,11 +1,12 @@
 
 using Skyrmions3D
+using Quaternions
 
 a_skyrmion = Skyrmion(5, 0.2)
 
 @test Skyrmions3D.R_from_axis_angle(0.0, [1.0, 0.0, 0.0]) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
 @test Skyrmions3D.R_from_axis_angle(1.0, [0.0, 0.0, 0.0]) == [1.0 0 0; 0 1.0 0; 0 0 1.0]
-@test Skyrmions3D.R_from_axis_angle(pi/4, [0.0, 0.0, 1.0]) ≈
+@test Skyrmions3D.R_from_axis_angle(-pi/4, [0.0, 0.0, 1.0]) ≈
       1/sqrt(2.0) .* [1.0 -1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 sqrt(2.0)]
 
 
@@ -32,13 +33,13 @@ Skpt = Skyrmions3D.ADHMpt(
 
 B=1
 
-L = [Quaternion(0.0, 0.0, 0.0, 0.0) for a = 1:B, b = 1:B]
-M = [Quaternion(0.0, 0.0, 0.0, 0.0) for a = 1:B, b = 1:B]
+L = [Quaternions.Quaternion(0.0, 0.0, 0.0, 0.0) for a = 1:B, b = 1:B]
+M = [Quaternions.Quaternion(0.0, 0.0, 0.0, 0.0) for a = 1:B, b = 1:B]
 
 lam = 1.0
 
-L[1, 1] = Quaternion(lam, 0.0, 0.0, 0.0)
-M[1, 1] = Quaternion(0.0, 0.0, 0.0, 0.0)
+L[1, 1] = Quaternions.Quaternion(lam, 0.0, 0.0, 0.0)
+M[1, 1] = Quaternions.Quaternion(0.0, 0.0, 0.0, 0.0)
 
 make_ADHM!(a_skyrmion, L, M)
 

@@ -9,7 +9,7 @@ function product_approx!(sk1, sk2)
 
     check_grids(sk1, sk2)
 
-    lp = sk1.lp
+    lp = sk1.grid.lp
     tempsk = deepcopy(sk1)
 
     for k = 1:lp[3], j = 1:lp[2], i = 1:lp[1]
@@ -32,7 +32,7 @@ function product_approx(sk1, sk2)
 
     check_grids(sk1, sk2)
 
-    lp = sk2.lp
+    lp = sk2.grid.lp
 
     tempsk = deepcopy(sk1)
 
@@ -47,7 +47,7 @@ function product_approx(sk1, sk2)
 end
 
 function check_grids(sk1, sk2)
-    if sk1.x != sk2.x
+    if sk1.grid.x != sk2.grid.x
         error("skyrmion grids are not equal")
         return
     end
@@ -80,8 +80,8 @@ See also [`translate_sk!`]
 """
 function translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 
-    x = skyrmion.x
-    lp = skyrmion.lp
+    x = skyrmion.grid.x
+    lp = skyrmion.grid.lp
 
     sky_temp = deepcopy(skyrmion)
 
@@ -126,8 +126,8 @@ See also [`translate_sk`]
 """
 function translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 
-    x = skyrmion.x
-    lp = skyrmion.lp
+    x = skyrmion.grid.x
+    lp = skyrmion.grid.lp
 
     sky_temp = deepcopy(skyrmion)
 
@@ -174,7 +174,7 @@ See also [`isorotate_sk!`]
 
 
 """
-function isorotate_sk!(skyrmion, theta, n)
+function isorotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
     if n == [0.0, 0.0, 0.0]
         error("Your vector is zero.")
@@ -183,7 +183,7 @@ function isorotate_sk!(skyrmion, theta, n)
 
     rotation_matrix = R_from_axis_angle(theta, n)
 
-    lp = skyrmion.lp
+    lp = skyrmion.grid.lp
 
     tempsk = deepcopy(skyrmion)
 
@@ -228,7 +228,7 @@ function isorotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
     tempsk = deepcopy(skyrmion)
 
-    lp = skyrmion.lp
+    lp = skyrmion.grid.lp
     for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3], a = 1:3
         tempsk.pion_field[i, j, k, a] = 0.0
     end
@@ -268,8 +268,8 @@ function rotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
     rotation_matrix = R_from_axis_angle(theta, n)
 
-    lp = skyrmion.lp
-    x = skyrmion.x
+    lp = skyrmion.grid.lp
+    x = skyrmion.grid.x
 
     sky_temp = deepcopy(skyrmion)
 
@@ -327,8 +327,8 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
     rotation_matrix = R_from_axis_angle(theta, n)
 
-    lp = skyrmion.lp
-    x = skyrmion.x
+    lp = skyrmion.grid.lp
+    x = skyrmion.grid.x
 
     sky_temp = deepcopy(skyrmion)
 
@@ -384,25 +384,25 @@ end
 
 function set_dirichlet_boudary!(sk; vac = [0.0, 0.0, 0.0, 1.0])
 
-    for i = 1:sk.lp[1], j = 1:sk.lp[2]
+    for i = 1:sk.grid.lp[1], j = 1:sk.grid.lp[2]
         sk.pion_field[i, j, 1, :] .= vac
         sk.pion_field[i, j, 2, :] .= vac
-        sk.pion_field[i, j, sk.lp[3], :] .= vac
-        sk.pion_field[i, j, sk.lp[3]-1, :] .= vac
+        sk.pion_field[i, j, sk.grid.lp[3], :] .= vac
+        sk.pion_field[i, j, sk.grid.lp[3]-1, :] .= vac
     end
 
-    for k = 1:sk.lp[3], j = 1:sk.lp[2]
+    for k = 1:sk.grid.lp[3], j = 1:sk.grid.lp[2]
         sk.pion_field[1, j, k, :] .= vac
         sk.pion_field[2, j, k, :] .= vac
-        sk.pion_field[sk.lp[1], j, k, :] .= vac
-        sk.pion_field[sk.lp[1]-1, j, k, :] .= vac
+        sk.pion_field[sk.grid.lp[1], j, k, :] .= vac
+        sk.pion_field[sk.grid.lp[1]-1, j, k, :] .= vac
     end
 
-    for k = 1:sk.lp[3], i = 1:sk.lp[1]
+    for k = 1:sk.grid.lp[3], i = 1:sk.grid.lp[1]
         sk.pion_field[i, 1, k, :] .= vac
         sk.pion_field[i, 2, k, :] .= vac
-        sk.pion_field[i, sk.lp[2], k, :] .= vac
-        sk.pion_field[i, sk.lp[2]-1, k, :] .= vac
+        sk.pion_field[i, sk.grid.lp[2], k, :] .= vac
+        sk.pion_field[i, sk.grid.lp[2]-1, k, :] .= vac
     end
 
 end
@@ -416,7 +416,7 @@ Evaluates the Skyrme field at the spatial position y, using some fancy interpola
 
 function evaluate_sk(skyrmion, y)
 
-    x = skyrmion.x
+    x = skyrmion.grid.x
     vac = [0.0, 0.0, 0.0, 1.0]
     phi=vac
 

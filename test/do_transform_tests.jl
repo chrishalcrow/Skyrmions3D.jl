@@ -13,13 +13,13 @@ b_skyrmion = Skyrmion(5, 0.2)
 product_approx!(a_skyrmion, b_skyrmion)
 @test b_skyrmion.pion_field == a_skyrmion.pion_field
 
-translate_sk!(a_skyrmion, [0.0, 0.0, -4.0])
+translate_sk!(a_skyrmion, X=[0.0, 0.0, -4.0])
 @test a_skyrmion.pion_field == b_skyrmion.pion_field
 
-rotate_sk!(a_skyrmion, 0.5, [0.0, 0.0, 1.0])
+rotate_sk!(a_skyrmion, theta=0.5, n=[0.0, 0.0, 1.0])
 @test a_skyrmion.pion_field == b_skyrmion.pion_field
 
-isorotate_sk!(a_skyrmion, 0.5, [0.0, 1.0, 0.0])
+isorotate_sk!(a_skyrmion, theta=0.5, n=[0.0, 1.0, 0.0])
 @test a_skyrmion.pion_field == b_skyrmion.pion_field
 
 
@@ -47,7 +47,7 @@ for X0 in [
 
     make_rational_map!(a_skyrmion, p, q, f)
     make_rational_map!(b_skyrmion, p, q, f, X = X0)
-    @test translate_sk(a_skyrmion, X0).pion_field[3, 3, 3, :] ≈
+    @test translate_sk(a_skyrmion, X=X0).pion_field[3, 3, 3, :] ≈
           b_skyrmion.pion_field[3, 3, 3, :]
 
 end
@@ -57,12 +57,12 @@ n = [rand(), rand(), rand()]
 
 make_rational_map!(a_skyrmion, p, q, f)
 make_rational_map!(b_skyrmion, p, q, f, iTH = theta, i_n = n)
-@test isorotate_sk(a_skyrmion, theta, n).pion_field[3, 3, 3, :] ≈
+@test isorotate_sk(a_skyrmion, theta=theta, n=n).pion_field[3, 3, 3, :] ≈
       b_skyrmion.pion_field[3, 3, 3, :]
 
 make_rational_map!(a_skyrmion, p, q, f)
 make_rational_map!(b_skyrmion, p, q, f, jTH = theta, j_n = n)
-@test rotate_sk(a_skyrmion, theta, n).pion_field[3, 3, 3, :] ≈
+@test rotate_sk(a_skyrmion, theta=theta, n=n).pion_field[3, 3, 3, :] ≈
       b_skyrmion.pion_field[3, 3, 3, :]
 
 

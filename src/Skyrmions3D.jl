@@ -8,7 +8,7 @@ using StaticArrays, LinearAlgebra, Interpolations
 
 export Skyrmion,
     get_grid, get_field, set_mpi!, set_lattice!, set_Fpi!, set_ee!, set_physical!
-export set_periodic!, set_dirichlet!, set_neumann!
+export set_periodic!, set_dirichlet!, set_neumann!, set_bounary_conditions!
 export check_if_normalised, normer!, normer
 
 include("transform.jl")
@@ -28,6 +28,8 @@ include("plottingGPU.jl")
 export interactive_flow
 
 include("derivatives.jl")
+
+include("grid.jl")
 
 include("diff.jl")
 export gradient_flow!, arrested_newton_flow!, newton_flow!
@@ -56,26 +58,11 @@ Create a skyrme field with `lp` lattice points and `ls` lattice spacing.
 """
 mutable struct Skyrmion
     pion_field::Array{Float64,4}
-    lp::Vector{Int64}
-    ls::Vector{Float64}
-    x::Vector{
-        StepRangeLen{
-            Float64,
-            Base.TwicePrecision{Float64},
-            Base.TwicePrecision{Float64},
-            Int64,
-        },
-    }
+	grid::Grid
     mpi::Float64
     Fpi::Float64
     ee::Float64
     physical::Bool
-    dirichlet::Bool
-    index_grid_x::Vector{Int64}
-    index_grid_y::Vector{Int64}
-    index_grid_z::Vector{Int64}
-    sum_grid::Vector{UnitRange{Int64}}
-    boundary_conditions::String
 end
 
 
@@ -89,19 +76,11 @@ Skyrmion(
     boundary_conditions = "dirichlet",
 ) = Skyrmion(
     vacuum_skyrmion(lp, lp, lp, vac),
-    [lp, lp, lp],
-    [ls, ls, ls],
-    [(-ls*(lp-1)/2.0):ls:(ls*(lp-1)/2.0) for a = 1:3],
+    Grid([lp,lp,lp], [ls,ls,ls], boundary_conditions),
     mpi,
     Fpi,
     ee,
     false,
-    is_dirichlet(boundary_conditions),
-    index_grid(lp, boundary_conditions),
-    index_grid(lp, boundary_conditions),
-    index_grid(lp, boundary_conditions),
-    sum_grid(lp, boundary_conditions),
-    boundary_conditions,
 )
 
 Skyrmion(
@@ -114,19 +93,11 @@ Skyrmion(
     boundary_conditions = "dirichlet",
 ) = Skyrmion(
     vacuum_skyrmion(lp[1], lp[2], lp[3], vac),
-    lp,
-    ls,
-    [(-ls[a]*(lp[a]-1)/2.0):ls[a]:(ls[a]*(lp[a]-1) ./ 2.0) for a = 1:3],
+    Grid([lp[1],lp[2],lp[3]], [ls[1],ls[2],ls[3]], boundary_conditions),
     mpi,
     Fpi,
     ee,
     false,
-    is_dirichlet(boundary_conditions),
-    index_grid(lp[1], boundary_conditions),
-    index_grid(lp[2], boundary_conditions),
-    index_grid(lp[3], boundary_conditions),
-    sum_grid(lp, boundary_conditions),
-    boundary_conditions,
 )
 
 
@@ -141,7 +112,7 @@ function get_field(skyrmion::Skyrmion)
 
 end
 
-"""
+""" 
     get_grid(skyrmion::Skyrmion)
 
 Returns an array of 3D arrays `[x, y, z]`, which can be used in integrals.
@@ -150,15 +121,15 @@ function get_grid(skyrmion::Skyrmion)
 
     x_grid = [
         skyrmion.x[1][i] for
-        i = 1:skyrmion.lp[1], j = 1:skyrmion.lp[2], k = 1:skyrmion.lp[3]
+        i = 1:skyrmion.grid.lp[1], j = 1:skyrmion.grid.lp[2], k = 1:skyrmion.grid.lp[3]
     ]
     y_grid = [
         skyrmion.x[2][j] for
-        i = 1:skyrmion.lp[1], j = 1:skyrmion.lp[2], k = 1:skyrmion.lp[3]
+        i = 1:skyrmion.grid.lp[1], j = 1:skyrmion.grid.lp[2], k = 1:skyrmion.grid.lp[3]
     ]
     z_grid = [
         skyrmion.x[3][k] for
-        i = 1:skyrmion.lp[1], j = 1:skyrmion.lp[2], k = 1:skyrmion.lp[3]
+        i = 1:skyrmion.grid.lp[1], j = 1:skyrmion.grid.lp[2], k = 1:skyrmion.grid.lp[3]
     ]
 
     return (x_grid, y_grid, z_grid)
@@ -193,20 +164,17 @@ function set_mpi!(sk::Skyrmion, mpi)
     sk.mpi = mpi
 end
 
-function set_periodic!(sk::Skyrmion, periodic::Bool)
 
-    sk.periodic = periodic
-    sk.sum_grid = sum_grid(sk.lp, sk.periodic)
 
-    if dirichlet == false
-        println("Periodic boundary conditions activated")
-    else
-        set_dirichlet!(sk)
-        println("Dirichlet boundary conditions activated")
-    end
+function set_bounary_conditions!(sk::Skyrmion, boundary_conditions::String)
+
+    sk.grid.boundary_conditions = boundary_conditions
+    sk.grid.sum_grid = sum_grid(sk.grid.lp, boundary_conditions)
+    sk.grid.index_grid_x = index_grid(sk.grid.lp[1], boundary_conditions)
+    sk.grid.index_grid_y = index_grid(sk.grid.lp[2], boundary_conditions)
+    sk.grid.index_grid_z = index_grid(sk.grid.lp[3], boundary_conditions)
 
 end
-
 
 """
 	set_periodic!(skyrmion::Skyrmion)
@@ -215,14 +183,9 @@ Sets the `skyrmion` to have periodic boundary conditions.
 """
 function set_periodic!(sk::Skyrmion)
 
-    sk.dirichlet = false
+    sk.grid.dirichlet = false
 
-    sk.boundary_conditions = "periodic"
-    sk.sum_grid = sum_grid(sk.lp, sk.boundary_conditions)
-
-    sk.index_grid_x = index_grid(sk.lp[1], sk.boundary_conditions)
-    sk.index_grid_y = index_grid(sk.lp[2], sk.boundary_conditions)
-    sk.index_grid_z = index_grid(sk.lp[3], sk.boundary_conditions)
+	set_bounary_conditions!(sk, "periodic")
 
     println("Periodic boundary conditions activated")
 
@@ -235,14 +198,9 @@ Sets the `skyrmion` to have Dirichlet boundary conditions.
 """
 function set_neumann!(sk::Skyrmion)
 
-    sk.dirichlet = false
+    sk.grid.dirichlet = false
 
-    sk.boundary_conditions = "neumann"
-
-    sk.sum_grid = sum_grid(sk.lp, sk.boundary_conditions)
-    sk.index_grid_x = index_grid(sk.lp[1], sk.boundary_conditions)
-    sk.index_grid_y = index_grid(sk.lp[2], sk.boundary_conditions)
-    sk.index_grid_z = index_grid(sk.lp[3], sk.boundary_conditions)
+	set_bounary_conditions!(sk, "neumann")
 
     println("Neumann boundary conditions activated")
 
@@ -255,17 +213,15 @@ Sets the `skyrmion` to have periodic boundary conditions.
 """
 function set_dirichlet!(sk::Skyrmion)
 
-    sk.dirichlet = true
+    sk.grid.dirichlet = true
 
-    sk.boundary_conditions = "dirichlet"
-    sk.sum_grid = sum_grid(sk.lp, sk.boundary_conditions)
+    sk.grid.boundary_conditions = "dirichlet"
+    sk.grid.sum_grid = sum_grid(sk.grid.lp, sk.grid.boundary_conditions)
 
     set_dirichlet_boudary!(sk)
     println("Dirichlet boundary conditions activated")
 
 end
-
-
 
 
 """
@@ -329,14 +285,14 @@ Sets the underlying lattice to one with `lpx`x`lpy`x`lpz` points and `lsx`x`lsy`
 """
 function set_lattice!(skyrmion, lp, ls)
 
-    old_x = skyrmion.x
+    old_x = skyrmion.grid.x
     x = setgrid(lp, ls)
 
     sky_temp = Skyrmion(
         lp,
         ls,
         mpi = skyrmion.mpi,
-        boundary_conditions = skyrmion.boundary_conditions,
+        boundary_conditions = skyrmion.grid.boundary_conditions,
     )
     vac = [0.0, 0.0, 0.0, 1.0]
 
@@ -364,20 +320,20 @@ function set_lattice!(skyrmion, lp, ls)
 
     end
 
-    skyrmion.lp = sky_temp.lp
-    skyrmion.ls = sky_temp.ls
-    skyrmion.x = sky_temp.x
+    skyrmion.grid.lp = sky_temp.grid.lp
+    skyrmion.grid.ls = sky_temp.grid.ls
+    skyrmion.grid.x = sky_temp.grid.x
     skyrmion.pion_field = zeros(lp[1], lp[2], lp[3], 4)
     skyrmion.pion_field .= sky_temp.pion_field
 
-    skyrmion.index_grid_x = index_grid(lp[1], sky_temp.boundary_conditions)
-    skyrmion.index_grid_y = index_grid(lp[2], sky_temp.boundary_conditions)
-    skyrmion.index_grid_z = index_grid(lp[3], sky_temp.boundary_conditions)
+    skyrmion.grid.index_grid_x = index_grid(lp[1], sky_temp.grid.boundary_conditions)
+    skyrmion.grid.index_grid_y = index_grid(lp[2], sky_temp.grid.boundary_conditions)
+    skyrmion.grid.index_grid_z = index_grid(lp[3], sky_temp.grid.boundary_conditions)
 
-    skyrmion.sum_grid = sum_grid(lp, sky_temp.boundary_conditions)
+    skyrmion.grid.sum_grid = sum_grid(lp, sky_temp.grid.boundary_conditions)
 
     normer!(skyrmion)
-    if skyrmion.boundary_conditions == "dirichlet"
+    if skyrmion.grid.boundary_conditions == "dirichlet"
         set_dirichlet!(skyrmion)
     end
 
@@ -473,7 +429,7 @@ Throws an error if any point is not normalised
 
 """
 function check_if_normalised(skyrmion)
-    for i = 1:skyrmion.lp[1], j = 1:skyrmion.lp[2], k = 1:skyrmion.lp[3]
+    for i = 1:skyrmion.grid.lp[1], j = 1:skyrmion.grid.lp[2], k = 1:skyrmion.grid.lp[3]
         @assert skyrmion.pion_field[i, j, k, 1]^2 +
                 skyrmion.pion_field[i, j, k, 2]^2 +
                 skyrmion.pion_field[i, j, k, 3]^2 +
@@ -504,7 +460,7 @@ See also [`normer`]
 """
 function normer!(sk)
 
-    normer!(sk.pion_field, sk.lp)
+    normer!(sk.pion_field, sk.grid.lp)
 
 end
 
@@ -519,7 +475,7 @@ See also [`normer!`]
 function normer(sk)
 
     sk_new = deepcopy(sk)
-    normer!(sk_new.pion_field, sk_new.lp)
+    normer!(sk_new.pion_field, sk_new.grid.lp)
 
     return sk_new
 

@@ -10,20 +10,20 @@ function overview(sk)
 
     println(
         "This skyrmion is on a ",
-        sk.lp[1],
+        sk.grid.lp[1],
         "x",
-        sk.lp[2],
+        sk.grid.lp[2],
         "x",
-        sk.lp[3],
+        sk.grid.lp[3],
         " grid, with lattice spacing [",
-        sk.ls[1],
+        sk.grid.ls[1],
         ", ",
-        sk.ls[2],
+        sk.grid.ls[2],
         ", ",
-        sk.ls[3],
+        sk.grid.ls[3],
         "]. ",
     )
-    println("The boundary conditions are "*sk.boundary_conditions)
+    println("The boundary conditions are "*sk.grid.boundary_conditions)
     println()
     println("            m = ", round(sk.mpi, sigdigits = 5))
     println("Baryon number = ", round(Baryon(sk), sigdigits = 5))
@@ -62,12 +62,12 @@ Set 'density = true' to output the energy density and moment to `n` to calculate
 """
 function Energy(sk; density = false, moment = 0)
 
-    ED = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
+    ED = zeros(sk.grid.lp[1], sk.grid.lp[2], sk.grid.lp[3])
 
     get_energy_density!(ED, sk, moment = moment)
 
     if density == false
-        engtot = sum(ED)*sk.ls[1]*sk.ls[2]*sk.ls[3]
+        engtot = sum(ED)*sk.grid.ls[1]*sk.grid.ls[2]*sk.grid.ls[3]
         if sk.physical == false
             return engtot/(12.0*pi^2)
         else
@@ -88,12 +88,12 @@ end
 
 function get_energy_density!(density, sk; moment = 0)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             dp = getDP(sk, i, j, k)
-            rm = sqrt(sk.x[1][i]^2 + sk.x[2][j]^2 + sk.x[3][k]^2)^moment
-
+            rm = sqrt(sk.grid.x[1][i]^2 + sk.grid.x[2][j]^2 + sk.grid.x[3][k]^2)^moment
+            
             density[i, j, k] = engpt(dp, sk.pion_field[i, j, k, 4], sk.mpi) * rm
 
 
@@ -191,12 +191,12 @@ Set 'density = true' to output the baryon density and moment to `n` to calculate
 """
 function Baryon(sk; density = false, moment = 0, component = 0)
 
-    BD = zeros(sk.lp[1], sk.lp[2], sk.lp[3])
+    BD = zeros(sk.grid.lp[1], sk.grid.lp[2], sk.grid.lp[3])
 
     get_baryon_density!(BD, sk, moment = moment, component = component)
 
     if density == false
-        bartot = sum(BD)*sk.ls[1]*sk.ls[2]*sk.ls[3]/(2.0*pi^2)
+        bartot = sum(BD)*sk.grid.ls[1]*sk.grid.ls[2]*sk.grid.ls[3]/(2.0*pi^2)
         return bartot
     else
         return BD
@@ -218,12 +218,12 @@ function get_baryon_density!(baryon_density, sk; moment = 0, component = 0)
         vc = [0, 0, 1]
     end
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             pp = getX(sk, i, j, k)
             dp = getDP(sk, i, j, k)
-            rm = sqrt(vc[1]*sk.x[1][i]^2 + vc[2]*sk.x[2][j]^2 + vc[3]*sk.x[3][k]^2)^moment
+            rm = sqrt(vc[1]*sk.grid.x[1][i]^2 + vc[2]*sk.grid.x[2][j]^2 + vc[3]*sk.grid.x[3][k]^2)^moment
 
             baryon_density[i, j, k] = barypt(dp, pp) * rm
 
@@ -266,15 +266,15 @@ function center_of_mass(sk)
     the_engpt = 0.0
     toteng = 0.0
 
-    @inbounds for i = 3:(sk.lp[1]-2), j = 3:(sk.lp[2]-2), k = 3:(sk.lp[3]-2)
+    @inbounds for i = 3:(sk.grid.lp[1]-2), j = 3:(sk.grid.lp[2]-2), k = 3:(sk.grid.lp[3]-2)
 
         dp = getDP(sk, i, j, k)
 
         the_engpt = engpt(dp, sk.pion_field[i, j, k, 4], sk.mpi)
 
-        com[1] += the_engpt*sk.x[1][i]
-        com[2] += the_engpt*sk.x[2][j]
-        com[3] += the_engpt*sk.x[3][k]
+        com[1] += the_engpt*sk.grid.x[1][i]
+        com[2] += the_engpt*sk.grid.x[2][j]
+        com[3] += the_engpt*sk.grid.x[3][k]
 
         toteng += the_engpt
 
@@ -355,7 +355,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
         return
     end
 
-    current_density = zeros(3, 3, sk.lp[1], sk.lp[2], sk.lp[3])
+    current_density = zeros(3, 3, sk.grid.lp[1], sk.grid.lp[2], sk.grid.lp[3])
 
     aindices = 1:3
     bindices = 1:3
@@ -367,12 +367,12 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
     end
 
 
-    for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    for k in sk.grid.sum_grid[3]
+        @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             KD = diagm([1.0, 1.0, 1.0])
 
-            xxx = SVector{3,Float64}(sk.x[1][i], sk.x[2][j], sk.x[3][k])
+            xxx = SVector{3,Float64}(sk.grid.x[1][i], sk.grid.x[2][j], sk.grid.x[3][k])
             rm = sqrt(xxx[1]^2 + xxx[2]^2 + xxx[3]^2)^moment
 
             p = getX(sk, i, j, k)
@@ -516,7 +516,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
     if density == false
         tot_den = zeros(3, 3)
         for a in aindices, b in bindices
-            tot_den[a, b] = sum(current_density[a, b, :, :, :])*sk.ls[1]*sk.ls[2]*sk.ls[3]
+            tot_den[a, b] = sum(current_density[a, b, :, :, :])*sk.grid.ls[1]*sk.grid.ls[2]*sk.grid.ls[3]
         end
         if indices == [0, 0]
             return tot_den

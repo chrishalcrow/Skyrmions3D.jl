@@ -12,7 +12,7 @@ function getX(sk, i, j, k)
 end
 
 function getDP(sk, i, j, k)
-    if sk.dirichlet == true
+    if sk.grid.dirichlet == true
         return getDX(sk, i, j, k)
     else
         return getDXp(sk, i, j, k)
@@ -22,18 +22,18 @@ end
 function getDX(ϕ, i, j, k)
 
     return SMatrix{3,4,Float64,12}(
-        dxD(ϕ.pion_field, 1, i, j, k, ϕ.ls[1]),
-        dyD(ϕ.pion_field, 1, i, j, k, ϕ.ls[2]),
-        dzD(ϕ.pion_field, 1, i, j, k, ϕ.ls[3]),
-        dxD(ϕ.pion_field, 2, i, j, k, ϕ.ls[1]),
-        dyD(ϕ.pion_field, 2, i, j, k, ϕ.ls[2]),
-        dzD(ϕ.pion_field, 2, i, j, k, ϕ.ls[3]),
-        dxD(ϕ.pion_field, 3, i, j, k, ϕ.ls[1]),
-        dyD(ϕ.pion_field, 3, i, j, k, ϕ.ls[2]),
-        dzD(ϕ.pion_field, 3, i, j, k, ϕ.ls[3]),
-        dxD(ϕ.pion_field, 4, i, j, k, ϕ.ls[1]),
-        dyD(ϕ.pion_field, 4, i, j, k, ϕ.ls[2]),
-        dzD(ϕ.pion_field, 4, i, j, k, ϕ.ls[3]),
+        dxD(ϕ.pion_field, 1, i, j, k, ϕ.grid.ls[1]),
+        dyD(ϕ.pion_field, 1, i, j, k, ϕ.grid.ls[2]),
+        dzD(ϕ.pion_field, 1, i, j, k, ϕ.grid.ls[3]),
+        dxD(ϕ.pion_field, 2, i, j, k, ϕ.grid.ls[1]),
+        dyD(ϕ.pion_field, 2, i, j, k, ϕ.grid.ls[2]),
+        dzD(ϕ.pion_field, 2, i, j, k, ϕ.grid.ls[3]),
+        dxD(ϕ.pion_field, 3, i, j, k, ϕ.grid.ls[1]),
+        dyD(ϕ.pion_field, 3, i, j, k, ϕ.grid.ls[2]),
+        dzD(ϕ.pion_field, 3, i, j, k, ϕ.grid.ls[3]),
+        dxD(ϕ.pion_field, 4, i, j, k, ϕ.grid.ls[1]),
+        dyD(ϕ.pion_field, 4, i, j, k, ϕ.grid.ls[2]),
+        dzD(ϕ.pion_field, 4, i, j, k, ϕ.grid.ls[3]),
     )
 
 end
@@ -41,18 +41,18 @@ end
 function getDXp(ϕ, i, j, k)
 
     return SMatrix{3,4,Float64,12}(
-        dxDp(ϕ.pion_field, 1, i, j, k, ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field, 1, i, j, k, ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field, 1, i, j, k, ϕ.ls[3], ϕ.index_grid_z),
-        dxDp(ϕ.pion_field, 2, i, j, k, ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field, 2, i, j, k, ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field, 2, i, j, k, ϕ.ls[3], ϕ.index_grid_z),
-        dxDp(ϕ.pion_field, 3, i, j, k, ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field, 3, i, j, k, ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field, 3, i, j, k, ϕ.ls[3], ϕ.index_grid_z),
-        dxDp(ϕ.pion_field, 4, i, j, k, ϕ.ls[1], ϕ.index_grid_x),
-        dyDp(ϕ.pion_field, 4, i, j, k, ϕ.ls[2], ϕ.index_grid_y),
-        dzDp(ϕ.pion_field, 4, i, j, k, ϕ.ls[3], ϕ.index_grid_z),
+        dxDp(ϕ.pion_field, 1, i, j, k, ϕ.grid.ls[1], ϕ.grid.index_grid_x),
+        dyDp(ϕ.pion_field, 1, i, j, k, ϕ.grid.ls[2], ϕ.grid.index_grid_y),
+        dzDp(ϕ.pion_field, 1, i, j, k, ϕ.grid.ls[3], ϕ.grid.index_grid_z),
+        dxDp(ϕ.pion_field, 2, i, j, k, ϕ.grid.ls[1], ϕ.grid.index_grid_x),
+        dyDp(ϕ.pion_field, 2, i, j, k, ϕ.grid.ls[2], ϕ.grid.index_grid_y),
+        dzDp(ϕ.pion_field, 2, i, j, k, ϕ.grid.ls[3], ϕ.grid.index_grid_z),
+        dxDp(ϕ.pion_field, 3, i, j, k, ϕ.grid.ls[1], ϕ.grid.index_grid_x),
+        dyDp(ϕ.pion_field, 3, i, j, k, ϕ.grid.ls[2], ϕ.grid.index_grid_y),
+        dzDp(ϕ.pion_field, 3, i, j, k, ϕ.grid.ls[3], ϕ.grid.index_grid_z),
+        dxDp(ϕ.pion_field, 4, i, j, k, ϕ.grid.ls[1], ϕ.grid.index_grid_x),
+        dyDp(ϕ.pion_field, 4, i, j, k, ϕ.grid.ls[2], ϕ.grid.index_grid_y),
+        dzDp(ϕ.pion_field, 4, i, j, k, ϕ.grid.ls[3], ϕ.grid.index_grid_z),
     )
 
 end
@@ -109,7 +109,7 @@ end
 
 function getders_local_np(sk, i, j, k)
 
-    ls = SVector{3,Float64}(sk.ls[1], sk.ls[2], sk.ls[3])
+    ls = SVector{3,Float64}(sk.grid.ls[1], sk.grid.ls[2], sk.grid.ls[3])
 
     px1 = dx_stencil(sk, i, j, k, 1)
     py1 = dy_stencil(sk, i, j, k, 1)
@@ -202,39 +202,39 @@ end
 
 function getders_local_p(sk, i, j, k)
 
-    ls = SVector{3,Float64}(sk.ls[1], sk.ls[2], sk.ls[3])
+    ls = SVector{3,Float64}(sk.grid.ls[1], sk.grid.ls[2], sk.grid.ls[3])
 
-    px1 = dx_stencilp(sk, i, j, k, 1, sk.index_grid_x)
-    py1 = dy_stencilp(sk, i, j, k, 1, sk.index_grid_y)
-    pz1 = dz_stencilp(sk, i, j, k, 1, sk.index_grid_z)
+    px1 = dx_stencilp(sk, i, j, k, 1, sk.grid.index_grid_x)
+    py1 = dy_stencilp(sk, i, j, k, 1, sk.grid.index_grid_y)
+    pz1 = dz_stencilp(sk, i, j, k, 1, sk.grid.index_grid_z)
 
-    px2 = dx_stencilp(sk, i, j, k, 2, sk.index_grid_x)
-    py2 = dy_stencilp(sk, i, j, k, 2, sk.index_grid_y)
-    pz2 = dz_stencilp(sk, i, j, k, 2, sk.index_grid_z)
+    px2 = dx_stencilp(sk, i, j, k, 2, sk.grid.index_grid_x)
+    py2 = dy_stencilp(sk, i, j, k, 2, sk.grid.index_grid_y)
+    pz2 = dz_stencilp(sk, i, j, k, 2, sk.grid.index_grid_z)
 
-    px3 = dx_stencilp(sk, i, j, k, 3, sk.index_grid_x)
-    py3 = dy_stencilp(sk, i, j, k, 3, sk.index_grid_y)
-    pz3 = dz_stencilp(sk, i, j, k, 3, sk.index_grid_z)
+    px3 = dx_stencilp(sk, i, j, k, 3, sk.grid.index_grid_x)
+    py3 = dy_stencilp(sk, i, j, k, 3, sk.grid.index_grid_y)
+    pz3 = dz_stencilp(sk, i, j, k, 3, sk.grid.index_grid_z)
 
-    px4 = dx_stencilp(sk, i, j, k, 4, sk.index_grid_x)
-    py4 = dy_stencilp(sk, i, j, k, 4, sk.index_grid_y)
-    pz4 = dz_stencilp(sk, i, j, k, 4, sk.index_grid_z)
+    px4 = dx_stencilp(sk, i, j, k, 4, sk.grid.index_grid_x)
+    py4 = dy_stencilp(sk, i, j, k, 4, sk.grid.index_grid_y)
+    pz4 = dz_stencilp(sk, i, j, k, 4, sk.grid.index_grid_z)
 
-    pxy1 = dxy_stencilp(sk, i, j, k, 1, sk.index_grid_x, sk.index_grid_y)
-    pxz1 = dxz_stencilp(sk, i, j, k, 1, sk.index_grid_x, sk.index_grid_z)
-    pyz1 = dyz_stencilp(sk, i, j, k, 1, sk.index_grid_y, sk.index_grid_z)
+    pxy1 = dxy_stencilp(sk, i, j, k, 1, sk.grid.index_grid_x, sk.grid.index_grid_y)
+    pxz1 = dxz_stencilp(sk, i, j, k, 1, sk.grid.index_grid_x, sk.grid.index_grid_z)
+    pyz1 = dyz_stencilp(sk, i, j, k, 1, sk.grid.index_grid_y, sk.grid.index_grid_z)
 
-    pxy2 = dxy_stencilp(sk, i, j, k, 2, sk.index_grid_x, sk.index_grid_y)
-    pxz2 = dxz_stencilp(sk, i, j, k, 2, sk.index_grid_x, sk.index_grid_z)
-    pyz2 = dyz_stencilp(sk, i, j, k, 2, sk.index_grid_y, sk.index_grid_z)
+    pxy2 = dxy_stencilp(sk, i, j, k, 2, sk.grid.index_grid_x, sk.grid.index_grid_y)
+    pxz2 = dxz_stencilp(sk, i, j, k, 2, sk.grid.index_grid_x, sk.grid.index_grid_z)
+    pyz2 = dyz_stencilp(sk, i, j, k, 2, sk.grid.index_grid_y, sk.grid.index_grid_z)
 
-    pxy3 = dxy_stencilp(sk, i, j, k, 3, sk.index_grid_x, sk.index_grid_y)
-    pxz3 = dxz_stencilp(sk, i, j, k, 3, sk.index_grid_x, sk.index_grid_z)
-    pyz3 = dyz_stencilp(sk, i, j, k, 3, sk.index_grid_y, sk.index_grid_z)
+    pxy3 = dxy_stencilp(sk, i, j, k, 3, sk.grid.index_grid_x, sk.grid.index_grid_y)
+    pxz3 = dxz_stencilp(sk, i, j, k, 3, sk.grid.index_grid_x, sk.grid.index_grid_z)
+    pyz3 = dyz_stencilp(sk, i, j, k, 3, sk.grid.index_grid_y, sk.grid.index_grid_z)
 
-    pxy4 = dxy_stencilp(sk, i, j, k, 4, sk.index_grid_x, sk.index_grid_y)
-    pxz4 = dxz_stencilp(sk, i, j, k, 4, sk.index_grid_x, sk.index_grid_z)
-    pyz4 = dyz_stencilp(sk, i, j, k, 4, sk.index_grid_y, sk.index_grid_z)
+    pxy4 = dxy_stencilp(sk, i, j, k, 4, sk.grid.index_grid_x, sk.grid.index_grid_y)
+    pxz4 = dxz_stencilp(sk, i, j, k, 4, sk.grid.index_grid_x, sk.grid.index_grid_z)
+    pyz4 = dyz_stencilp(sk, i, j, k, 4, sk.grid.index_grid_y, sk.grid.index_grid_z)
 
 
     dxV = SMatrix{3,4,Float64,12}(

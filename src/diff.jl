@@ -9,11 +9,11 @@ See also [`newton_flow!`, `arrested_newton_flow!`]
 function gradient_flow!(
     ϕ;
     steps = 1,
-    dt = ((ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3])^(2/3))/100.0,
+    dt = ((ϕ.grid.ls[1]*ϕ.grid.ls[2]*ϕ.grid.ls[3])^(2/3))/100.0,
     tolerance = 0.0,
     checks = max(100, steps),
     print_stuff = true,
-    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),
+    dEdp = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4),
     max_steps = Inf,
 )
 
@@ -85,7 +85,7 @@ end
 # This creates some code duplication, for a ~10% performance boost.
 
 function getdEdp!(sk, dEdp)
-    if sk.boundary_conditions == "dirichlet"
+    if sk.grid.boundary_conditions == "dirichlet"
         getdEdp_np!(sk, dEdp)
     else
         getdEdp_p!(sk, dEdp)
@@ -95,8 +95,8 @@ end
 
 function getdEdp_np!(sk, dEdp)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_np(sk, i, j, k)
             getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
@@ -108,8 +108,8 @@ end
 
 function getdEdp_p!(sk, dEdp)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_p(sk, i, j, k)
             getdEdp_pt!(dEdp, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
@@ -229,8 +229,8 @@ end
 
 function EnergyANF(sk, ED)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             dp = getDP(sk, i, j, k)
             ED[i, j, k] = engpt(dp, sk.pion_field[i, j, k, 4], sk.mpi)
@@ -253,8 +253,8 @@ See also [`gradient_flow!`, `newton_flow!`]
 """
 function arrested_newton_flow!(
     ϕ;
-    ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),
-    dt = ϕ.ls[1]/10.0,
+    ϕd = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4),
+    dt = ϕ.grid.ls[1]/10.0,
     steps = 1,
     tolerance = 0.0,
     checks = max(100, steps),
@@ -267,13 +267,13 @@ function arrested_newton_flow!(
         checks = steps
     end
 
-    energy_density = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3])
+    energy_density = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3])
     old_pion_field = deepcopy(ϕ.pion_field);
 
-    dEdp = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
+    dEdp2 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
+    dEdp3 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
+    dEdp4 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
     sk2 = deepcopy(ϕ)
 
 
@@ -306,7 +306,7 @@ function arrested_newton_flow!(
                 round(error, sigdigits = 4),
                 " energy = ",
                 round(
-                    sum(energy_density)*ϕ.ls[1]*ϕ.ls[2]*ϕ.ls[3]/(12.0*pi^2),
+                    sum(energy_density)*ϕ.grid.ls[1]*ϕ.grid.ls[2]*ϕ.grid.ls[3]/(12.0*pi^2),
                     sigdigits = 8,
                 ),
             )
@@ -391,8 +391,8 @@ end
 
 function orthog_skd_and_norm!(sk, skd)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             sk_dot_skd = 0.0
             sk_dot_sk = 0.0
@@ -424,7 +424,7 @@ end
 
 function newton_flow_for_1_step!(sk, sk2, skd, dEdp1, dEdp2, dEdp3, dEdp4, dt)
 
-    if sk.boundary_conditions == "dirichlet"
+    if sk.grid.boundary_conditions == "dirichlet"
         getdEdp1!(sk, dEdp1, sk2, skd, dt)
         getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
         getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
@@ -441,8 +441,8 @@ end
 
 function getdEdp1!(sk, dEdp, sk2, skd, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_np(sk, i, j, k)
 
@@ -459,8 +459,8 @@ end
 
 function getdEdp2!(sk2, dEdp2, sk, dEdp1, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_np(sk2, i, j, k)
 
@@ -477,8 +477,8 @@ end
 
 function getdEdp3!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_np(sk, i, j, k)
 
@@ -499,8 +499,8 @@ end
 
 function getdEdp4!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_np(sk2, i, j, k)
             getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
@@ -543,8 +543,8 @@ end
 
 function getdEdp1_p!(sk, dEdp, sk2, skd, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_p(sk, i, j, k)
 
@@ -561,8 +561,8 @@ end
 
 function getdEdp2_p!(sk2, dEdp2, sk, dEdp1, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_p(sk2, i, j, k)
 
@@ -579,8 +579,8 @@ end
 
 function getdEdp3_p!(sk, dEdp3, sk2, skd, dEdp1, dEdp2, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_p(sk, i, j, k)
 
@@ -601,8 +601,8 @@ end
 
 function getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
 
-    Threads.@threads for k in sk.sum_grid[3]
-        @fastmath @inbounds for j in sk.sum_grid[2], i in sk.sum_grid[1]
+    Threads.@threads for k in sk.grid.sum_grid[3]
+        @fastmath @inbounds for j in sk.grid.sum_grid[2], i in sk.grid.sum_grid[1]
 
             p, dp, ddp1, ddp2 = getders_local_p(sk2, i, j, k)
             getdEdp_pt!(dEdp4, p, dp, ddp1, ddp2, sk.mpi, i, j, k)
@@ -655,8 +655,8 @@ See also [`gradient_flow!`, `arrested_newton_flow!`]
 """
 function newton_flow!(
     ϕ;
-    ϕd = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4),
-    dt = ϕ.ls[1]/20.0,
+    ϕd = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4),
+    dt = ϕ.grid.ls[1]/20.0,
     steps = 1,
     print_stuff = true,
     frequency_of_printing = steps,
@@ -684,10 +684,10 @@ end
 
 function newton_flow_for_n_steps!(ϕ, ϕd, dt, n)
 
-    dEdp1 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dEdp2 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dEdp3 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
-    dEdp4 = zeros(ϕ.lp[1], ϕ.lp[2], ϕ.lp[3], 4)
+    dEdp1 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
+    dEdp2 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
+    dEdp3 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
+    dEdp4 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
     sk2 = deepcopy(ϕ)
 
     for _ = 1:n

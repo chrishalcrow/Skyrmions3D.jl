@@ -26,13 +26,13 @@ function plot_field(skyrmion; component = 3, iso_value = 0.5, kwargs...)
 
         fig = Figure()
 
-        field_mesh = getmesh(pion_field_to_be_plotted, iso_value, skyrmion.x)
+        field_mesh = getmesh(pion_field_to_be_plotted, iso_value, skyrmion.grid.x)
 
 
         ax = Axis3(
             fig[1, 1],
             title = "Isosurface ϕ" * string(component) * " = ±" * string(iso_value),
-            aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+            aspect = (skyrmion.grid.lp[1], skyrmion.grid.lp[2], skyrmion.grid.lp[3]),
             kwargs...,
         )
 
@@ -54,7 +54,7 @@ Plots the pion fields and a baryon density of `skyrmion`.
 """
 function plot_overview(skyrmion; iso_value = 0.5)
 
-    x = skyrmion.x
+    x = skyrmion.grid.x
 
     BD = Baryon(skyrmion, density = true)
     (bdmin, bdmax) = extrema(BD)
@@ -79,28 +79,28 @@ function plot_overview(skyrmion; iso_value = 0.5)
     ax11 = Axis3(
         fig[2, 1],
         title = "Isosurface ϕ" * string(1) * " = ±" * string(iso_value),
-        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+        aspect = (skyrmion.grid.lp[1], skyrmion.grid.lp[2], skyrmion.grid.lp[3]),
     )
     ax12 = Axis3(
         fig[2, 2],
         title = "Isosurface ϕ" * string(2) * " = " * string(iso_value),
-        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+        aspect = (skyrmion.grid.lp[1], skyrmion.grid.lp[2], skyrmion.grid.lp[3]),
     )
     ax21 = Axis3(
         fig[3, 1],
         title = "Isosurface ϕ" * string(3) * " = " * string(iso_value),
-        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+        aspect = (skyrmion.grid.lp[1], skyrmion.grid.lp[2], skyrmion.grid.lp[3]),
     )
     ax22 = Axis3(
         fig[3, 2],
         title = "Isosurface ϕ" * string(4) * " = " * string(iso_value),
-        aspect = (skyrmion.lp[1], skyrmion.lp[2], skyrmion.lp[3]),
+        aspect = (skyrmion.grid.lp[1], skyrmion.grid.lp[2], skyrmion.grid.lp[3]),
     )
 
     if Makie.current_backend() == CairoMakie
 
         field_mesh =
-            [getmesh(skyrmion.pion_field[:, :, :, a], iso_value, skyrmion.x) for a = 1:4]
+            [getmesh(skyrmion.pion_field[:, :, :, a], iso_value, skyrmion.grid.x) for a = 1:4]
         Makie.mesh!(ax11, field_mesh[1], shading = NoShading)
         Makie.mesh!(ax12, field_mesh[2], shading = NoShading)
         Makie.mesh!(ax21, field_mesh[3], shading = NoShading)
@@ -214,7 +214,7 @@ Can accept any arguments used in `Axis3` from the `Makie` package. See more: [].
 """
 function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs...)
 
-    x = skyrmion.x
+    x = skyrmion.grid.x
 
     BD = Baryon(skyrmion, density = true)
     (bdmin, bdmax) = extrema(BD)
@@ -288,7 +288,7 @@ end
 
 function make_color_map_juggle(skyrmion, BDmesh)
 
-    x = skyrmion.x
+    x = skyrmion.grid.x
 
     ϕinterp = [
         linear_interpolation((x[1], x[2], x[3]), skyrmion.pion_field[:, :, :, a]) for
@@ -334,7 +334,7 @@ end
 
 function make_color_map(skyrmion, BDmesh)
 
-    x = skyrmion.x
+    x = skyrmion.grid.x
 
     ϕinterp = [
         linear_interpolation((x[1], x[2], x[3]), skyrmion.pion_field[:, :, :, a]) for
