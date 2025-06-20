@@ -58,7 +58,9 @@ normer!
 ```@docs
 overview
 Energy
+get_energy_density!
 Baryon
+get_baryon_density!
 center_of_mass
 compute_current
 rms_baryon
