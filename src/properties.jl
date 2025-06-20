@@ -198,7 +198,7 @@ end
 
 Compute baryon number of `skyrmion`.
 
-Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density. Setting also component to `i` ($i=1,2,3$) returns the `i`th component of the density. 
+Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density. Setting also component to `i` (i=1,2,3) returns the `i`th component of the density. 
 
 See also [`get_baryon_density!`](@ref). 
 
@@ -223,7 +223,7 @@ end
 
 Write the baryon density of the skyrmion `sk` to the array `baryon_density`.
 
-Set the moment to `n` to calculate the `n`th moment of the density. Set component to `i` ($i=1,2,3$) to calculate `i`th component of the density. 
+Set the moment to `n` to calculate the `n`th moment of the density. Set component to `i` (i=1,2,3) to calculate `i`th component of the density. 
 
 See also [`Baryon`](@ref).
 
@@ -323,7 +323,7 @@ end
 
 Compute root mean square charge radius of a skyrmion, using the baryon density.
 
-Set component to `i` ($i=1,2,3$) to calculate the rms radius for just the `i`th component.
+Set component to `i` (i=1,2,3) to calculate the rms radius for just the `i`th component.
 
 """
 function rms_baryon(sk; component = 0)
