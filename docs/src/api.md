@@ -78,5 +78,4 @@ arrested_newton_flow!
 plot_overview
 plot_field
 plot_baryon_density
-interactive_flow
 ```
