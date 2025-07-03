@@ -328,7 +328,7 @@ end
 """
     R_from_axis_angle(th, n)
 
-Creates the rotation matrix which acts via left multiplication on a vector to rotate it by angle `th` about axis `n`. The vector `n` is automatically normalised.
+Creates the rotation matrix which acts via left multiplication on a vector to rotate it by angle `-th` about axis `n`. The vector `n` is automatically normalised.
 
 """
 function R_from_axis_angle(th, n)
