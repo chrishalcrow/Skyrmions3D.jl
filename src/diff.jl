@@ -13,8 +13,7 @@ function gradient_flow!(
     tolerance = 0.0,
     checks = max(100, steps),
     print_stuff = true,
-    dEdp = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4),
-    max_steps = Inf,
+    dEdp = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
 )
 
     if tolerance == 0 && checks > steps
@@ -29,7 +28,7 @@ function gradient_flow!(
     counter = 0
     prev_error = 1.0e9
 
-    while counter < steps && counter < max_steps
+    while counter < steps
 
         gradient_flow_for_n_steps!(ϕ, dEdp, checks, dt)
 
@@ -259,8 +258,7 @@ function arrested_newton_flow!(
     tolerance = 0.0,
     checks = max(100, steps),
     print_stuff = true,
-    max_steps = Inf,
-    method = "RK4",
+    method = "RK4"
 )
 
     if tolerance == 0 && checks > steps
@@ -278,7 +276,7 @@ function arrested_newton_flow!(
 
 
     counter = 0
-    while counter < steps && counter < max_steps
+    while counter < steps
 
         arrested_newton_flow_for_n_steps!(
             ϕ,
