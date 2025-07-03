@@ -32,6 +32,10 @@ export Grid
 include("diff.jl")
 export gradient_flow!, arrested_newton_flow!, newton_flow!
 
+function __init__()
+    CairoMakie.activate!()
+end
+
 """
     Skyrmion(lp::Int64, ls::Float64)
 	Skyrmion([lpx,lpy,lpx], [lsx,lsy,lsz])
