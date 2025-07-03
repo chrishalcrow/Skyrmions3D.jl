@@ -352,6 +352,9 @@ function arrested_newton_flow_for_n_steps!(
             newton_flow_for_1_step!(ϕ, sk2, ϕd, dEdp1, dEdp2, dEdp3, dEdp4, dt)
         elseif method == "leapfrog"
             leapfrog_for_1_step!(ϕ, ϕd, dEdp1, dEdp2, dt)
+        else
+            println("Invalid method given, defaulting to RK4")
+            newton_flow_for_1_step!(ϕ, sk2, ϕd, dEdp1, dEdp2, dEdp3, dEdp4, dt)
         end
 
         new_energy = EnergyANF(ϕ, energy_density)
