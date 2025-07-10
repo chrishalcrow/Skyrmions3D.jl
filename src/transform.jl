@@ -134,37 +134,8 @@ See also [`isorotate_sk!`]
 """
 function isorotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
-    if n == [0.0, 0.0, 0.0]
-        error("Your vector is zero.")
-        return
-    end
-
-    rotation_matrix = R_from_axis_angle(theta, n)
-
-    lp = skyrmion.grid.lp
-
-    tempsk = deepcopy(skyrmion)
-
-    for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3], a = 1:3
-        tempsk.pion_field[i, j, k, a] = 0.0
-    end
-
-    for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3]
-
-        for a = 1:3, b = 1:3
-            tempsk.pion_field[i, j, k, a] +=
-                rotation_matrix[a, b]*skyrmion.pion_field[i, j, k, b]
-        end
-
-        tempsk.pion_field[i, j, k, 4] = skyrmion.pion_field[i, j, k, 4]
-
-    end
-
-    for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3], a = 1:4
-        skyrmion.pion_field[i, j, k, a] = tempsk.pion_field[i, j, k, a]
-    end
-
-    normer!(skyrmion)
+    tempsk = isorotate_sk(skyrmion, theta=theta, n=n)
+    skyrmion.pion_field .= tempsk.pion_field
 
 end
 
