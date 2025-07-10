@@ -118,7 +118,7 @@ See also [`translate_sk`]
 """
 function translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 
-    tempsk = translate_sk(skyrmion, X)
+    tempsk = translate_sk(skyrmion, X=X)
     skyrmion.pion_field .= tempsk.pion_field
 
 end
