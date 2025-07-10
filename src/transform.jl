@@ -6,17 +6,8 @@ Makes the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The 
 See also [`product_approx`]
 """
 function product_approx!(sk1, sk2)
-
-    check_grids(sk1, sk2)
-
-    lp = sk1.grid.lp
-    tempsk = deepcopy(sk1)
-
-    for k = 1:lp[3], j = 1:lp[2], i = 1:lp[1]
-        tempsk.pion_field[i, j, k, :] = product_approx_pt(sk1, sk2, i, j, k)
-    end
-
-    normer!(tempsk)
+    # Assign via a temporary skyrmion made via product_approx. 
+    tempsk = product_approx(sk1, sk2)
     sk1.pion_field .= tempsk.pion_field
 
 end
