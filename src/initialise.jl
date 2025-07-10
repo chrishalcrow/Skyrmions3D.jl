@@ -349,11 +349,6 @@ function R_from_axis_angle(th, n)
 end
 
 
-function make_ADHM!(an_ADHM_skyrmion, LM; tsteps = 42)
-    B = size(LM)[2]
-    make_ADHM!(an_ADHM_skyrmion, LM[1, 1:B], LM[2:(B+1), 1:B])
-end
-
 """
     make_ADHM!(skyrmion, L, M )
     
@@ -376,7 +371,14 @@ M[2,2] = Quaternion(-1.0, 0.0, 0.0, 0.0)
 ```
 
 """
-function make_ADHM!(an_ADHM_skyrmion, L, M; tsteps = 42)
+function make_ADHM!(an_ADHM_skyrmion, L, M = nothing; tsteps = 42)
+    # If only one of L, M is provided, i.e. M is nothing, then we assume that
+    # the user has provided the combined matrix LM, and we extract the two. 
+    if isnothing(M)
+        B = size(L)[2]
+        M = L[2:(B+1), 1:B]
+        L = L[1, 1:B]
+    end 
 
     B = size(L)[1]
 
