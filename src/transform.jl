@@ -190,52 +190,8 @@ See also [`rotate_sk`]
 """
 function rotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
-    if n == [0.0, 0.0, 0.0]
-        error("Your vector is zero.")
-        return
-    end
-
-    rotation_matrix = R_from_axis_angle(theta, n)
-
-    lp = skyrmion.grid.lp
-    x = skyrmion.grid.x
-
-    sky_temp = deepcopy(skyrmion)
-
-    vac = [0.0, 0.0, 0.0, 1.0]
-
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
-
-    for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3]
-
-        newx = rotation_matrix*[x[1][i], x[2][j], x[3][k]]
-
-        if x[1][1] < newx[1] < x[1][end] &&
-           x[2][1] < newx[2] < x[2][end] &&
-           x[3][1] < newx[3] < x[3][end]
-            for a = 1:4
-                sky_temp.pion_field[i, j, k, a] = ϕinterp[a](newx[1], newx[2], newx[3])
-            end
-        else
-            for a = 1:4
-                sky_temp.pion_field[i, j, k, a] = vac[a]
-            end
-        end
-    end
-
-    for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3], a = 1:4
-        skyrmion.pion_field[i, j, k, a] = sky_temp.pion_field[i, j, k, a]
-    end
-
-    normer!(skyrmion)
+    tempsk = rotate_sk(skyrmion, theta=theta, n=n)
+    skyrmion.pion_field .= tempsk.pion_field
 
 end
 
