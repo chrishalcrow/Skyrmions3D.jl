@@ -371,17 +371,14 @@ function vacuum_skyrmion(lpx, lpy, lpz, vac)
 
 end
 
-function sum_grid(lp::Integer, boundary_conditions::String)
 
-    if boundary_conditions == "dirichlet"
-        return [3:(lp-2), 3:(lp-2), 3:(lp-2)]
-    else
-        return [1:lp, 1:lp, 1:lp]
+
+function sum_grid(lp, boundary_conditions::String)
+    # We allow for lp to be given as a single integer, in which case we set
+    # the number of lattice points in each direction to be lp. 
+    if isa(lp, Integer)
+        lp = [lp, lp, lp]
     end
-
-end
-
-function sum_grid(lp::Vector{Int64}, boundary_conditions::String)
 
     if boundary_conditions == "dirichlet"
         return [3:(lp[1]-2), 3:(lp[2]-2), 3:(lp[3]-2)]
