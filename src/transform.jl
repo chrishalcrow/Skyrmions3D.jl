@@ -8,6 +8,7 @@ See also [`product_approx`]
 function product_approx!(sk1, sk2)
     # Assign via a temporary skyrmion made via product_approx. 
     tempsk = product_approx(sk1, sk2)
+    # note here the .= is broadcast assignment 
     sk1.pion_field .= tempsk.pion_field
 
 end
@@ -117,42 +118,8 @@ See also [`translate_sk`]
 """
 function translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 
-    x = skyrmion.grid.x
-    lp = skyrmion.grid.lp
-
-    sky_temp = deepcopy(skyrmion)
-
-    vac = [0.0, 0.0, 0.0, 1.0]
-
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
-
-    for a = 1:4, k = 1:lp[3], j = 1:lp[2], i = 1:lp[1]
-        if x[1][i] > x[1][1] + X[1] &&
-           x[1][i] < x[1][end] + X[1] &&
-           x[2][j] > x[2][1] + X[2] &&
-           x[2][j] < x[2][end] + X[2] &&
-           x[3][k] > x[3][1] + X[3] &&
-           x[3][k] < x[3][end] + X[3]
-            sky_temp.pion_field[i, j, k, a] =
-                ϕinterp[a](x[1][i] - X[1], x[2][j] - X[2], x[3][k] - X[3])
-        else
-            sky_temp.pion_field[i, j, k, a] = vac[a]
-        end
-    end
-
-    for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3], a = 1:4
-        skyrmion.pion_field[i, j, k, a] = sky_temp.pion_field[i, j, k, a]
-    end
-
-    normer!(skyrmion)
+    tempsk = translate_sk(skyrmion, X)
+    skyrmion.pion_field .= tempsk.pion_field
 
 end
 
