@@ -643,46 +643,6 @@ function getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
 
 end
 
-
-
-
-
-"""
-    newton_flow!(skyrmion; skyrmion_dot, steps = n, dt=ls^2/80.0, frequency_of_printing = freq, print_stuff = true)
-    
-Applies a newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The energy is checked every `freq` steps.
-
-See also [`gradient_flow!`, `arrested_newton_flow!`]
-"""
-function newton_flow!(
-    ϕ;
-    ϕd = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4),
-    dt = ϕ.grid.ls[1]/20.0,
-    steps = 1,
-    print_stuff = true,
-    frequency_of_printing = steps,
-)
-
-    if print_stuff == true
-        println("intial energy: ", Energy(ϕ))
-    end
-
-    counter = 0
-    while counter < steps
-
-        newton_flow_for_n_steps!(ϕ, ϕd, dt, frequency_of_printing)
-        counter += frequency_of_printing
-
-        if print_stuff == true
-            println("after ", counter, " steps, energy = ", Energy(ϕ))
-        end
-
-    end
-
-    return
-
-end
-
 function newton_flow_for_n_steps!(ϕ, ϕd, dt, n)
 
     dEdp1 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)

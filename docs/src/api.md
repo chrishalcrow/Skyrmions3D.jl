@@ -68,7 +68,6 @@ rms_baryon
 
 ```@docs
 gradient_flow!
-newton_flow!
 arrested_newton_flow!
 ```
 
