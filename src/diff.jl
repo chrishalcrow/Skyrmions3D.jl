@@ -646,20 +646,6 @@ function getdEdp4_p!(sk2, dEdp4, sk, dEdp1, dEdp2, dEdp3, skd, dt)
 
 end
 
-function newton_flow_for_n_steps!(ϕ, ϕd, dt, n)
-
-    dEdp1 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
-    dEdp2 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
-    dEdp3 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
-    dEdp4 = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
-    sk2 = deepcopy(ϕ)
-
-    for _ = 1:n
-        newton_flow_for_1_step!(ϕ, sk2, ϕd, dEdp1, dEdp2, dEdp3, dEdp4, dt)
-    end
-
-end
-
 function max_abs_err(A)
 
     return maximum(abs, A)
