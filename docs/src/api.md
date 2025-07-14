@@ -49,6 +49,7 @@ rotate_sk
 isorotate_sk!
 isorotate_sk
 center_skyrmion!
+evaluate_sk
 normer
 normer!
 ```
@@ -58,7 +59,9 @@ normer!
 ```@docs
 overview
 Energy
+get_energy_density!
 Baryon
+get_baryon_density!
 center_of_mass
 compute_current
 rms_baryon
@@ -79,4 +82,9 @@ plot_overview
 plot_field
 plot_baryon_density
 interactive_flow
+```
+
+## Helpers
+```@docs
+R_from_axis_angle
 ```
