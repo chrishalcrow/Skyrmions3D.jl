@@ -352,10 +352,12 @@ end
 """
     make_ADHM!(skyrmion, L, M )
     
-Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M should be given by `B` and `BxB` arrays of Quaternions, from the `GLMakie` package.
+Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M should be given by `B` and `BxB` arrays of Quaternions, from the `Quaternions` package.
 
-# Example of data
+# Example
 ```
+using Quaternions
+
 B=2
 
 L = [ Quaternion(0.0,0.0,0.0,0.0) for a in 1:B ]
@@ -368,6 +370,9 @@ M[1,1] = Quaternion(1.0, 0.0, 0.0, 0.0)
 M[1,2] = Quaternion(0.0, 1.0, 0.0, 0.0)
 M[2,1] = Quaternion(0.0, 1.0, 0.0, 0.0)
 M[2,2] = Quaternion(-1.0, 0.0, 0.0, 0.0)
+
+my_skyrmion = Skyrmion(30,0.2)
+make_ADHM!(my_skyrmion, L, M)
 ```
 
 """
