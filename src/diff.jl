@@ -3,7 +3,7 @@
     
 Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`newton_flow!`, `arrested_newton_flow!`]
+See also [`arrested_newton_flow!`]
 
 """
 function gradient_flow!(
@@ -244,11 +244,15 @@ end
 
 
 """
-    arrested_newton_flow!(skyrmion; skyrmion_dot, steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true)
+    arrested_newton_flow!(skyrmion; skyrmion_dot, steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true, method = "RK4")
     
-Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is skyrmion_dot with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
+Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is `skyrmion_dot` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`gradient_flow!`, `newton_flow!`]
+The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true.
+
+The `method` argument, which should be either "RK4" or "leapfrog", determines how each step is made.  
+
+See also [`gradient_flow!`]
 """
 function arrested_newton_flow!(
     ϕ;
@@ -353,8 +357,7 @@ function arrested_newton_flow_for_n_steps!(
         elseif method == "leapfrog"
             leapfrog_for_1_step!(ϕ, ϕd, dEdp1, dEdp2, dt)
         else
-            println("Invalid method given, defaulting to RK4")
-            newton_flow_for_1_step!(ϕ, sk2, ϕd, dEdp1, dEdp2, dEdp3, dEdp4, dt)
+            throw(ArgumentError(method, "method must be either RK4 or leapfrog"))
         end
 
         new_energy = EnergyANF(ϕ, energy_density)
