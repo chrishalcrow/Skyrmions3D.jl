@@ -1,9 +1,11 @@
 """
-    gradient_flow!(skyrmion; steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true)
+    gradient_flow!(skyrmion; steps=n, tolerance=tol, dt=ls^2/80.0, checks=max(100, steps), print_stuff=true, dEdp=zero_array)
     
 Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-See also [`arrested_newton_flow!`]
+`dEdp` is an array, initialised to be the correct shape and 0.0 everywhere, which stores the change in energy density. The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true.
+
+See also [`arrested_newton_flow!`](@ref). 
 
 """
 function gradient_flow!(
@@ -244,15 +246,14 @@ end
 
 
 """
-    arrested_newton_flow!(skyrmion; skyrmion_dot, steps = n, tolerance = tol, dt=ls^2/80.0, checks = freq, print_stuff = true, method = "RK4")
+    arrested_newton_flow!(skyrmion; skyrmion_dot, steps=n, tolerance=tol, dt=ls^2/80.0, checks=max(100, steps), print_stuff=true, method="RK4")
     
 Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is `skyrmion_dot` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
 
-The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true.
+The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true. `method` determines how each timestep is carried out: accepted values are "RK4" or "leapfrog". 
 
-The `method` argument, which should be either "RK4" or "leapfrog", determines how each step is made.  
+See also [`gradient_flow!`](@ref). 
 
-See also [`gradient_flow!`]
 """
 function arrested_newton_flow!(
     ϕ;
