@@ -90,7 +90,7 @@ function make_RM_product!(sk, Xs)
 end
 
 """
-    make_rational_map!(skyrmion, prof, pfn, qfn; kwargs... )
+    make_rational_map!(skyrmion, pfn, qfn, prof; kwargs... )
     
 Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
 
@@ -108,13 +108,38 @@ function make_rational_map!(
     skyrmion,
     pfn,
     qfn,
-    prof;
+    prof = nothing;
+    baryon = nothing,
     X = [0.0, 0.0, 0.0],
     iTH = 0.0,
     i_n = [0.0, 0.0, 1.0],
     jTH = 0.0,
     j_n = [0.0, 0.0, 0.0],
+    print_things = true,
 )
+    # If a profile function is not given choose a sensible choice
+    if isnothing(prof)
+        # If the baryon number has not been specified, deduce it from from the
+        # polynomials provided
+        if isnothing(baryon)
+            baryon1 = abs((log(pfn(10000)) - log(pfn(1)))/log(10000))
+            baryon2 = abs((log(qfn(10000)) - log(qfn(1)))/log(10000))
+            baryon = max(round(baryon1), round(baryon2))
+            if print_things == true
+                println(
+                    "I think your baryon number is ",
+                    baryon,
+                    ". If it is not, include '; baryon=B' in your argument.",
+                )
+            end
+        end
+        R(z) = pfn(z)/qfn(z)
+        k1, k2 = getOKprofile(1.0, baryon, getI(R), skyrmion.mpi)
+        # Need what seems like an extra line here to avoid "cannot add method
+        # to function argument" error here. 
+        nprof(r) = pi/(1 - tanh(-k2*k1))*(-tanh(k2*(r - k1)) + 1.0);
+        prof = nprof
+    end
 
     lp, x = skyrmion.grid.lp, skyrmion.grid.x
 
@@ -166,43 +191,6 @@ function make_rational_map!(
     if skyrmion.grid.boundary_conditions == "dirichlet"
         set_dirichlet_boudary!(skyrmion)
     end
-
-end
-
-function make_rational_map!(
-    skyrmion,
-    pfn,
-    qfn;
-    baryon = 0.0,
-    X = [0.0, 0.0, 0.0],
-    iTH = 0.0,
-    i_n = [0.0, 0.0, 1.0],
-    jTH = 0.0,
-    j_n = [0.0, 0.0, 0.0],
-    print_things = true,
-)
-
-    if baryon == 0.0
-        baryon1 = abs((log(pfn(10000)) - log(pfn(1)))/log(10000))
-        baryon2 = abs((log(qfn(10000)) - log(qfn(1)))/log(10000))
-        baryon = max(round(baryon1), round(baryon2))
-
-        if print_things == true
-            println(
-                "I think your baryon number is ",
-                baryon,
-                ". If it is not, include '; baryon=B' in your argument.",
-            )
-        end
-
-    end
-
-    R(z) = pfn(z)/qfn(z)
-    k1, k2=getOKprofile(1.0, baryon, getI(R), skyrmion.mpi)
-
-    prof(r) = pi/(1 - tanh(-k2*k1))*(-tanh(k2*(r - k1)) + 1.0);
-    make_rational_map!(skyrmion, pfn, qfn, prof; X, iTH, i_n, jTH, j_n)
-
 
 end
 
@@ -368,11 +356,6 @@ function R_from_axis_angle(th, n)
 end
 
 
-function make_ADHM!(an_ADHM_skyrmion, LM; tsteps = 42)
-    B = size(LM)[2]
-    make_ADHM!(an_ADHM_skyrmion, LM[1, 1:B], LM[2:(B+1), 1:B])
-end
-
 """
     make_ADHM!(skyrmion, L, M; tsteps=42)
     
@@ -402,7 +385,14 @@ make_ADHM!(my_skyrmion, L, M)
 ```
 
 """
-function make_ADHM!(an_ADHM_skyrmion, L, M; tsteps = 42)
+function make_ADHM!(an_ADHM_skyrmion, L, M = nothing; tsteps = 42)
+    # If only one of L, M is provided, i.e. M is nothing, then we assume that
+    # the user has provided the combined matrix LM, and we extract the two. 
+    if isnothing(M)
+        B = size(L)[2]
+        M = L[2:(B+1), 1:B]
+        L = L[1, 1:B]
+    end 
 
     B = size(L)[1]
 
