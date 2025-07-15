@@ -25,9 +25,6 @@ export R_from_axis_angle
 include("plotting.jl")
 export activate_CairoMakie, plot_field, plot_baryon_density, plot_overview, plot_scan
 
-include("plottingGPU.jl")
-export interactive_flow
-
 include("derivatives.jl")
 
 include("grid.jl")
@@ -35,18 +32,6 @@ export Grid
 
 include("diff.jl")
 export gradient_flow!, arrested_newton_flow!, newton_flow!
-
-function __init__()
-    CairoMakie.activate!()
-    @require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" include("plottingGPU.jl")
-    @require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" export interactive_flow,
-        activate_GLMakie
-    @require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" println(
-        "You have GLMakie installed. Interactive plotting is supported.",
-    )
-    @require GLMakie="e9467ef8-e4e7-5192-8a1a-b1aee30e663a" GLMakie.activate!();
-end
-
 
 """
     Skyrmion(lp::Int64, ls::Float64)
