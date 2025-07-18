@@ -13,6 +13,7 @@ makedocs(
         "Flow" => "flow.md",
         "Visualise" => "visualisation.md",
         "API" => "api.md",
+        "Citations" => "citations.md",
     ],
 )
 
