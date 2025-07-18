@@ -14,6 +14,7 @@ makedocs(
         "Visualise" => "visualisation.md",
         "API" => "api.md",
         "Citations" => "citations.md",
+        "Contribute" => "contributing.md",
     ],
 )
 

@@ -53,11 +53,13 @@ end
 
 
 """
-    Energy(skyrmion; density=false)
+    Energy(skyrmion; density=false, moment=0)
 
 Compute energy of `skyrmion`.
 
-Set 'density = true' to output the energy density and moment to `n` to calculate the nth moment of the energy density.
+Set 'density = true' to output the energy density and moment to `n` to calculate the `n`th moment of the energy density.
+
+See also [`get_energy_density!`](@ref). 
 
 """
 function Energy(sk; density = false, moment = 0)
@@ -86,6 +88,16 @@ function Energy(sk; density = false, moment = 0)
 
 end
 
+"""
+    get_energy_density!(density, sk; moment=0)
+
+Write the energy density of the skyrmion `sk` to the array `density`.
+
+Set the moment to `n` to calculate the `n`th moment of the density.
+
+See also [`Energy`](@ref).
+
+"""
 function get_energy_density!(density, sk; moment = 0)
 
     Threads.@threads for k in sk.grid.sum_grid[3]
@@ -182,11 +194,13 @@ function engpt(dp, p4, mpi)
 end
 
 """
-    Baryon(skyrmion; density=false)
+    Baryon(skyrmion; density=false, moment=0, component=0)
 
 Compute baryon number of `skyrmion`.
 
-Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density.
+Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density. Setting also component to `i` (i=1,2,3) returns the `i`th component of the density. 
+
+See also [`get_baryon_density!`](@ref). 
 
 """
 function Baryon(sk; density = false, moment = 0, component = 0)
@@ -204,6 +218,16 @@ function Baryon(sk; density = false, moment = 0, component = 0)
 
 end
 
+"""
+    get_baryon_density!(baryon_density, sk; moment=0, component=0)
+
+Write the baryon density of the skyrmion `sk` to the array `baryon_density`.
+
+Set the moment to `n` to calculate the `n`th moment of the density. Set component to `i` (i=1,2,3) to calculate `i`th component of the density. 
+
+See also [`Baryon`](@ref).
+
+"""
 function get_baryon_density!(baryon_density, sk; moment = 0, component = 0)
 
     vc = zeros(3)
@@ -259,7 +283,7 @@ end
 
 
 """
-    center_of_mass(skyrmion; density=false, moment=0)
+    center_of_mass(skyrmion)
 
 Compute the center of mass of `skyrmion`, based on the energy density.
 
@@ -295,9 +319,12 @@ end
 
 
 """
-    rms_baryon(skyrmion)
+    rms_baryon(skyrmion; component=0)
 
 Compute root mean square charge radius of a skyrmion, using the baryon density.
+
+Set component to `i` (i=1,2,3) to calculate the rms radius for just the `i`th component.
+
 """
 function rms_baryon(sk; component = 0)
 
