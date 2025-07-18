@@ -1,5 +1,3 @@
-[comment]: <> (Remove comment at end. See https://joss.readthedocs.io/en/latest/paper.html#github-action and https://joss.readthedocs.io/en/latest/example_paper.html)
-
 ---
 title: 'Skyrmions3D: A Julia package to create and visualise 3D Skyrmions in the Skyrme model'
 tags:
