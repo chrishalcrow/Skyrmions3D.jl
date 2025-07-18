@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: Skyrmions3D
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: Chris
+    family-names: Halcrow
+    email: chalcrow@ed.ac.uk
+    affiliation: University of Edinburgh
+    orcid: 'https://orcid.org/0000-0002-0246-8075'
+  - given-names: Linden
+    family-names: Disney-Hogg
+    email: a.l.disney-hogg@leeds.ac.uk
+    orcid: 'https://orcid.org/0000-0002-6597-2463'
+    affiliation: University of Leeds
+url: 'https://github.com/chrishalcrow/Skyrmions3D.jl'
+version: TBC
+date-released: TBC
