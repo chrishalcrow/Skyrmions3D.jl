@@ -13,6 +13,11 @@ authors:
     email: a.l.disney-hogg@leeds.ac.uk
     orcid: 'https://orcid.org/0000-0002-6597-2463'
     affiliation: University of Leeds
+  - given-names: Cas
+    family-names: Chaudhuri
+    email: mmgch@leeds.ac.uk
+    orcid: 'https://orcid.org/0009-0001-4281-2766'
+    affiliation: University of Leeds
 url: 'https://github.com/chrishalcrow/Skyrmions3D.jl'
 version: TBC
 date-released: TBC
