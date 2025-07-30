@@ -50,4 +50,6 @@ Mention (if applicable) a representative set of past or ongoing research project
 
 Acknowledgement of any financial support.
 
+The research of LDH is supported by a UK Engineering and Physical Sciences Research Council (EPSRC) doctoral prize fellowship.
+
 # References
