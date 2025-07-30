@@ -13,8 +13,12 @@ makedocs(
         "Flow" => "flow.md",
         "Visualise" => "visualisation.md",
         "API" => "api.md",
-        "Contribute" => "contributing.md"
+        "Citations" => "citations.md",
+        "Contribute" => "contributing.md",
     ],
+    repo = "github.com/chrishalcrow/Skyrmions3D.jl",
 )
 
-deploydocs(; repo = "github.com/chrishalcrow/Skyrmions3D.jl")
+deploydocs(;
+           repo = "github.com/chrishalcrow/Skyrmions3D.jl",
+           )
