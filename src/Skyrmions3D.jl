@@ -372,7 +372,7 @@ end
 
 
 
-function sum_grid(lp, boundary_conditions::String)
+function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
     # We allow for lp to be given as a single integer, in which case we set
     # the number of lattice points in each direction to be lp. 
     if isa(lp, Integer)
