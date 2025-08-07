@@ -90,18 +90,20 @@ function make_RM_product!(sk, Xs)
 end
 
 """
-    make_rational_map!(skyrmion, pfn, qfn, prof; kwargs... )
+    make_rational_map!(skyrmion, pfn, qfn, prof = nothing; kwargs...)
     
-Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
+Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials `pfn` and `qfn` as R(z) = p(z)/q(z), and the profile f(r) is `prof`.
 
-If no `f` is given, the function will find an OK approximation for the profile.
+If `prof` is `nothing`, the function will find an OK approximation for the profile.
 
 # Optional arguments
--  `X=[0.0,0.0,0.0]`: translate the initial skyrmion by `X`
--  `iTH = 0.0`: isorotate by initial skyrmion by `iTH`
--  `i_n = 0.0`: isorotate initial skyrmion around `i_n`
--  `jTH = 0.0`: isorotate by initial skyrmion by `jTH`
--  `j_n = 0.0`: isorotate initial skyrmion around `j_n`
+-  `baryon = nothing`: if the baryon number is not provided, it will be determined from the rational map
+-  `X = [0.0, 0.0, 0.0]`: translate the initial skyrmion by `X`
+-  `iTH = 0.0`: isorotate initial skyrmion by `iTH` about `i_n`
+-  `i_n = [0.0, 0.0, 1.0]`: axis about which to isorotate skyrmion
+-  `jTH = 0.0`: rotate initial skyrmion by `jTH` about `j_n`
+-  `j_n = [0.0, 0.0, 1.0]`: axis about which to rotate skyrmion
+-  `print_things = true`: determines whether the function will print the found baryon number (if it is not given)
 
 """
 function make_rational_map!(
@@ -114,7 +116,7 @@ function make_rational_map!(
     iTH = 0.0,
     i_n = [0.0, 0.0, 1.0],
     jTH = 0.0,
-    j_n = [0.0, 0.0, 0.0],
+    j_n = [0.0, 0.0, 1.0],
     print_things = true,
 )
     # If a profile function is not given choose a sensible choice
@@ -350,9 +352,14 @@ end
 
 
 """
-    make_ADHM!(skyrmion, L, M )
+    make_ADHM!(skyrmion, L, M = nothing; kwargs...)
     
 Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M should be given by `B` and `BxB` arrays of Quaternions, from the `Quaternions` package.
+
+If `M` is `nothing` then it is assumed `L` is a `(B+1)xB` array containing all the ADHM data. 
+
+# Optional arguments
+-  `tsteps = 42`: the number of time steps to use when approximating the holonomy
 
 # Example
 ```
