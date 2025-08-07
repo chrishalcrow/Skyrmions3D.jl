@@ -59,21 +59,22 @@ in each homotopy class. The remarkable fact about the Skyrme model is that, desp
  - the physical parameters $m_\pi$, $F_\pi$, $e$, and
  - boundary conditions determing how the Skyrme field is to be treated at the edge of the grid. 
 
-Explicit formula for skyrmion fields which attain the minimal energy are not known, and so one must work with approximate ...
+Explicit formula for skyrmion fields which attain the minimal energy are not known, and so one must work with well-motivated approximations. Two common approaches to skyrmions motivated by the study of other topological solitons are the rational map approximation (motivated by monopoles) and the Atiyah-Manton or ADHM approximation (motivated by instantons): both are implemented in `Skyrmions3D.jl`. In addition, `Skyrmions3D.jl` has been written in a flexible manner such that it is simple to implement new approximation within the existing framework, see for example [@Cork2025]. 
 
 Given skyrmions there are a variety of ways to manipulate them:
  - one can translate and (iso)rotate them, for example by sending $U(x)$ to $U(x-x_0)$ when translating by fixed $x_0 \in \mathbb{R}^3$, and
  - one can combine two skyrmions via the product ansatz.
-Moreover, there are ...
+Moreover, there are a variety of properties of skyrmions which one may naturally wish to compute, such as the total energy, or visualisations of the skyrmion baryon density. `Skyrmions3D.jl` has the ability to compute a large number of such properties which are commonly used, and supports interactive plotting via `Makie`. 
+
+Comprehensive documentation for `Skyrmions3D.jl` is provided via a webpage, including an API, examples of how to use key features, and guidance on requesting features or raising bug reports. In addition, this webpage provides a list of known publications which have used and cited `Skyrmions3D.jl`. 
+
+While many of the underlying numerical methods are standard applications, there are notable exceptions which warrant special attention. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for this purpose. Moreover, the implementation of the Runge-Kutta algorithm used for arrested Newton flow ... 
 
 
 An incomplete list that LDH thinks should be included in this section:
  - a brief overview of the features offered by the package
  - the colouring of plots, wasn't it a paper of CH which introduced the colouring convention?
- - some small details about the algorithms used where they are notable, e.g. marching cubes has become *the* tool for plotting isosurfaces in the solitons community, reference the Harland paper for efficient computation of holonomy, anything about arrested newton flow?
- - the webpage providing comprehensive documentation and examples of usage
- - the papers which have currently used Skyrmions3D, advertised on a webpage
- - the flexibility to employ Skyrmions in other projects, cite [@Cork2025]. 
+ - some small details about the algorithms used where they are notable, e.g. marching cubes has become *the* tool for plotting isosurfaces in the solitons community
 
 # Acknowledgements
 *Acknowledgement of any financial support.*
