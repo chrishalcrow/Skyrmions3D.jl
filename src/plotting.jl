@@ -4,9 +4,13 @@ end
 
 
 """
-    plot_field!(skyrmion; component=3, iso_value=0.5 )
+    plot_field(skyrmion; component=3, iso_value=0.5, kwargs...)
     
-Plots an isosurface of constant value, `skyrme_field[component] = iso_value`
+Plots an isosurface of constant value, `skyrme_field[component] = iso_value`. 
+
+# Optional argument
+
+Can accept any arguments used in `Axis3` from the `Makie` package.
 
 """
 function plot_field(skyrmion; component = 3, iso_value = 0.5, kwargs...)
@@ -47,9 +51,11 @@ end
 
 
 """
-    plot_overview(skyrmion)
+    plot_overview(skyrmion; iso_value=0.5)
     
 Plots the pion fields and a baryon density of `skyrmion`.
+
+Pion field isosurfaces are taken at the value `iso_value`, while the baryon density isosurface is taken at halfway between the minimum and maximum density value. 
 
 """
 function plot_overview(skyrmion; iso_value = 0.5)
@@ -210,7 +216,7 @@ Can use a _juggling ball_ colouring scheme by setting `juggling = true`.
 
 # Optional argument
 
-Can accept any arguments used in `Axis3` from the `Makie` package. See more: [].
+Can accept any arguments used in `Axis3` from the `Makie` package.
 
 """
 function plot_baryon_density(skyrmion; juggling = false, iso_value = 0.0, kwargs...)

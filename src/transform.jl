@@ -1,9 +1,10 @@
 """
-    product_approx!(skyrmion1,skyrmion2) 
+    product_approx!(skyrmion1, skyrmion2) 
 
 Makes the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The output is written in to `skyrmion1`. The returned field is normalised.
 
-See also [`product_approx`]
+See also [`product_approx`](@ref). 
+
 """
 function product_approx!(sk1, sk2)
     # Assign via a temporary skyrmion made via product_approx. 
@@ -14,11 +15,12 @@ function product_approx!(sk1, sk2)
 end
 
 """
-    product_approx(skyrmion1,skyrmion2) -> product_skyrmion
+    product_approx(skyrmion1, skyrmion2)
 
 Returns the symmetrised product approximation of `skyrmion1` and `skyrmion2`. The returned field is normalised.
 
-See also [`product_approx!`]
+See also [`product_approx!`](@ref).
+
 """
 function product_approx(sk1, sk2)
 
@@ -64,11 +66,12 @@ end
 
 
 """
-    translate_sk(skyrmion,X) -> translated_skyrmion
+    translate_sk(skyrmion; X=[0.0,0.0,0.0])
 
 Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
-See also [`translate_sk!`]
+See also [`translate_sk!`](@ref). 
+
 """
 function translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 
@@ -110,11 +113,12 @@ function translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 end
 
 """
-    translate_sk!(skyrmion,X)
+    translate_sk!(skyrmion; X=[0.0,0.0,0.0])
 
 Translates `skyrmion` by the 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
-See also [`translate_sk`]
+See also [`translate_sk`](@ref). 
+
 """
 function translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 
@@ -124,12 +128,11 @@ function translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 end
 
 """
-    isorotate_sk!(skyrmion,theta,n)
+    isorotate_sk!(skyrmion; theta=0, n=[0,0,1])
 
 Isorotates `skyrmion` by `theta` around the vector `n`. The given vector is automatically normalised.
 
-See also [`isorotate_sk!`]
-
+See also [`isorotate_sk`](@ref). 
 
 """
 function isorotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
@@ -140,11 +143,12 @@ function isorotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 end
 
 """
-    isorotate_sk(skyrmion,theta,n) -> isorotated_skyrmion
+    isorotate_sk(skyrmion; theta=0, n=[0,0,1])
 
 Returns `skyrmion` isorotated by `theta` around the vector `n`. The given vector is automatically normalised.
 
-See also [`isorotate_sk!`]
+See also [`isorotate_sk!`](@ref). 
+
 """
 function isorotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
@@ -182,11 +186,12 @@ end
 
 
 """
-    rotate_sk!(skyrmion,theta,n)
+    rotate_sk!(skyrmion; theta=0, n=[0,0,1])
 
 Rotates `skyrmion` by `theta` around the vector `n`. The given vector is automatically normalised.
 
-See also [`rotate_sk`]
+See also [`rotate_sk`](@ref). 
+
 """
 function rotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
@@ -197,11 +202,12 @@ end
 
 
 """
-    rotate_sk(skyrmion,theta,n) -> rotated_skyrmion
+    rotate_sk(skyrmion; theta=0, n=[0,0,1])
 
 Returns `skyrmion` rotated by `theta` around the vector `n`. The given vector is automatically normalised.
 
-See also [`rotate_sk!`]
+See also [`rotate_sk!`](@ref). 
+
 """
 function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
@@ -253,7 +259,7 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 end
 
 """
-    center_skyrmion(my_skyrmion)
+    center_skyrmion!(skyrmion)
 
 Translates `skyrmion' so that the center of mass is `(0,0,0)'.
 
@@ -293,12 +299,11 @@ function set_dirichlet_boudary!(sk; vac = [0.0, 0.0, 0.0, 1.0])
 end
 
 """
-    evaluate_skevaluate_sk(skyrmion,y)
+    evaluate_sk(skyrmion, y)
 
-Evaluates the Skyrme field at the spatial position y, using some fancy interpolation method
+Evaluates the Skyrme field at the spatial position `y`, using some fancy interpolation method.
 
 """
-
 function evaluate_sk(skyrmion, y)
 
     x = skyrmion.grid.x
