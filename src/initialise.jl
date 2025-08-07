@@ -139,8 +139,7 @@ function make_rational_map!(
         k1, k2 = getOKprofile(1.0, baryon, getI(R), skyrmion.mpi)
         # Need what seems like an extra line here to avoid "cannot add method
         # to function argument" error here. 
-        nprof(r) = pi/(1 - tanh(-k2*k1))*(-tanh(k2*(r - k1)) + 1.0);
-        prof = nprof
+        prof = r -> pi/(1 - tanh(-k2*k1))*(-tanh(k2*(r - k1)) + 1.0);
     end
 
     lp, x = skyrmion.grid.lp, skyrmion.grid.x
