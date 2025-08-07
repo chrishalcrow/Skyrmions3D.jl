@@ -66,7 +66,7 @@ end
 
 
 """
-    translate_sk(skyrmion; X=[0.0,0.0,0.0])
+    translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 
 Returns `skyrmion` translated by 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
@@ -113,7 +113,7 @@ function translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 end
 
 """
-    translate_sk!(skyrmion; X=[0.0,0.0,0.0])
+    translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 
 Translates `skyrmion` by the 3-Vector `X`, e.g. `X = [1.0, 0.0, 0.0]`
 
@@ -128,7 +128,7 @@ function translate_sk!(skyrmion; X = [0.0, 0.0, 0.0])
 end
 
 """
-    isorotate_sk!(skyrmion; theta=0, n=[0,0,1])
+    isorotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
 Isorotates `skyrmion` by `theta` around the vector `n`. The given vector is automatically normalised.
 
@@ -143,7 +143,7 @@ function isorotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 end
 
 """
-    isorotate_sk(skyrmion; theta=0, n=[0,0,1])
+    isorotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
 Returns `skyrmion` isorotated by `theta` around the vector `n`. The given vector is automatically normalised.
 
@@ -186,7 +186,7 @@ end
 
 
 """
-    rotate_sk!(skyrmion; theta=0, n=[0,0,1])
+    rotate_sk!(skyrmion; theta = 0, n = [0, 0, 1])
 
 Rotates `skyrmion` by `theta` around the vector `n`. The given vector is automatically normalised.
 
@@ -202,7 +202,7 @@ end
 
 
 """
-    rotate_sk(skyrmion; theta=0, n=[0,0,1])
+    rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
 Returns `skyrmion` rotated by `theta` around the vector `n`. The given vector is automatically normalised.
 
@@ -261,7 +261,7 @@ end
 """
     center_skyrmion!(skyrmion)
 
-Translates `skyrmion' so that the center of mass is `(0,0,0)'.
+Translates `skyrmion` so that the center of mass is `(0, 0, 0)`.
 
 """
 function center_skyrmion!(sk)

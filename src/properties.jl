@@ -53,7 +53,7 @@ end
 
 
 """
-    Energy(skyrmion; density=false, moment=0)
+    Energy(skyrmion; density = false, moment = 0)
 
 Compute energy of `skyrmion`.
 
@@ -89,7 +89,7 @@ function Energy(sk; density = false, moment = 0)
 end
 
 """
-    get_energy_density!(density, sk; moment=0)
+    get_energy_density!(density, sk; moment = 0)
 
 Write the energy density of the skyrmion `sk` to the array `density`.
 
@@ -194,7 +194,7 @@ function engpt(dp, p4, mpi)
 end
 
 """
-    Baryon(skyrmion; density=false, moment=0, component=0)
+    Baryon(skyrmion; density = false, moment = 0, component = 0)
 
 Compute baryon number of `skyrmion`.
 
@@ -219,7 +219,7 @@ function Baryon(sk; density = false, moment = 0, component = 0)
 end
 
 """
-    get_baryon_density!(baryon_density, sk; moment=0, component=0)
+    get_baryon_density!(baryon_density, sk; moment = 0, component = 0)
 
 Write the baryon density of the skyrmion `sk` to the array `baryon_density`.
 
@@ -319,7 +319,7 @@ end
 
 
 """
-    rms_baryon(skyrmion; component=0)
+    rms_baryon(skyrmion; component = 0)
 
 Compute root mean square charge radius of a skyrmion, using the baryon density.
 
@@ -355,7 +355,7 @@ function sphericity(my_skyrmion)
 end
 
 """
-    compute_current(skyrmion; label="uMOI", indices=[0,0], density = false, moment=0)
+    compute_current(skyrmion; label = "uMOI", indices = [0, 0], density = false, moment = 0)
 
 Compute a variety of currents in the Skyrme model, based on a `skyrmion`. 
 

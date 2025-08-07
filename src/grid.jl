@@ -1,6 +1,6 @@
 
 """
-	Grid([lpx,lpy,lpx], [lsx,lsy,lsz], boundary_conditions::String)
+	Grid([lpx, lpy, lpx], [lsx, lsy, lsz], boundary_conditions::String)
     
 Create a Grid field with `lp` lattice points and `ls` lattice spacing. 
  

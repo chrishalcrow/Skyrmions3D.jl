@@ -1,7 +1,7 @@
 """
-    gradient_flow!(skyrmion; steps=n, tolerance=tol, dt=ls^2/80.0, checks=max(100, steps), print_stuff=true, dEdp=zero_array)
+    gradient_flow!(skyrmion; steps = 1, tolerance = 0.0, dt = ls^2/100.0, checks = max(100, steps), print_stuff = true, dEdp = zero_array)
     
-Applies a gradient flow to `skyrmion` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
+Applies a gradient flow to `skyrmion` with timestep `dt` (where `ls` is the average lattice spacing), either for `steps` steps or until the error falls below `tolerance`. The error is checked every `checks` steps.
 
 `dEdp` is an array, initialised to be the correct shape and 0.0 everywhere, which stores the change in energy density. The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true.
 
@@ -246,9 +246,9 @@ end
 
 
 """
-    arrested_newton_flow!(skyrmion; skyrmion_dot, steps=n, tolerance=tol, dt=ls^2/80.0, checks=max(100, steps), print_stuff=true, method="RK4")
+    arrested_newton_flow!(skyrmion; skyrmion_dot = zero_array, steps = 1, tolerance = 0.0, dt = ls/10.0, checks = max(100, steps), print_stuff = true, method = "RK4")
     
-Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is `skyrmion_dot` with timestep `dt`, either for `n` steps or until the error falls below `tol`. The error is checked every `checks` steps.
+Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is `skyrmion_dot` (an array of the correct shape initialised with value 0.0) with timestep `dt` (where `ls` is the lattice spacing in the first direction), either for `steps` steps or until the error falls below `tolerance`. The error is checked every `checks` steps.
 
 The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true. `method` determines how each timestep is carried out: accepted values are "RK4" or "leapfrog". 
 
