@@ -20,7 +20,7 @@ affiliations:
    index: 1
  - name: University of Leeds, United Kingdom
    index: 2
-date: 30 July 2025
+date: 8 August 2025
 bibliography: paper.bib
 ---
 
@@ -36,7 +36,7 @@ Solitons are solutions to partial differential equations which behave like parti
 *A Statement of need section that clearly illustrates the research purpose of the software and places it in the context of related work.*
 
 
-Computational tools have long been important to the study of topological solitons due to the many complicated high-dimensional integrals which must be executed in order to determine even fundamental properties of a soliton such as its energy. This difficulty is compounded in the study of skyrmions, where exact Skyrme fields are not available. Despite such a necessity, aside from `Skyrmions3D.jl` there are no open-source packages available for the study of 3-dimensional skyrmions. This is a marked difference to the study of 2-dimensional magnetic skyrmions where many tools are available, for example [@Beg2022], [@CortesOrtuno019], [@KanaszNagy2015]. 
+Computational tools have long been important to the study of topological solitons due to the many complicated high-dimensional integrals which must be executed in order to determine even fundamental properties of a soliton such as its energy. This difficulty is compounded in the study of skyrmions, where exact Skyrme fields are not available. Despite such a necessity, aside from `Skyrmions3D.jl` there are no open-source packages available for the study of 3-dimensional skyrmions. This is a marked difference to the study of other solitons where a variety of tools exist, for example 2-dimensional magnetic skyrmions (e.g. [@Beg2022], [@CortesOrtuno019], [@KanaszNagy2015]), monopoles (e.g. [@DisneyHogg2023], [@Garcia2025], [@Lang2020]), and vortices (e.g. [@GonzalezArroyo2004], [@GonzalezArroyo2007], [@Stoica2013]). 
 
 As such `Skyrmions3D.jl` provides a tool which lowers barriers to skyrmion research presented by the computational skill required, prevents inefficies arising from duplication of software, supports rigorous science by making source code open, and aids reproducibility across publications. 
 
@@ -68,13 +68,9 @@ Moreover, there are a variety of properties of skyrmions which one may naturally
 
 Comprehensive documentation for `Skyrmions3D.jl` is provided via a webpage, including an API, examples of how to use key features, and guidance on requesting features or raising bug reports. In addition, this webpage provides a list of known publications which have used and cited `Skyrmions3D.jl`. 
 
-While many of the underlying numerical methods are standard applications, there are notable exceptions which warrant special attention. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for this purpose. Moreover, the implementation of the Runge-Kutta algorithm used for arrested Newton flow ... 
+While many of the underlying numerical methods are standard applications, there are notable exceptions which warrant special attention. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for application to skyrmions, but having wider applicability. Moreover, the ODE solved to flow an approximate skyrmion towards the (locally) minimal energy configuration is "arrested Newton flow", a modification of gradient flow common to the field of topological solitons but less widely known, see [@Gudnason2020]. Finally, the colouring used in plotting of skyrmion baryon density is not merely used to provide contrast, but colours the surface using the value of the Skyrme field at that point in space via the Runge colour sphere as introduced in [@Manton2012]. 
 
-
-An incomplete list that LDH thinks should be included in this section:
- - a brief overview of the features offered by the package
- - the colouring of plots, wasn't it a paper of CH which introduced the colouring convention?
- - some small details about the algorithms used where they are notable, e.g. marching cubes has become *the* tool for plotting isosurfaces in the solitons community
+Future work on the package shall focus on allowing modification to the Skyrme action which make binding energies more realist, see for example [@Gudnason2020]. 
 
 # Acknowledgements
 *Acknowledgement of any financial support.*
