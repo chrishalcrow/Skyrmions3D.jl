@@ -4,7 +4,7 @@ end
 
 
 """
-    plot_field(skyrmion; component=3, iso_value=0.5, kwargs...)
+    plot_field(skyrmion; component = 3, iso_value = 0.5, kwargs...)
     
 Plots an isosurface of constant value, `skyrme_field[component] = iso_value`. 
 
@@ -51,7 +51,7 @@ end
 
 
 """
-    plot_overview(skyrmion; iso_value=0.5)
+    plot_overview(skyrmion; iso_value = 0.5)
     
 Plots the pion fields and a baryon density of `skyrmion`.
 
@@ -208,7 +208,7 @@ end
 
 
 """
-    plot_baryon_density(skyrmion; iso_value = 0.5*(max(BD) - min(BD)), juggling = false, kwargs...)
+    plot_baryon_density(skyrmion; iso_value = 0.25*(max(BD) + min(BD)), juggling = false, kwargs...)
     
 Plots an isosurface of constant baryon density, with value `iso_value`, coloured to reveal the pion field structure, originally described in [].
 

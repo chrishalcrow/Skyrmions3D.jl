@@ -34,13 +34,16 @@ include("diff.jl")
 export gradient_flow!, arrested_newton_flow!, newton_flow!
 
 """
-    Skyrmion(lp::Int64, ls::Float64)
-	Skyrmion([lpx,lpy,lpx], [lsx,lsy,lsz])
+    Skyrmion(lp::Int64, ls::Float64; kwargs...)
+	Skyrmion([lpx, lpy, lpx], [lsx, lsy, lsz]; kwargs...)
     
 Create a skyrme field with `lp` lattice points and `ls` lattice spacing. 
 
 # Optional arguments
 - `mpi = 0.0`: sets the pion mass for this Skyrme field
+- `Fpi = 180`: sets the pion decay constant for this Skyrme field
+- `ee = 4.0`: sets the Skyrme constant for this Skyrme field
+- `physical = false`: whether the Skyrmion is using physical units
 
 """
 mutable struct Skyrmion
@@ -244,7 +247,7 @@ end
 
 
 """
-    set_physical!(skyrmion::Skyrmion, is_physical; Fpi=Fpi, ee=ee)
+    set_physical!(skyrmion::Skyrmion, is_physical; Fpi = Fpi, ee = ee)
 
 Sets `skyrmion` to use physical units, when `is_physical` is `true`.
 
@@ -367,17 +370,14 @@ function vacuum_skyrmion(lpx, lpy, lpz, vac)
 
 end
 
-function sum_grid(lp::Integer, boundary_conditions::String)
 
-    if boundary_conditions == "dirichlet"
-        return [3:(lp-2), 3:(lp-2), 3:(lp-2)]
-    else
-        return [1:lp, 1:lp, 1:lp]
+
+function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
+    # We allow for lp to be given as a single integer, in which case we set
+    # the number of lattice points in each direction to be lp. 
+    if isa(lp, Integer)
+        lp = [lp, lp, lp]
     end
-
-end
-
-function sum_grid(lp::Vector{Int64}, boundary_conditions::String)
 
     if boundary_conditions == "dirichlet"
         return [3:(lp[1]-2), 3:(lp[2]-2), 3:(lp[3]-2)]
