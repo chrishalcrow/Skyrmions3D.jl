@@ -48,7 +48,7 @@ Energy(skyrmion)
 >>> (6149.285364807477, "MeV")
 ```
 
-Note that the energy of the skyrmion is dependent both on its underlying pion field (which determines the ernergy density at a point) but also the grid, as the energy is calculated as the sum of the energy density over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
+Note that the energy of the skyrmion is dependent both on its underlying pion field (which determines the energy density at a point) but also the grid, as the energy is calculated as the sum of the energy density over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
 
 ## Currents
 

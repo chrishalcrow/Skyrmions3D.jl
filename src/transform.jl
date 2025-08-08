@@ -265,7 +265,10 @@ Translates `skyrmion` so that the center of mass is `(0, 0, 0)`.
 
 """
 function center_skyrmion!(sk)
-
+    # A single translation by the center of mass may not leave the new center 
+    # sufficiently close to the origin. By using repeat translations this 
+    # method is more robust, but succeptible to the same problems which haunt
+    # center_of_mass. 
     for _ = 1:5
         current_CoM = center_of_mass(sk)
         translate_sk!(sk, X = -current_CoM)

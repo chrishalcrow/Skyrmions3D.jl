@@ -66,13 +66,15 @@ make_rational_map!(b_skyrmion, p, q, f, jTH = theta, j_n = n)
       b_skyrmion.pion_field[3, 3, 3, :]
 
 
-b_skyrmion = Skyrmion(6, 0.2)
+b_skyrmion = Skyrmion(60, 0.2)
 set_neumann!(b_skyrmion)
 make_rational_map!(b_skyrmion, p, q, f, X = [0.2, 0.0, 0.0])
-center_skyrmion!(a_skyrmion)
-@test center_of_mass(a_skyrmion) ≈ [0.0, 0.0, 0.0]
+center_skyrmion!(b_skyrmion)
+@test isapprox(center_of_mass(b_skyrmion), [0.0, 0.0, 0.0], atol=1e-10)
 
-
+b_skyrmion = Skyrmion(6, 0.2)
+set_neumann!(b_skyrmion)
+make_rational_map!(b_skyrmion, p, q, f)
 Skyrmions3D.set_dirichlet_boudary!(b_skyrmion, vac = [2.0, 0.2, -0.3, 0.5])
 @test b_skyrmion.pion_field[1, 1, 1, :] == [2.0, 0.2, -0.3, 0.5]
 
