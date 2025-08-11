@@ -277,14 +277,12 @@ function center_skyrmion!(sk; max_steps = 10, tolerance = 1e-9)
     for _ in 1:max_steps
         translate_sk!(sk, X = -current_CoM)
         current_CoM = center_of_mass(sk)
-        if tolerance <= 0
-            continue
-        end
+        tolerance <= 0 && continue
         L1 = maximum(abs, current_CoM)
-        L1 < tolerance && break
-    then
-        tolerance > 0 && @warn "Centering failed to converge"
+        L1 < tolerance && @goto converged
     end
+    tolerance > 0 && @warn "Centering failed to converge"
+    @label converged
 end
 
 function set_dirichlet_boudary!(sk; vac = [0.0, 0.0, 0.0, 1.0])
