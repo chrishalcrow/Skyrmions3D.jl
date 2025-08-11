@@ -24,6 +24,11 @@ and run `Pkg.tests()`. You can do this in a one-liner like so:
 ```
 julia --project=path/to/Skyrmions3D.jl -e "using Pkg; Pkg.test()"
 ```
+or by changing directory to the project and running 
+```
+julia --project=. test/runtests.jl
+```
+The latter is faster but will not work if changes have been made to the package which require updating the package dependencies. 
 
 If you fix a bug or add a new feature, consider adding a test to an appropriate file in the test suite (e.g. *test/do\_diff\_tests.jl*); more on testing can be found [in the Julia documentation](https://docs.julialang.org/en/v1/stdlib/Test/). 
 
