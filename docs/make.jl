@@ -17,8 +17,7 @@ makedocs(
         "Contribute" => "contributing.md",
     ],
     repo = Documenter.Remotes.GitHub("chrishalcrow", "Skyrmions3D.jl"),
+    checkdocs=:exports,
 )
 
-deploydocs(;
-           repo = "github.com/chrishalcrow/Skyrmions3D.jl",
-           )
+deploydocs(; repo = "github.com/chrishalcrow/Skyrmions3D.jl")

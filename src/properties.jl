@@ -361,7 +361,7 @@ Compute a variety of currents in the Skyrme model, based on a `skyrmion`.
 
 You can calculate specific indices using e.g. `indices = [1,2]`. If `indices = [0,0]`, the function will calculate all indices. If `density = false`, the function will return the integrated densities, while `density = true` it will return the densities. 
 
-The possible currents are (currently):
+The possible currents are:
 - `uMOI`: the isospin moment of inertia.
 - `wMOI`: the mixed moment of inertia.
 - `vMOI`: the spin moment of inertia.
@@ -412,7 +412,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             if label == "uMOI"
 
-                Tiam, Lia = getTiam(p), getLka(p, dp)
+                Tiam, Lia = getTiam(p), getLia(p, dp)
 
                 for a in aindices, b in bindices
                     current_density[a, b, i, j, k] = -trace_su2_ij(Tiam, Tiam, a, b)*rm
@@ -424,7 +424,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "wMOI"
 
-                Tiam, Lia = getTiam(p), getLka(p, dp)
+                Tiam, Lia = getTiam(p), getLia(p, dp)
                 Gia = -1.0 .* getGia(Lia, xxx)
 
                 for a in aindices, b in bindices
@@ -437,7 +437,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "vMOI"
 
-                Lia = getLka(p, dp)
+                Lia = getLia(p, dp)
                 Gia = -1.0 .* getGia(Lia, xxx)
 
                 for a in aindices, b in bindices
@@ -450,7 +450,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "uAxial"
 
-                Tiam, Tiap, Lia = getTiam(p), getTiap(p), getRka(p, dp)
+                Tiam, Tiap, Lia = getTiam(p), getTiap(p), getRia(p, dp)
 
                 for a in aindices, b in bindices
                     current_density[a, b, i, j, k] = -trace_su2_ij(Tiam, Tiap, a, b)*rm
@@ -462,7 +462,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "wAxial"
 
-                Tiap, Lia = getTiap(p), getLka(p, dp)
+                Tiap, Lia = getTiap(p), getLia(p, dp)
                 Gia = -1.0 .* getGia(Lia, xxx)
 
                 for a in aindices, b in bindices
@@ -476,7 +476,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "stress"
 
-                Lia = getLka(p, dp)
+                Lia = getLia(p, dp)
 
                 for a in aindices, b in bindices
 
@@ -506,7 +506,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "NoetherIso"
 
-                Lia, Tiam = getLka(p, dp), getTiam(p)
+                Lia, Tiam = getLia(p, dp), getTiam(p)
 
                 for a in aindices, b in bindices
 
@@ -520,7 +520,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
                 end
             elseif label == "NoetherAxial"
 
-                Lia, Tiap = getLka(p, dp), getTiap(p)
+                Lia, Tiap = getLia(p, dp), getTiap(p)
 
                 for a in aindices, b in bindices
 
@@ -567,7 +567,12 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
 end
 
-
+"""
+Compute G_ia where
+G_i = levicivita_{ilm} x_l L_ma for i=1,2,3
+G_i = 1/2 U^{-1} [tau_i, U]     for i=4,5,6
+tau are the Pauli spin matrices
+"""
 function getGia(Lia, x)
 
     return SMatrix{3,3,Float64,9}(
@@ -584,6 +589,11 @@ function getGia(Lia, x)
 
 end
 
+"""
+Compute Tm_{a} = i/2*U^{-1}[tau_a, U] from the pion field p.
+tau are the Pauli spin matrices
+a denotes the component of the pion field
+"""
 function getTiam(p)
 
     return SMatrix{3,3,Float64,9}(
@@ -600,6 +610,11 @@ function getTiam(p)
 
 end
 
+"""
+Compute Tp_{a} = i/2[tau_a, U]U^{-1} from the pion field p.
+tau are the Pauli spin matrices
+a denotes the component of the pion field
+"""
 function getTiap(p)
 
     return SMatrix{3,3,Float64,9}(
@@ -616,7 +631,12 @@ function getTiap(p)
 
 end
 
-function getRka(p, dp)
+"""
+Compute R_{ia} = ((d_i U)U^{-1})_a from the pion field p and its derivative dp.
+d_i denotes the spatial derivative
+a denotes the component of the pion field
+"""
+function getRia(p, dp)
 
     return SMatrix{3,3,Float64,9}(
         -(dp[1, 4]*p[1]) - dp[1, 3]*p[2] + dp[1, 2]*p[3] + dp[1, 1]*p[4],
@@ -632,7 +652,12 @@ function getRka(p, dp)
 
 end
 
-function getLka(p, dp)
+"""
+Compute L_{ia} = (U^{-1}(d_i U))_a from the pion field p and its derivative dp.
+d_i denotes the spatial derivative
+a denotes the component of the pion field
+"""
+function getLia(p, dp)
 
     return SMatrix{3,3,Float64,9}(
         -(dp[1, 4]*p[1]) + dp[1, 3]*p[2] - dp[1, 2]*p[3] + dp[1, 1]*p[4],
@@ -648,10 +673,16 @@ function getLka(p, dp)
 
 end
 
-function trace_su2_ij(Lia, Lib, i, j)
-    return -2.0*(Lia[1, i]*Lib[1, j] + Lia[2, i]*Lib[2, j] + Lia[3, i]*Lib[3, j])
+"""
+Returns the evaluation of Tr(L1_{i}L2_{j})
+"""
+function trace_su2_ij(L1, L2, i, j)
+    return -2.0*(L1[i, 1]*L2[j, 1] + L1[i, 2]*L2[j, 2] + L1[i, 3]*L2[j, 3])
 end
 
+"""
+Returns the evaluation of Tr([L1_i,L2_j][L1_k,L2_l])
+"""
 function trace_su2_ijkl(L1, L2, L3, L4, i, j, k, l)
     return -8.0*(
         L1[
