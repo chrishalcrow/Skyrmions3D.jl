@@ -259,21 +259,32 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 end
 
 """
-    center_skyrmion!(skyrmion)
+    center_skyrmion!(skyrmion; max_steps = 10, tolerance = 1e-9)
 
 Translates `skyrmion` so that the center of mass is `(0, 0, 0)`.
 
+The method works by succesively finding the center of mass of `skyrmion` and translating by it, either until the L1 difference between the center of mass and `(0, 0, 0)` is less than `tolerance`, or until `max_steps` many translations have occurred. This process should converge provided the Skyrme field of `skyrmion` is small at the boundary of the grid. 
+
 """
-function center_skyrmion!(sk)
+function center_skyrmion!(sk; max_steps = 10, tolerance = 1e-9)
     # A single translation by the center of mass may not leave the new center 
     # sufficiently close to the origin. By using repeat translations this 
     # method is more robust, but succeptible to the same problems which haunt
     # center_of_mass. 
-    for _ = 1:5
-        current_CoM = center_of_mass(sk)
-        translate_sk!(sk, X = -current_CoM)
-    end
+    tolerance < 0 && @warn "Tolerance is negative"
 
+    current_CoM = center_of_mass(sk)
+    for _ in 1:max_steps
+        translate_sk!(sk, X = -current_CoM)
+        current_CoM = center_of_mass(sk)
+        if tolerance <= 0
+            continue
+        end
+        L1 = maximum(abs, current_CoM)
+        L1 < tolerance && break
+    then
+        tolerance > 0 && @warn "Centering failed to converge"
+    end
 end
 
 function set_dirichlet_boudary!(sk; vac = [0.0, 0.0, 0.0, 1.0])
