@@ -291,7 +291,7 @@ end
 
 Compute the center of mass of `skyrmion`, based on the energy density.
 
-Note that this method sums over the grid. If the grid is not sufficiently large, the computed center of mass may not accurately reflect the 'true' expected value from how the field was initialised. 
+Note that this method sums over the grid. If the Skyrme field is not sufficientl small at the boundary of the grid, the computed center of mass may not accurately reflect the 'true' expected value from how the field was initialised. 
 
 """
 function center_of_mass(sk)
