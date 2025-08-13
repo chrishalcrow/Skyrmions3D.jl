@@ -34,15 +34,19 @@ If you fix a bug or add a new feature, consider adding a test to an appropriate 
 
 ## Build docs locally
 
-When you submit a PR, a GitHub workflow will automatically build the docs for you. But it can be helpful to build them yourself locally. To do so, first
-change directory to the project. Then build the docs using
+When you submit a PR, a GitHub workflow will automatically build the docs for you.
+But it can be helpful to build them yourself locally.
+To do so, first change directory to the `docs` subdirectory in the project folder.
+Then build the docs using
 ```
-julia --project=. docs/make.jl
+julia --project=. make.jl
 ```
-This will create the documentation website in `./docs/build/`. You can open the index page using
+This will create the documentation website in `./build/`.
+You can open the index page using
 ```
-open docs/build/index.html  
+open build/index.html
 ```
+Or by running an HTTP server (with e.g. `python -m http.server 8000`) in the `build` directory.
 
 ## Using a pre-commit hook to format your code
 
