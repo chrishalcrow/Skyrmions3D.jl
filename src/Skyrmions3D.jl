@@ -37,13 +37,17 @@ export gradient_flow!, arrested_newton_flow!, newton_flow!
     Skyrmion(lp::Int64, ls::Float64; kwargs...)
 	Skyrmion([lpx, lpy, lpx], [lsx, lsy, lsz]; kwargs...)
     
-Create a skyrme field with `lp` lattice points and `ls` lattice spacing. 
+Create a vacuum skyrme field with `lp` lattice points and `ls` lattice spacing. 
 
 # Optional arguments
 - `mpi = 0.0`: sets the pion mass for this Skyrme field
-- `Fpi = 180`: sets the pion decay constant for this Skyrme field
+- `Fpi = 180`: sets the pion decay constant for this Skyrme field, given in MeV
 - `ee = 4.0`: sets the Skyrme constant for this Skyrme field
 - `physical = false`: whether the Skyrmion is using physical units
+- `vac = [0.0, 0.0, 0.0, 1.0]`: the value the vacuum pion field takes
+- `boundary_conditions = "dirichlet"`: the boundary conditions for the pion field
+
+The default values of `Fpi` and `ee` are taken to [roughly approximate experimental values](https://doi.org/10.1016/0550-3213(83)90559-X).
 
 """
 mutable struct Skyrmion
@@ -249,9 +253,11 @@ end
 """
     set_physical!(skyrmion::Skyrmion, is_physical; Fpi = Fpi, ee = ee)
 
-Sets `skyrmion` to use physical units, when `is_physical` is `true`.
+Sets `skyrmion` to use physical units (as opposed to [Skyrme units](https://doi.org/10.1142/q0368)) when `is_physical` is `true`, and prints the physical units.
 
 Also used to turn off physical units by setting `is_physical=false`.
+
+The physical energy unit is $\frac{F_\pi}{4e}$ MeV and the physical length unit is $\frac{2\hbar}{e F_\pi}$ fm (where $\hbar \approx 197.327$ MeV fm is the reduced Planck constant).  
 
 """
 function set_physical!(

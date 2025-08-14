@@ -23,7 +23,7 @@ massive_periodic_skyrmion = Skyrmion(
 Find out more about the Skyrmion constructor in the API. 
 
 
-By default the pion mass is set equal to `(0,0,0,1)`. So we next want to add some field structure to it...
+By default the pion field is set equal to `(0,0,0,1)`, which is that of a vacuum skyrmion. So we next want to add some field structure to it...
 
 ## Rational Maps
 
