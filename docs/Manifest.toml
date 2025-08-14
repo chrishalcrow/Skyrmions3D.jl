@@ -1220,7 +1220,7 @@ version = "0.1.5"
 
 [[deps.Skyrmions3D]]
 deps = ["CairoMakie", "Colors", "GeometryBasics", "Interpolations", "LaTeXStrings", "LinearAlgebra", "Makie", "Meshing", "Quaternions", "Requires", "StaticArrays"]
-path = "/home/castalia/projects/Skyrmions3D.jl"
+path = ".."
 uuid = "1ccad2fe-a5c3-464e-b06e-022e005d04e0"
 version = "1.0.0-DEV"
 
