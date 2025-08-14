@@ -12,6 +12,7 @@ makedocs(
         "Compute properties" => "properties.md",
         "Flow" => "flow.md",
         "Visualise" => "visualisation.md",
+        "Tutorial" => "tutorial.md",
         "API" => "api.md",
         "Citations" => "citations.md",
         "Contribute" => "contributing.md",
