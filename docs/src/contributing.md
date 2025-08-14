@@ -41,12 +41,8 @@ Then build the docs using
 ```
 julia --project=. make.jl
 ```
-This will create the documentation website in `./build/`.
-You can open the index page using
-```
-open build/index.html
-```
-Or by running an HTTP server (with e.g. `python -m http.server 8000`) in the `build` directory.
+This will create the documentation website in `<project_directory>/docs/build/`.
+You can view the documentation by opening the file `<project_directory>/docs/build/index.html` in a web browser (on Mac, you can use `open ./build/index.html` to do this).
 
 ## Using a pre-commit hook to format your code
 
