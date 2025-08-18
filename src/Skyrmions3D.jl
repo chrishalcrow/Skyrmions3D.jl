@@ -257,7 +257,7 @@ Sets `skyrmion` to use physical units (as opposed to [Skyrme units](https://doi.
 
 Also used to turn off physical units by setting `is_physical=false`.
 
-The physical energy unit is $\frac{F_\pi}{4e}$ MeV and the physical length unit is $\frac{2\hbar}{e F_\pi}$ fm (where $\hbar \approx 197.327$ MeV fm is the reduced Planck constant).  
+The physical energy unit is ``\\frac{F_\\pi}{4e}`` MeV and the physical length unit is ``\\frac{2\\hbar}{e F_\\pi}`` fm (where ``\\hbar \\approx 197.327`` MeV fm is the reduced Planck constant).  
 
 """
 function set_physical!(
