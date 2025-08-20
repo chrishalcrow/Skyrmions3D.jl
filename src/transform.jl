@@ -82,15 +82,7 @@ function translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 
     vac = [0.0, 0.0, 0.0, 1.0]
 
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    ϕinterp = quadratic_spline_interpolation(skyrmion.pion_field, x)
 
     for a = 1:4, k = 1:lp[3], j = 1:lp[2], i = 1:lp[1]
         if x[1][i] > x[1][1] + X[1] &&
@@ -225,15 +217,7 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
     vac = [0.0, 0.0, 0.0, 1.0]
 
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    ϕinterp = quadratic_spline_interpolation(skyrmion.pion_field, x)
 
     for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3]
 
@@ -310,15 +294,7 @@ function evaluate_sk(skyrmion, y)
     vac = [0.0, 0.0, 0.0, 1.0]
     phi=vac
 
-    phiinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    phiinterp = quadratic_spline_interpolation(skyrmion.pion_field, x)
 
     if x[1][1] < y[1] < x[1][end] &&
        x[2][1] < y[2] < x[2][end] &&
@@ -329,5 +305,30 @@ function evaluate_sk(skyrmion, y)
     end
 
     return phi/sqrt(phi'*phi)
+
+end
+
+
+"""
+    quadratic_spline_interpolation(pion_field, x)
+
+Provides a function which interpolates `pion_field` on the grid `x` 
+
+In particular, the return object is an array of interpolation objects from the package `Interpolations`, one for each component of the pion field. These are constructed using a quadatic b-spline. 
+
+"""
+function quadratic_spline_interpolation(pion_field, x)
+
+    phiinterp = [
+        extrapolate(
+            scale(
+                interpolate(pion_field[:, :, :, a], BSpline(Quadratic())),
+                (x[1], x[2], x[3]),
+            ),
+            Throw(),
+        ) for a = 1:4
+    ]
+
+    return phiinterp
 
 end
