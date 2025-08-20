@@ -285,7 +285,9 @@ end
 """
     evaluate_sk(skyrmion, y)
 
-Evaluates the Skyrme field at the spatial position `y`, using some fancy interpolation method.
+Evaluates the Skyrme field at the spatial position `y`.
+
+See also [`quadratic_spline_interpolation`](@ref). 
 
 """
 function evaluate_sk(skyrmion, y)
