@@ -50,6 +50,7 @@ isorotate_sk!
 isorotate_sk
 center_skyrmion!
 evaluate_sk
+quadratic_spline_interpolation
 normer
 normer!
 ```
