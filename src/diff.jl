@@ -1,9 +1,9 @@
 """
-    gradient_flow!(skyrmion; steps = 1, tolerance = 0.0, dt = ls^2/100.0, checks = max(100, steps), print_stuff = true, dEdp = zero_array)
+    gradient_flow!(skyrmion; steps = 1, tolerance = 0.0, dt = ls^2/100.0, checks = max(100, steps), verbose = true, dEdp = zero_array)
     
 Applies a gradient flow to `skyrmion` with timestep `dt` (where `ls` is the average lattice spacing), either for `steps` steps or until the error falls below `tolerance`. The error is checked every `checks` steps.
 
-`dEdp` is an array, initialised to be the correct shape and 0.0 everywhere, which stores the change in energy density. The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true.
+`dEdp` is an array, initialised to be the correct shape and 0.0 everywhere, which stores the change in energy density. The flow is verbose, incrementally describing the error and new energy, if `verbose` is true.
 
 See also [`arrested_newton_flow!`](@ref). 
 
@@ -14,7 +14,7 @@ function gradient_flow!(
     dt = ((ϕ.grid.ls[1]*ϕ.grid.ls[2]*ϕ.grid.ls[3])^(2/3))/100.0,
     tolerance = 0.0,
     checks = max(100, steps),
-    print_stuff = true,
+    verbose = true,
     dEdp = zeros(ϕ.grid.lp[1], ϕ.grid.lp[2], ϕ.grid.lp[3], 4)
 )
 
@@ -22,7 +22,7 @@ function gradient_flow!(
         checks = steps
     end
 
-    if print_stuff == true
+    if verbose
         println("initial: energy: ", Energy(ϕ))
 
     end
@@ -45,7 +45,7 @@ function gradient_flow!(
 
         counter += checks
 
-        if print_stuff == true
+        if verbose
             println("after ", counter, " steps, error = ", round(err, sigdigits = 4))
         end
 
@@ -59,7 +59,7 @@ function gradient_flow!(
 
     end
 
-    if print_stuff == true
+    if verbose
         println("final energy: ", Energy(ϕ))
     end
 
@@ -246,11 +246,11 @@ end
 
 
 """
-    arrested_newton_flow!(skyrmion; skyrmion_dot = zero_array, steps = 1, tolerance = 0.0, dt = ls/10.0, checks = max(100, steps), print_stuff = true, method = "RK4")
+    arrested_newton_flow!(skyrmion; skyrmion_dot = zero_array, steps = 1, tolerance = 0.0, dt = ls/10.0, checks = max(100, steps), verbose = true, method = "RK4")
     
 Applies an arrested Newton flow to `skyrmion` whose initial time derivative field is `skyrmion_dot` (an array of the correct shape initialised with value 0.0) with timestep `dt` (where `ls` is the lattice spacing in the first direction), either for `steps` steps or until the error falls below `tolerance`. The error is checked every `checks` steps.
 
-The flow is verbose, incrementally describing the error and new energy, if `print_stuff` is true. `method` determines how each timestep is carried out: accepted values are "RK4" or "leapfrog". 
+The flow is verbose, incrementally describing the error and new energy, if `verbose` is true. `method` determines how each timestep is carried out: accepted values are "RK4" or "leapfrog". 
 
 See also [`gradient_flow!`](@ref). 
 
@@ -262,7 +262,7 @@ function arrested_newton_flow!(
     steps = 1,
     tolerance = 0.0,
     checks = max(100, steps),
-    print_stuff = true,
+    verbose = true,
     method = "RK4"
 )
 
@@ -301,7 +301,7 @@ function arrested_newton_flow!(
         error = max_abs_err(dEdp)
         counter += checks
 
-        if print_stuff == true
+        if verbose
             println(
                 "after ",
                 counter,

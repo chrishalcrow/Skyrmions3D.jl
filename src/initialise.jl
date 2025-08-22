@@ -52,7 +52,7 @@ function make_RM_product!(sk, Xs)
             i_n = Xs[a][5],
             jTH = Xs[a][6],
             j_n = Xs[a][7],
-            print_things = false,
+            verbose = false,
         )
     end
 
@@ -80,7 +80,7 @@ function make_RM_product!(sk, Xs)
                 i_n = Xs[a][5],
                 jTH = Xs[a][6],
                 j_n = Xs[a][7],
-                print_things = false,
+                verbose = false,
             )
         end
 
@@ -103,7 +103,7 @@ If `prof` is `nothing`, the function will find an OK approximation for the profi
 -  `i_n = [0.0, 0.0, 1.0]`: axis about which to isorotate skyrmion
 -  `jTH = 0.0`: rotate initial skyrmion by `jTH` about `j_n`
 -  `j_n = [0.0, 0.0, 1.0]`: axis about which to rotate skyrmion
--  `print_things = true`: determines whether the function will print the found baryon number (if it is not given)
+-  `verbose = true`: determines whether the function will print the found baryon number (if it is not given)
 
 """
 function make_rational_map!(
@@ -117,7 +117,7 @@ function make_rational_map!(
     i_n = [0.0, 0.0, 1.0],
     jTH = 0.0,
     j_n = [0.0, 0.0, 1.0],
-    print_things = true,
+    verbose = true,
 )
     # If a profile function is not given choose a sensible choice
     if isnothing(prof)
@@ -127,7 +127,7 @@ function make_rational_map!(
             baryon1 = abs((log(pfn(10000)) - log(pfn(1)))/log(10000))
             baryon2 = abs((log(qfn(10000)) - log(qfn(1)))/log(10000))
             baryon = max(round(baryon1), round(baryon2))
-            if print_things == true
+            if verbose
                 println(
                     "I think your baryon number is ",
                     baryon,

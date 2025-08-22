@@ -59,6 +59,8 @@ Compute energy of `skyrmion`.
 
 Set 'density = true' to output the energy density and moment to `n` to calculate the `n`th moment of the energy density.
 
+If `skyrmion.physical` is false, then the returned value is the ``\\frac{1}{12\\pi^2}`` times the integral of the energy density, reflecting the [Fadeev bound on the energy of a 1-skyrmion](https://doi.org/10.1007/BF01238909) that ``E \\geq 12 \\pi^2``. Otherwise, the returned value is in the appropriate physical units, and including the factor of ``12 \\pi^2``. 
+
 Note that this method sums over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
 
 See also [`get_energy_density!`](@ref). 
@@ -330,6 +332,8 @@ end
 Compute root mean square charge radius of a skyrmion, using the baryon density.
 
 Set component to `i` (i=1,2,3) to calculate the rms radius for just the `i`th component.
+
+The returned value is given in the units determined by `skyrmion.physical`.   
 
 """
 function rms_baryon(sk; component = 0)

@@ -78,5 +78,5 @@ stress_density = compute_current(skyrmion, label="stress", density=true)
 The second moment of the Noether-iso current is
 
 ```julia
-why_am_i_computing_this = compute_current(skyrmion, label="NoetherIso", density=false, moment=2)
+noether_moment = compute_current(skyrmion, label="NoetherIso", density=false, moment=2)
 ```
