@@ -327,6 +327,8 @@ Compute root mean square charge radius of a skyrmion, using the baryon density.
 
 Set component to `i` (i=1,2,3) to calculate the rms radius for just the `i`th component.
 
+The returned value is given in the units determined by `skyrmion.physical`.   
+
 """
 function rms_baryon(sk; component = 0)
 
