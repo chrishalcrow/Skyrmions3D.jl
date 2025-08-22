@@ -13,7 +13,7 @@ export check_if_normalised, normer!, normer
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
-export product_approx, product_approx!, center_skyrmion!, evaluate_sk
+export product_approx, product_approx!, center_skyrmion!, evaluate_sk, quadratic_spline_interpolation
 
 include("properties.jl")
 export Energy, get_energy_density!, Baryon, get_baryon_density!, center_of_mass, rms_baryon, compute_current, overview, sphericity
@@ -296,15 +296,7 @@ function set_lattice!(skyrmion, lp, ls)
     )
     vac = [0.0, 0.0, 0.0, 1.0]
 
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (old_x[1], old_x[2], old_x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    ϕinterp = quadratic_spline_interpolation(skyrmion.pion_field, old_x)
 
     for k = 1:lp[3], j = 1:lp[2], i = 1:lp[1]
 
