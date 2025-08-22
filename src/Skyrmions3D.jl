@@ -190,7 +190,7 @@ function set_periodic!(sk::Skyrmion)
 end
 
 """
-    set_dirichlet!(skyrmion::Skyrmion)
+    set_neumann!(skyrmion::Skyrmion)
 
 Sets the `skyrmion` to have Dirichlet boundary conditions.
 
