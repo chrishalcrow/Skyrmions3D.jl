@@ -61,6 +61,8 @@ Set 'density = true' to output the energy density and moment to `n` to calculate
 
 If `skyrmion.physical` is false, then the returned value is the ``\\frac{1}{12\\pi^2}`` times the integral of the energy density, reflecting the [Fadeev bound on the energy of a 1-skyrmion](https://doi.org/10.1007/BF01238909) that ``E \\geq 12 \\pi^2``. Otherwise, the returned value is in the appropriate physical units, and including the factor of ``12 \\pi^2``. 
 
+Note that this method sums over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
+
 See also [`get_energy_density!`](@ref). 
 
 """
@@ -202,6 +204,8 @@ Compute baryon number of `skyrmion`.
 
 Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density. Setting also component to `i` (i=1,2,3) returns the `i`th component of the density. 
 
+Note that this method sums over the grid. If the grid is not sufficiently large, the computed baryon number will be smaller than the 'true' value. 
+
 See also [`get_baryon_density!`](@ref). 
 
 """
@@ -288,6 +292,8 @@ end
     center_of_mass(skyrmion)
 
 Compute the center of mass of `skyrmion`, based on the energy density.
+
+Note that this method sums over the grid. If the Skyrme field is not sufficientl small at the boundary of the grid, the computed center of mass may not accurately reflect the 'true' expected value from how the field was initialised. 
 
 """
 function center_of_mass(sk)

@@ -82,15 +82,7 @@ function translate_sk(skyrmion; X = [0.0, 0.0, 0.0])
 
     vac = [0.0, 0.0, 0.0, 1.0]
 
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    ϕinterp = quadratic_spline_interpolation(skyrmion.pion_field, x)
 
     for a = 1:4, k = 1:lp[3], j = 1:lp[2], i = 1:lp[1]
         if x[1][i] > x[1][1] + X[1] &&
@@ -225,15 +217,7 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 
     vac = [0.0, 0.0, 0.0, 1.0]
 
-    ϕinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    ϕinterp = quadratic_spline_interpolation(skyrmion.pion_field, x)
 
     for i = 1:lp[1], j = 1:lp[2], k = 1:lp[3]
 
@@ -259,17 +243,30 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 end
 
 """
-    center_skyrmion!(skyrmion)
+    center_skyrmion!(skyrmion; steps = 10, tolerance = 1e-9)
 
 Translates `skyrmion` so that the center of mass is `(0, 0, 0)`.
 
-"""
-function center_skyrmion!(sk)
+The method works by succesively finding the center of mass of `skyrmion` and translating by it, either until the L1 difference between the center of mass and `(0, 0, 0)` is less than `tolerance`, or until `steps` many translations have occurred. This process should converge provided the Skyrme field of `skyrmion` is small at the boundary of the grid. 
 
-    for _ = 1:5
-        current_CoM = center_of_mass(sk)
+"""
+function center_skyrmion!(sk; steps = 10, tolerance = 1e-9)
+    # A single translation by the center of mass may not leave the new center 
+    # sufficiently close to the origin. By using repeat translations this 
+    # method is more robust, but succeptible to the same problems which haunt
+    # center_of_mass. 
+    tolerance < 0 && @warn "Tolerance is negative"
+
+    current_CoM = center_of_mass(sk)
+    counter = 0
+    L1 = tolerance + 1 # dummy value so we enter the while loop
+    while counter < steps && L1 >= tolerance 
         translate_sk!(sk, X = -current_CoM)
+        current_CoM = center_of_mass(sk)
+        L1 = maximum(abs, current_CoM)
+        counter += 1
     end
+    L1 >= tolerance && @warn "Centering failed to converge"
 
 end
 
@@ -301,7 +298,9 @@ end
 """
     evaluate_sk(skyrmion, y)
 
-Evaluates the Skyrme field at the spatial position `y`, using some fancy interpolation method.
+Evaluates the Skyrme field at the spatial position `y`.
+
+See also [`quadratic_spline_interpolation`](@ref). 
 
 """
 function evaluate_sk(skyrmion, y)
@@ -310,15 +309,7 @@ function evaluate_sk(skyrmion, y)
     vac = [0.0, 0.0, 0.0, 1.0]
     phi=vac
 
-    phiinterp = [
-        extrapolate(
-            scale(
-                interpolate(skyrmion.pion_field[:, :, :, a], BSpline(Quadratic())),
-                (x[1], x[2], x[3]),
-            ),
-            Throw(),
-        ) for a = 1:4
-    ]
+    phiinterp = quadratic_spline_interpolation(skyrmion.pion_field, x)
 
     if x[1][1] < y[1] < x[1][end] &&
        x[2][1] < y[2] < x[2][end] &&
@@ -329,5 +320,30 @@ function evaluate_sk(skyrmion, y)
     end
 
     return phi/sqrt(phi'*phi)
+
+end
+
+
+"""
+    quadratic_spline_interpolation(pion_field, x)
+
+Provides a function which interpolates `pion_field` on the grid `x` 
+
+In particular, the return object is an array of interpolation objects from the package `Interpolations`, one for each component of the pion field. These are constructed using a quadatic b-spline. 
+
+"""
+function quadratic_spline_interpolation(pion_field, x)
+
+    phiinterp = [
+        extrapolate(
+            scale(
+                interpolate(pion_field[:, :, :, a], BSpline(Quadratic())),
+                (x[1], x[2], x[3]),
+            ),
+            Throw(),
+        ) for a = 1:4
+    ]
+
+    return phiinterp
 
 end
