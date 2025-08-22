@@ -59,6 +59,8 @@ Compute energy of `skyrmion`.
 
 Set 'density = true' to output the energy density and moment to `n` to calculate the `n`th moment of the energy density.
 
+Note that this method sums over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
+
 See also [`get_energy_density!`](@ref). 
 
 """
@@ -200,6 +202,8 @@ Compute baryon number of `skyrmion`.
 
 Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density. Setting also component to `i` (i=1,2,3) returns the `i`th component of the density. 
 
+Note that this method sums over the grid. If the grid is not sufficiently large, the computed baryon number will be smaller than the 'true' value. 
+
 See also [`get_baryon_density!`](@ref). 
 
 """
@@ -286,6 +290,8 @@ end
     center_of_mass(skyrmion)
 
 Compute the center of mass of `skyrmion`, based on the energy density.
+
+Note that this method sums over the grid. If the Skyrme field is not sufficientl small at the boundary of the grid, the computed center of mass may not accurately reflect the 'true' expected value from how the field was initialised. 
 
 """
 function center_of_mass(sk)
