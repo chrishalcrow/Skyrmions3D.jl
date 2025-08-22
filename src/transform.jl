@@ -259,14 +259,14 @@ function rotate_sk(skyrmion; theta = 0, n = [0, 0, 1])
 end
 
 """
-    center_skyrmion!(skyrmion; max_steps = 10, tolerance = 1e-9)
+    center_skyrmion!(skyrmion; steps = 10, tolerance = 1e-9)
 
 Translates `skyrmion` so that the center of mass is `(0, 0, 0)`.
 
-The method works by succesively finding the center of mass of `skyrmion` and translating by it, either until the L1 difference between the center of mass and `(0, 0, 0)` is less than `tolerance`, or until `max_steps` many translations have occurred. This process should converge provided the Skyrme field of `skyrmion` is small at the boundary of the grid. 
+The method works by succesively finding the center of mass of `skyrmion` and translating by it, either until the L1 difference between the center of mass and `(0, 0, 0)` is less than `tolerance`, or until `steps` many translations have occurred. This process should converge provided the Skyrme field of `skyrmion` is small at the boundary of the grid. 
 
 """
-function center_skyrmion!(sk; max_steps = 10, tolerance = 1e-9)
+function center_skyrmion!(sk; steps = 10, tolerance = 1e-9)
     # A single translation by the center of mass may not leave the new center 
     # sufficiently close to the origin. By using repeat translations this 
     # method is more robust, but succeptible to the same problems which haunt
@@ -274,15 +274,16 @@ function center_skyrmion!(sk; max_steps = 10, tolerance = 1e-9)
     tolerance < 0 && @warn "Tolerance is negative"
 
     current_CoM = center_of_mass(sk)
-    for _ in 1:max_steps
+    counter = 0
+    L1 = tolerance + 1 # dummy value so we enter the while loop
+    while counter < steps && L1 >= tolerance 
         translate_sk!(sk, X = -current_CoM)
         current_CoM = center_of_mass(sk)
-        tolerance <= 0 && continue
         L1 = maximum(abs, current_CoM)
-        L1 < tolerance && @goto converged
+        counter += 1
     end
-    tolerance > 0 && @warn "Centering failed to converge"
-    @label converged
+    L1 >= tolerance && @warn "Centering failed to converge"
+
 end
 
 function set_dirichlet_boudary!(sk; vac = [0.0, 0.0, 0.0, 1.0])
