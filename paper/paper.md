@@ -51,7 +51,9 @@ The Skyrme model is a non-linear sigma model with field $U: \mathbb{R}^3 \to \ma
 $$
 E = \int_{\mathbb{R}^3} \left ( \left \lvert U^{-1} dU \right \rvert^2 + \left \lvert U^{-1} dU \wedge U^{-1} dU \right\rvert^2 \right) d^3 x
 $$
-in each homotopy class. The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model accurately predict the observed properties of baryons when scales $F_\pi$, $e$, and $m_\pi$ (corresponding to the pion decay constant, Skyrme parameter, and tree-level pion mass repsectivey, determined via experiment) are introduced. As a result, there is hope that studying the skyrme model (and simple modifications thereof) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004, @Manton2022]. 
+in each homotopy class. It is known that for a skyrmion of baryon number $B$, the energy is bounded below by $12 \pi^2 B$, though this bound is not attained [@Manton1987]. 
+
+The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model accurately predict the observed properties of baryons when scales $F_\pi$, $e$, and $m_\pi$ (corresponding to the pion decay constant, Skyrme parameter, and tree-level pion mass repsectivey, determined via experiment [@Adkins1983]) are introduced. As a result, there is hope that studying the skyrme model (and simple modifications thereof) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004, @Manton2022]. 
 
 `Skyrmions3D.jl` implements a structure in Julia to describe numerically a skyrmion. It has
  - the discrete grid $(x_i, y_j, z_k)$ of spatial values at which the Skyrme field will be given, 
