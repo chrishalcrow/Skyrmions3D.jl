@@ -4,6 +4,8 @@
     
 Create a Grid field with `lp` lattice points and `ls` lattice spacing. 
 
+The current accepted values for `boundary_conditions` are `"dirichlet"`, `"neumann"`, and `"periodic"`. If a different value is provided, a warning is given. 
+
 """
 mutable struct Grid
     lp::Vector{Int64}

@@ -13,10 +13,19 @@ export check_if_normalised, normer!, normer
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
-export product_approx, product_approx!, center_skyrmion!, evaluate_sk, quadratic_spline_interpolation
+export product_approx,
+    product_approx!, center_skyrmion!, evaluate_sk, quadratic_spline_interpolation
 
 include("properties.jl")
-export Energy, get_energy_density!, Baryon, get_baryon_density!, center_of_mass, rms_baryon, compute_current, overview, sphericity
+export Energy,
+    get_energy_density!,
+    Baryon,
+    get_baryon_density!,
+    center_of_mass,
+    rms_baryon,
+    compute_current,
+    overview,
+    sphericity
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
@@ -368,11 +377,19 @@ function vacuum_skyrmion(lpx, lpy, lpz, vac)
 
 end
 
-
+function check_boundary_conditions_valid(boundary_conditions)
+    if boundary_conditions != "dirichlet" &&
+       boundary_conditions != "neumann" &&
+       boundary_conditions != "periodic"
+        @warn "Unrecognised boundary conditions: unexpected behaviour may occur"
+    end
+end
 
 function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
     # We allow for lp to be given as a single integer, in which case we set
     # the number of lattice points in each direction to be lp. 
+    check_boundary_conditions_valid(boundary_conditions)
+
     if isa(lp, Integer)
         lp = [lp, lp, lp]
     end
@@ -386,6 +403,7 @@ function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
 end
 
 function index_grid(lp, boundary_conditions::String)
+    check_boundary_conditions_valid(boundary_conditions)
 
     index_grid_array = zeros(Int64, lp+4)
 
