@@ -80,6 +80,11 @@ set_physical!(a_skyrmion, false)
 
 @test Skyrmions3D.sum_grid([3, 3, 3], "periodic") == Skyrmions3D.sum_grid(3, "periodic")
 
+@test_logs (:warn, "Unrecognised boundary conditions: unexpected behaviour may occur") Skyrmions3D.sum_grid(
+    [3, 3, 3],
+    "nonsense_boundary_condition",
+)
+
 @test Skyrmions3D.index_grid(6, "periodic")[end] == 2
 @test Skyrmions3D.index_grid(6, "periodic")[end-1] == 1
 @test Skyrmions3D.index_grid(6, "periodic")[1] == 5

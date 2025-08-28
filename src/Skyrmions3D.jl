@@ -13,10 +13,19 @@ export check_if_normalised, normer!, normer
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
-export product_approx, product_approx!, center_skyrmion!, evaluate_sk, quadratic_spline_interpolation
+export product_approx,
+    product_approx!, center_skyrmion!, evaluate_sk, quadratic_spline_interpolation
 
 include("properties.jl")
-export Energy, get_energy_density!, Baryon, get_baryon_density!, center_of_mass, rms_baryon, compute_current, overview, sphericity
+export Energy,
+    get_energy_density!,
+    Baryon,
+    get_baryon_density!,
+    center_of_mass,
+    rms_baryon,
+    compute_current,
+    overview,
+    sphericity
 
 include("initialise.jl")
 export make_rational_map!, make_RM_product!, make_ADHM!
@@ -37,13 +46,17 @@ export gradient_flow!, arrested_newton_flow!, newton_flow!
     Skyrmion(lp::Int64, ls::Float64; kwargs...)
 	Skyrmion([lpx, lpy, lpx], [lsx, lsy, lsz]; kwargs...)
     
-Create a skyrme field with `lp` lattice points and `ls` lattice spacing. 
+Create a vacuum skyrme field with `lp` lattice points and `ls` lattice spacing. 
 
 # Optional arguments
 - `mpi = 0.0`: sets the pion mass for this Skyrme field
-- `Fpi = 180`: sets the pion decay constant for this Skyrme field
+- `Fpi = 180`: sets the pion decay constant for this Skyrme field, given in MeV
 - `ee = 4.0`: sets the Skyrme constant for this Skyrme field
 - `physical = false`: whether the Skyrmion is using physical units
+- `vac = [0.0, 0.0, 0.0, 1.0]`: the value the vacuum pion field takes
+- `boundary_conditions = "dirichlet"`: the boundary conditions for the pion field
+
+The default values of `Fpi` and `ee` are taken to [roughly approximate experimental values](https://doi.org/10.1016/0550-3213(83)90559-X).
 
 """
 mutable struct Skyrmion
@@ -186,7 +199,7 @@ function set_periodic!(sk::Skyrmion)
 end
 
 """
-    set_dirichlet!(skyrmion::Skyrmion)
+    set_neumann!(skyrmion::Skyrmion)
 
 Sets the `skyrmion` to have Dirichlet boundary conditions.
 
@@ -249,9 +262,11 @@ end
 """
     set_physical!(skyrmion::Skyrmion, is_physical; Fpi = Fpi, ee = ee)
 
-Sets `skyrmion` to use physical units, when `is_physical` is `true`.
+Sets `skyrmion` to use physical units (as opposed to [Skyrme units](https://doi.org/10.1142/q0368)) when `is_physical` is `true`, and prints the physical units.
 
 Also used to turn off physical units by setting `is_physical=false`.
+
+The physical energy unit is ``\\frac{F_\\pi}{4e}`` MeV and the physical length unit is ``\\frac{2\\hbar}{e F_\\pi}`` fm (where ``\\hbar \\approx 197.327`` MeV fm is the reduced Planck constant).  
 
 """
 function set_physical!(
@@ -362,11 +377,19 @@ function vacuum_skyrmion(lpx, lpy, lpz, vac)
 
 end
 
-
+function check_boundary_conditions_valid(boundary_conditions)
+    if boundary_conditions != "dirichlet" &&
+       boundary_conditions != "neumann" &&
+       boundary_conditions != "periodic"
+        @warn "Unrecognised boundary conditions: unexpected behaviour may occur"
+    end
+end
 
 function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
     # We allow for lp to be given as a single integer, in which case we set
     # the number of lattice points in each direction to be lp. 
+    check_boundary_conditions_valid(boundary_conditions)
+
     if isa(lp, Integer)
         lp = [lp, lp, lp]
     end
@@ -380,6 +403,7 @@ function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
 end
 
 function index_grid(lp, boundary_conditions::String)
+    check_boundary_conditions_valid(boundary_conditions)
 
     index_grid_array = zeros(Int64, lp+4)
 

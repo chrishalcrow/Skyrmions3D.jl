@@ -210,7 +210,7 @@ end
 """
     plot_baryon_density(skyrmion; iso_value = 0.25*(max(BD) + min(BD)), juggling = false, kwargs...)
     
-Plots an isosurface of constant baryon density, with value `iso_value`, coloured to reveal the pion field structure, originally described in [].
+Plots an isosurface of constant baryon density, with value `iso_value` (where `BD` which determines the default value is the baryon density of `skyrmion` over its grid). The isosurface is coloured to reveal the pion field structure as originally described in [Classical Skyrmions -- static solutions and dynamics (Manton, 2012)](https://doi.org/10.1002/mma.2512).
 
 Can use a _juggling ball_ colouring scheme by setting `juggling = true`.
 
