@@ -105,24 +105,24 @@ Skyrmion(
 
 
 """
-    get_field(skyrmion::Skyrmion)
+    get_field(skyrmion)
 
 Returns the array of pion fields `[π1, π2, π3, π0]` of `skyrmion`, which can be used in integrals.
 
 """
-function get_field(skyrmion::Skyrmion)
+function get_field(skyrmion)
 
     return [skyrmion.pion_field[:, :, :, a] for a = 1:4]
 
 end
 
 """ 
-    get_grid(skyrmion::Skyrmion)
+    get_grid(skyrmion)
 
 Returns an array of 3D arrays `[x, y, z]`, which can be used in integrals.
 
 """
-function get_grid(skyrmion::Skyrmion)
+function get_grid(skyrmion)
 
     x_grid = [
         skyrmion.x[1][i] for
@@ -161,18 +161,18 @@ end
 
 
 """
-    set_mpi!(skyrmion::Skyrmion, mpi)
+    set_mpi!(skyrmion, mpi)
 
 Set the pion mass of `skyrmion` to `mpi`.
 
 """
-function set_mpi!(sk::Skyrmion, mpi)
+function set_mpi!(sk, mpi)
     sk.mpi = mpi
 end
 
 
 
-function set_bounary_conditions!(sk::Skyrmion, boundary_conditions::String)
+function set_bounary_conditions!(sk, boundary_conditions)
 
     sk.grid.boundary_conditions = boundary_conditions
     sk.grid.sum_grid = sum_grid(sk.grid.lp, boundary_conditions)
@@ -183,12 +183,12 @@ function set_bounary_conditions!(sk::Skyrmion, boundary_conditions::String)
 end
 
 """
-    set_periodic!(skyrmion::Skyrmion)
+    set_periodic!(skyrmion)
 
 Sets the `skyrmion` to have periodic boundary conditions.
 
 """
-function set_periodic!(sk::Skyrmion)
+function set_periodic!(sk)
 
     sk.grid.dirichlet = false
 
@@ -201,10 +201,11 @@ end
 """
     set_neumann!(skyrmion::Skyrmion)
 
+
 Sets the `skyrmion` to have Dirichlet boundary conditions.
 
 """
-function set_neumann!(sk::Skyrmion)
+function set_neumann!(sk)
 
     sk.grid.dirichlet = false
 
@@ -215,12 +216,12 @@ function set_neumann!(sk::Skyrmion)
 end
 
 """
-    set_dirichlet!(skyrmion::Skyrmion)
+    set_dirichlet!(skyrmion)
 
 Sets the `skyrmion` to have periodic boundary conditions.
 
 """
-function set_dirichlet!(sk::Skyrmion)
+function set_dirichlet!(sk)
 
     sk.grid.dirichlet = true
 
@@ -234,12 +235,12 @@ end
 
 
 """
-    set_Fpi!(skyrmion::Skyrmion, Fpi)
+    set_Fpi!(skyrmion, Fpi)
 
 Sets the pion decay constant of `skyrmion` to `Fpi`. 
 
 """
-function set_Fpi!(sk::Skyrmion, Fpi)
+function set_Fpi!(sk, Fpi)
 
     sk.Fpi = Fpi
 
@@ -247,12 +248,12 @@ end
 
 
 """
-    set_ee!(skyrmion::Skyrmion, ee)
+    set_ee!(skyrmion, ee)
 
 Sets the Skyrme coupling constant of `skyrmion` to `ee`. 
 
 """
-function set_ee!(sk::Skyrmion, ee)
+function set_ee!(sk, ee)
 
     sk.ee = ee
 
@@ -260,7 +261,7 @@ end
 
 
 """
-    set_physical!(skyrmion::Skyrmion, is_physical; Fpi = Fpi, ee = ee)
+    set_physical!(skyrmion, is_physical; Fpi = Fpi, ee = ee)
 
 Sets `skyrmion` to use physical units (as opposed to [Skyrme units](https://doi.org/10.1142/q0368)) when `is_physical` is `true`, and prints the physical units.
 
@@ -270,8 +271,8 @@ The physical energy unit is ``\\frac{F_\\pi}{4e}`` MeV and the physical length u
 
 """
 function set_physical!(
-    skyrmion::Skyrmion,
-    physical::Bool;
+    skyrmion,
+    physical;
     Fpi = skyrmion.Fpi,
     ee = skyrmion.ee,
 )
@@ -385,7 +386,7 @@ function check_boundary_conditions_valid(boundary_conditions)
     end
 end
 
-function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
+function sum_grid(lp, boundary_conditions)
     # We allow for lp to be given as a single integer, in which case we set
     # the number of lattice points in each direction to be lp. 
     check_boundary_conditions_valid(boundary_conditions)
@@ -402,8 +403,9 @@ function sum_grid(lp::Union{Integer,Vector{Int64}}, boundary_conditions::String)
 
 end
 
-function index_grid(lp, boundary_conditions::String)
+function index_grid(lp, boundary_conditions)
     check_boundary_conditions_valid(boundary_conditions)
+
 
     index_grid_array = zeros(Int64, lp+4)
 

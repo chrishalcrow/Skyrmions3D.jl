@@ -265,6 +265,7 @@ function arrested_newton_flow!(
     verbose = true,
     method = "RK4"
 )
+    tolerance < 0 && @warn "Tolerance is negative"
 
     if tolerance == 0 && checks > steps
         checks = steps
