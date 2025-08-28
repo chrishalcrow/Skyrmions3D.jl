@@ -6,10 +6,14 @@ using Makie, CairoMakie, Requires, Meshing, GeometryBasics, Colors
 # Functionality
 using StaticArrays, LinearAlgebra, Interpolations
 
+# Save/load
+using TOML, HDF5
+
 export Skyrmion,
     get_grid, get_field, set_mpi!, set_lattice!, set_Fpi!, set_ee!, set_physical!
 export set_periodic!, set_dirichlet!, set_neumann!, set_bounary_conditions!
 export check_if_normalised, normer!, normer
+export save_skyrmion, load_skyrmion
 
 include("transform.jl")
 export translate_sk, translate_sk!, isorotate_sk, isorotate_sk!, rotate_sk!, rotate_sk
@@ -103,6 +107,96 @@ Skyrmion(
     false,
 )
 
+function save_skyrmion(skyrmion, folder; overwrite = false)
+
+    if (overwrite == false) & isdir(folder)
+        @warn "Folder already exists. To overwrite pass `overwrite = true` to the save funciton."
+        return
+    end
+
+    # Be careful when deleting - only delete a folder that looks like a Skyrmions3D output
+    if overwrite == true
+        rm(joinpath(folder, "metadata.toml"))
+        rm(joinpath(folder, "pion_field.h5"))
+        rm(folder, recursive = false)
+    end
+
+    mkdir(folder)
+
+    grid_metadata = Dict(
+        "lp" => skyrmion.grid.lp,
+        "ls" => skyrmion.grid.ls,
+        "boundary_conditions" => skyrmion.grid.boundary_conditions,
+    )
+
+    skyrmion_metadata = Dict(
+        "grid" => grid_metadata,
+        "Fpi" => skyrmion.Fpi,
+        "ee" => skyrmion.ee,
+        "mpi" => skyrmion.mpi,
+        "physical" => skyrmion.physical,
+    )
+
+    open(joinpath(folder, "metadata.toml"), "w") do io
+        TOML.print(io, skyrmion_metadata)
+    end
+
+    h5open(joinpath(folder, "pion_field.h5"), "w") do file
+        dataset = create_dataset(
+            file,
+            "pion_field",
+            datatype(eltype(skyrmion.pion_field)),
+            dataspace(size(skyrmion.pion_field)),
+            compress = 6,
+            chunk = (size(skyrmion.pion_field)[1], size(skyrmion.pion_field)[2], 1, 1),
+        )
+        write(dataset, skyrmion.pion_field)
+    end
+
+end
+
+
+function load_skyrmion(folder)
+
+    metadata_path = joinpath(folder, "metadata.toml")
+
+    if isfile(metadata_path) == false
+        @warn "No `metadata.toml` file in `folder`. Cannot load."
+        return
+    end
+
+    metadata = nothing
+    open(joinpath(folder, "metadata.toml"), "r") do io
+        metadata = TOML.parse(io)
+    end
+
+    lp = metadata["grid"]["lp"]
+    ls = metadata["grid"]["ls"]
+    boundary_conditions = metadata["grid"]["boundary_conditions"]
+
+    mpi = metadata["mpi"]
+    ee = metadata["ee"]
+    Fpi = metadata["Fpi"]
+    physical = metadata["physical"]
+
+    loaded_skyrmion = Skyrmion(
+        lp,
+        ls,
+        boundary_conditions = boundary_conditions,
+        mpi = mpi,
+        ee = ee,
+        Fpi = Fpi,
+    )
+
+    set_physical!(loaded_skyrmion, physical)
+
+    pion_field = h5read(joinpath(folder, "pion_field.h5"), "pion_field")
+    loaded_skyrmion.pion_field = pion_field
+
+    return loaded_skyrmion
+
+
+end
 
 """
     get_field(skyrmion)
