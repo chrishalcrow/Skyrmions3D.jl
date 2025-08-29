@@ -47,13 +47,17 @@ As such `Skyrmions3D.jl` provides a tool which lowers barriers to skyrmion resea
 *Mention (if applicable) a representative set of past or ongoing research projects using the software and recent scholarly publications enabled by it.*
 
 
-The Skyrme model is a non-linear sigma model with field $U: \mathbb{R}^3 \to \mathrm{SU}(2)$, designed such that the topolocial solitons serve as models of baryons: an element in $SU(2)$ may be considered as a unit quaternion, and the coefficients of its imaginary parts are taken to be pion field. Upon imposing a boundary condition that $\lim_{|x| \to \infty} U(x) = 1$, $U$ determines a map $S^3 \to S^3$ and the integer which determines the homotopy class of that map in $\pi_3(S^3) \cong \mathbb{Z}$ is to be interpreted as the baryon number. The skyrmions are the fields which minimise the Skyrme energy 
+The Skyrme model is a non-linear sigma model with field $U: \mathbb{R}^3 \to \mathrm{SU}(2)$, designed such that the topolocial solitons serve as models of baryons: an element in $SU(2)$ may be considered as a unit quaternion, and the coefficients of its imaginary parts are taken to be pion fields. Upon imposing a boundary condition that $\lim_{|x| \to \infty} U(x) = 1$, $U$ determines a map $S^3 \to S^3$ and the integer which determines the homotopy class of that map in $\pi_3(S^3) \cong \mathbb{Z}$ is to be interpreted as the baryon number. The skyrmions are the fields which minimise the Skyrme energy 
 $$
-E = \int_{\mathbb{R}^3} \left ( \left \lvert U^{-1} dU \right \rvert^2 + \left \lvert U^{-1} dU \wedge U^{-1} dU \right\rvert^2 \right) d^3 x
+\begin{align}
+E = \int_{\mathbb{R}^3} \left \lbrace &-\frac{F_\pi^2}{16}\mathrm{Tr} \left ( R_i R_i \right ) \right . \\
+& \left . - \frac{1}{32e^2} \mathrm{Tr}\left ( [R_i, R_j] [R_i, R_j] \right)  \right. \\
+& \left. + m_\pi^2 \mathrm{Tr}(1-U) \right \rbrace d^3 x,
+\end{align}
 $$
-in each homotopy class. It is known that for a skyrmion of baryon number $B \geq 0$, the energy is bounded below by $12 \pi^2 B$, though this bound is not attained for $B \geq 1$ [@Manton1987]. 
+in each homotopy class. Here $R_i = (\partial_i U) U^{-1}$, while scales $F_\pi$, $e$, and $m_\pi$ correspond to the pion decay constant, Skyrme parameter, and tree-level pion mass repsectivey. The first two of these may be removed using energy units $\frac{F_\pi}{4e}$ and length units $\frac{2}{e F_\pi}$ (so-called Skyrme units). It is known that for a skyrmion of baryon number $B \geq 0$, the energy in skyrme units with $m_\pi=0$ is bounded below by $12 \pi^2 B$, though this bound is not attained for $B \geq 1$ [@Manton1987]. 
 
-The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model accurately predict the observed properties of baryons when scales $F_\pi$, $e$, and $m_\pi$ (corresponding to the pion decay constant, Skyrme parameter, and tree-level pion mass repsectivey, determined via experiment [@Adkins1983]) are introduced. As a result, there is hope that studying the skyrme model (and simple modifications thereof) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004, @Manton2022]. 
+The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model accurately predict the observed properties of baryons when $F_\pi$, $e$ and $m_\pi$ are determined via experiment [@Adkins1983]. As a result, there is hope that studying the skyrme model (and simple modifications thereof) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004, @Manton2022]. 
 
 `Skyrmions3D.jl` implements a structure in Julia to describe numerically a skyrmion. It has
  - the discrete grid $(x_i, y_j, z_k)$ of spatial values at which the Skyrme field will be given, 
