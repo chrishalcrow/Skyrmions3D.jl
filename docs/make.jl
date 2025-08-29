@@ -1,4 +1,9 @@
-using Documenter, Skyrmions3D
+using Documenter, Skyrmions3D, DocumenterCitations
+
+bib = CitationBibliography(
+    joinpath(@__DIR__, "../paper/paper.bib");
+    style=:numeric
+)
 
 makedocs(
     modules = [Skyrmions3D],
@@ -15,9 +20,11 @@ makedocs(
         "API" => "api.md",
         "Citations" => "citations.md",
         "Contribute" => "contributing.md",
+        "References" => "references.md",
     ],
     repo = Documenter.Remotes.GitHub("chrishalcrow", "Skyrmions3D.jl"),
-    checkdocs=:exports,
+    checkdocs=:exports;
+    plugins=[bib]
 )
 
 deploydocs(; repo = "github.com/chrishalcrow/Skyrmions3D.jl")

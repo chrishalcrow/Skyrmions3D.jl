@@ -56,8 +56,11 @@ Create a vacuum skyrme field with `lp` lattice points and `ls` lattice spacing.
 - `vac = [0.0, 0.0, 0.0, 1.0]`: the value the vacuum pion field takes
 - `boundary_conditions = "dirichlet"`: the boundary conditions for the pion field
 
-The default values of `Fpi` and `ee` are taken to [roughly approximate experimental values](https://doi.org/10.1016/0550-3213(83)90559-X).
+The default values of `Fpi` and `ee` are taken to roughly approximate experimental values [Adkins1983](@cite).
 
+# References
+
+* [Adkins1983](@cite) Adkins et al. Nuclear Physics B 228, 552–566 (1983).
 """
 mutable struct Skyrmion
     pion_field::Array{Float64,4}
@@ -263,11 +266,15 @@ end
 """
     set_physical!(skyrmion, is_physical; Fpi = Fpi, ee = ee)
 
-Sets `skyrmion` to use physical units (as opposed to [Skyrme units](https://doi.org/10.1142/q0368)) when `is_physical` is `true`, and prints the physical units.
+Sets `skyrmion` to use physical units (as opposed to Skyrme units [Manton2022](@cite)) when `is_physical` is `true`, and prints the physical units.
 
 Also used to turn off physical units by setting `is_physical=false`.
 
-The physical energy unit is ``\\frac{F_\\pi}{4e}`` MeV and the physical length unit is ``\\frac{2\\hbar}{e F_\\pi}`` fm (where ``\\hbar \\approx 197.327`` MeV fm is the reduced Planck constant).  
+The physical energy unit is ``\\frac{F_\\pi}{4e}`` MeV and the physical length unit is ``\\frac{2\\hbar}{e F_\\pi}`` fm (where ``\\hbar \\approx 197.327`` MeV fm is the reduced Planck constant).
+
+# References
+
+* [Manton2022](@cite) Manton. _Skyrmions: a theory of nuclei_ (2022).
 
 """
 function set_physical!(
