@@ -20,6 +20,7 @@ makedocs(
         "API" => "api.md",
         "Citations" => "citations.md",
         "Contribute" => "contributing.md",
+        "References" => "references.md",
     ],
     repo = Documenter.Remotes.GitHub("chrishalcrow", "Skyrmions3D.jl"),
     checkdocs=:exports;
