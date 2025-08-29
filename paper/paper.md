@@ -51,7 +51,7 @@ The Skyrme model is a non-linear sigma model with field $U: \mathbb{R}^3 \to \ma
 $$
 E = \int_{\mathbb{R}^3} \left ( \left \lvert U^{-1} dU \right \rvert^2 + \left \lvert U^{-1} dU \wedge U^{-1} dU \right\rvert^2 \right) d^3 x
 $$
-in each homotopy class. It is known that for a skyrmion of baryon number $B$, the energy is bounded below by $12 \pi^2 B$, though this bound is not attained [@Manton1987]. 
+in each homotopy class. It is known that for a skyrmion of baryon number $B \geq 0$, the energy is bounded below by $12 \pi^2 B$, though this bound is not attained for $B \geq 1$ [@Manton1987]. 
 
 The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model accurately predict the observed properties of baryons when scales $F_\pi$, $e$, and $m_\pi$ (corresponding to the pion decay constant, Skyrme parameter, and tree-level pion mass repsectivey, determined via experiment [@Adkins1983]) are introduced. As a result, there is hope that studying the skyrme model (and simple modifications thereof) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004, @Manton2022]. 
 
@@ -61,7 +61,7 @@ The remarkable fact about the Skyrme model is that, despite its simplicity, the 
  - the physical parameters $m_\pi$, $F_\pi$, $e$, and
  - boundary conditions determing how the Skyrme field is to be treated at the edge of the grid. 
 
-Explicit formula for skyrmion fields which attain the minimal energy are not known, and so one must work with well-motivated approximations. Two common approaches to skyrmions arising from the study of other topological solitons are the rational map approximation (motivated by monopoles) and the Atiyah-Manton or ADHM approximation (motivated by instantons): both are implemented in `Skyrmions3D.jl`. In addition, `Skyrmions3D.jl` has been written in a flexible manner such that it is simple to implement new approximation within the existing framework, see for example [@Cork2025]. 
+Explicit formula for skyrmion fields which attain the minimal energy are not known. Moreover, though (local) minimisers of the energy functional are given by solutions to the Euler-Lagrange PDE, attempting to solve these using standard Julia PDE implementations (such as those from SciML) with topologically non-trivial boundary conditions is not fasible, and so one must work with well-motivated approximations where the toplogical constraints are imposed from the outset. Two common approaches to skyrmions arising from the study of other topological solitons are the rational map approximation (motivated by monopoles) and the Atiyah-Manton or ADHM approximation (motivated by instantons): both are implemented in `Skyrmions3D.jl`. In addition, `Skyrmions3D.jl` has been written in a flexible manner such that it is simple to implement new approximations within the existing framework, see for example [@Cork2025]. 
 
 Given skyrmions there are a variety of ways to manipulate them:
  - one can translate and (iso)rotate them, for example by sending $U(x)$ to $U(x-x_0)$ when translating by fixed $x_0 \in \mathbb{R}^3$, and
@@ -72,7 +72,7 @@ Comprehensive documentation for `Skyrmions3D.jl` is provided via a webpage, incl
 
 While many of the underlying numerical methods are standard applications, there are notable exceptions which warrant special attention. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for the context of skyrmions, but having wider applicability. Moreover, the ODE solved to flow an approximate skyrmion towards the (locally) minimal energy configuration is "arrested Newton flow", a modification of gradient flow common to the field of topological solitons but less widely known, see [@Battye2002, @Gudnason2020]. Finally, the colouring used in plotting of skyrmion baryon density is not merely used to provide contrast, but colours the surface using the value of the Skyrme field at that point in space via the Runge colour sphere as introduced in [@Manton2012]. 
 
-Future work on the package shall focus on allowing modification to the Skyrme action which make binding energies more realist, see for example [@Gudnason2020]. 
+Future work on the package shall focus on allowing modifications to the Skyrme action which make binding energies more realist, see for example [@Gudnason2020]. 
 
 # Acknowledgements
 *Acknowledgement of any financial support.*
