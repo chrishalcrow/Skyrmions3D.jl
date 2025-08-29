@@ -53,11 +53,15 @@ end
 
 
 """
-    Energy(skyrmion; density=false, moment=0)
+    Energy(skyrmion; density = false, moment = 0)
 
 Compute energy of `skyrmion`.
 
 Set 'density = true' to output the energy density and moment to `n` to calculate the `n`th moment of the energy density.
+
+If `skyrmion.physical` is false, then the returned value is the ``\\frac{1}{12\\pi^2}`` times the integral of the energy density, reflecting the [Fadeev bound on the energy of a 1-skyrmion](https://doi.org/10.1007/BF01238909) that ``E \\geq 12 \\pi^2``. Otherwise, the returned value is in the appropriate physical units, and including the factor of ``12 \\pi^2``. 
+
+Note that this method sums over the grid. If the grid is not sufficiently large, the computed energy will be smaller than the 'true' value. 
 
 See also [`get_energy_density!`](@ref). 
 
@@ -89,7 +93,7 @@ function Energy(sk; density = false, moment = 0)
 end
 
 """
-    get_energy_density!(density, sk; moment=0)
+    get_energy_density!(density, sk; moment = 0)
 
 Write the energy density of the skyrmion `sk` to the array `density`.
 
@@ -194,11 +198,13 @@ function engpt(dp, p4, mpi)
 end
 
 """
-    Baryon(skyrmion; density=false, moment=0, component=0)
+    Baryon(skyrmion; density = false, moment = 0, component = 0)
 
 Compute baryon number of `skyrmion`.
 
 Set 'density = true' to output the baryon density and moment to `n` to calculate the nth moment of the baryon density. Setting also component to `i` (i=1,2,3) returns the `i`th component of the density. 
+
+Note that this method sums over the grid. If the grid is not sufficiently large, the computed baryon number will be smaller than the 'true' value. 
 
 See also [`get_baryon_density!`](@ref). 
 
@@ -219,7 +225,7 @@ function Baryon(sk; density = false, moment = 0, component = 0)
 end
 
 """
-    get_baryon_density!(baryon_density, sk; moment=0, component=0)
+    get_baryon_density!(baryon_density, sk; moment = 0, component = 0)
 
 Write the baryon density of the skyrmion `sk` to the array `baryon_density`.
 
@@ -287,6 +293,8 @@ end
 
 Compute the center of mass of `skyrmion`, based on the energy density.
 
+Note that this method sums over the grid. If the Skyrme field is not sufficientl small at the boundary of the grid, the computed center of mass may not accurately reflect the 'true' expected value from how the field was initialised. 
+
 """
 function center_of_mass(sk)
 
@@ -319,11 +327,13 @@ end
 
 
 """
-    rms_baryon(skyrmion; component=0)
+    rms_baryon(skyrmion; component = 0)
 
 Compute root mean square charge radius of a skyrmion, using the baryon density.
 
 Set component to `i` (i=1,2,3) to calculate the rms radius for just the `i`th component.
+
+The returned value is given in the units determined by `skyrmion.physical`.   
 
 """
 function rms_baryon(sk; component = 0)
@@ -355,13 +365,13 @@ function sphericity(my_skyrmion)
 end
 
 """
-    compute_current(skyrmion; label="uMOI", indices=[0,0], density = false, moment=0)
+    compute_current(skyrmion; label = "uMOI", indices = [0, 0], density = false, moment = 0)
 
 Compute a variety of currents in the Skyrme model, based on a `skyrmion`. 
 
 You can calculate specific indices using e.g. `indices = [1,2]`. If `indices = [0,0]`, the function will calculate all indices. If `density = false`, the function will return the integrated densities, while `density = true` it will return the densities. 
 
-The possible currents are (currently):
+The possible currents are:
 - `uMOI`: the isospin moment of inertia.
 - `wMOI`: the mixed moment of inertia.
 - `vMOI`: the spin moment of inertia.
@@ -412,7 +422,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             if label == "uMOI"
 
-                Tiam, Lia = getTiam(p), getLka(p, dp)
+                Tiam, Lia = getTiam(p), getLia(p, dp)
 
                 for a in aindices, b in bindices
                     current_density[a, b, i, j, k] = -trace_su2_ij(Tiam, Tiam, a, b)*rm
@@ -424,7 +434,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "wMOI"
 
-                Tiam, Lia = getTiam(p), getLka(p, dp)
+                Tiam, Lia = getTiam(p), getLia(p, dp)
                 Gia = -1.0 .* getGia(Lia, xxx)
 
                 for a in aindices, b in bindices
@@ -437,7 +447,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "vMOI"
 
-                Lia = getLka(p, dp)
+                Lia = getLia(p, dp)
                 Gia = -1.0 .* getGia(Lia, xxx)
 
                 for a in aindices, b in bindices
@@ -450,7 +460,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "uAxial"
 
-                Tiam, Tiap, Lia = getTiam(p), getTiap(p), getRka(p, dp)
+                Tiam, Tiap, Lia = getTiam(p), getTiap(p), getRia(p, dp)
 
                 for a in aindices, b in bindices
                     current_density[a, b, i, j, k] = -trace_su2_ij(Tiam, Tiap, a, b)*rm
@@ -462,7 +472,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "wAxial"
 
-                Tiap, Lia = getTiap(p), getLka(p, dp)
+                Tiap, Lia = getTiap(p), getLia(p, dp)
                 Gia = -1.0 .* getGia(Lia, xxx)
 
                 for a in aindices, b in bindices
@@ -476,7 +486,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "stress"
 
-                Lia = getLka(p, dp)
+                Lia = getLia(p, dp)
 
                 for a in aindices, b in bindices
 
@@ -506,7 +516,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
             elseif label == "NoetherIso"
 
-                Lia, Tiam = getLka(p, dp), getTiam(p)
+                Lia, Tiam = getLia(p, dp), getTiam(p)
 
                 for a in aindices, b in bindices
 
@@ -520,7 +530,7 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
                 end
             elseif label == "NoetherAxial"
 
-                Lia, Tiap = getLka(p, dp), getTiap(p)
+                Lia, Tiap = getLia(p, dp), getTiap(p)
 
                 for a in aindices, b in bindices
 
@@ -567,7 +577,12 @@ function compute_current(sk; label = "NULL", indices = [0, 0], density = false, 
 
 end
 
-
+"""
+Compute G_ia where
+G_i = levicivita_{ilm} x_l L_ma for i=1,2,3
+G_i = 1/2 U^{-1} [tau_i, U]     for i=4,5,6
+tau are the Pauli spin matrices
+"""
 function getGia(Lia, x)
 
     return SMatrix{3,3,Float64,9}(
@@ -584,6 +599,11 @@ function getGia(Lia, x)
 
 end
 
+"""
+Compute Tm_{a} = i/2*U^{-1}[tau_a, U] from the pion field p.
+tau are the Pauli spin matrices
+a denotes the component of the pion field
+"""
 function getTiam(p)
 
     return SMatrix{3,3,Float64,9}(
@@ -600,6 +620,11 @@ function getTiam(p)
 
 end
 
+"""
+Compute Tp_{a} = i/2[tau_a, U]U^{-1} from the pion field p.
+tau are the Pauli spin matrices
+a denotes the component of the pion field
+"""
 function getTiap(p)
 
     return SMatrix{3,3,Float64,9}(
@@ -616,7 +641,12 @@ function getTiap(p)
 
 end
 
-function getRka(p, dp)
+"""
+Compute R_{ia} = ((d_i U)U^{-1})_a from the pion field p and its derivative dp.
+d_i denotes the spatial derivative
+a denotes the component of the pion field
+"""
+function getRia(p, dp)
 
     return SMatrix{3,3,Float64,9}(
         -(dp[1, 4]*p[1]) - dp[1, 3]*p[2] + dp[1, 2]*p[3] + dp[1, 1]*p[4],
@@ -632,7 +662,12 @@ function getRka(p, dp)
 
 end
 
-function getLka(p, dp)
+"""
+Compute L_{ia} = (U^{-1}(d_i U))_a from the pion field p and its derivative dp.
+d_i denotes the spatial derivative
+a denotes the component of the pion field
+"""
+function getLia(p, dp)
 
     return SMatrix{3,3,Float64,9}(
         -(dp[1, 4]*p[1]) + dp[1, 3]*p[2] - dp[1, 2]*p[3] + dp[1, 1]*p[4],
@@ -648,10 +683,16 @@ function getLka(p, dp)
 
 end
 
-function trace_su2_ij(Lia, Lib, i, j)
-    return -2.0*(Lia[1, i]*Lib[1, j] + Lia[2, i]*Lib[2, j] + Lia[3, i]*Lib[3, j])
+"""
+Returns the evaluation of Tr(L1_{i}L2_{j})
+"""
+function trace_su2_ij(L1, L2, i, j)
+    return -2.0*(L1[i, 1]*L2[j, 1] + L1[i, 2]*L2[j, 2] + L1[i, 3]*L2[j, 3])
 end
 
+"""
+Returns the evaluation of Tr([L1_i,L2_j][L1_k,L2_l])
+"""
 function trace_su2_ijkl(L1, L2, L3, L4, i, j, k, l)
     return -8.0*(
         L1[

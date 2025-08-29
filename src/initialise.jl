@@ -52,7 +52,7 @@ function make_RM_product!(sk, Xs)
             i_n = Xs[a][5],
             jTH = Xs[a][6],
             j_n = Xs[a][7],
-            print_things = false,
+            verbose = false,
         )
     end
 
@@ -80,7 +80,7 @@ function make_RM_product!(sk, Xs)
                 i_n = Xs[a][5],
                 jTH = Xs[a][6],
                 j_n = Xs[a][7],
-                print_things = false,
+                verbose = false,
             )
         end
 
@@ -90,31 +90,57 @@ function make_RM_product!(sk, Xs)
 end
 
 """
-    make_rational_map!(skyrmion, prof, pfn, qfn; kwargs... )
+    make_rational_map!(skyrmion, pfn, qfn, prof = nothing; kwargs...)
     
-Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials R(z) = p(z)/q(z) and the profile f(r).
+Writes a rational map skyrmion in to `skyrmion`. The rational map is given by the polynomials `pfn` and `qfn` as R(z) = p(z)/q(z), and the profile f(r) is `prof`.
 
-If no `f` is given, the function will find an OK approximation for the profile.
+If `prof` is `nothing`, the function will find an OK approximation for the profile.
 
 # Optional arguments
--  `X=[0.0,0.0,0.0]`: translate the initial skyrmion by `X`
--  `iTH = 0.0`: isorotate by initial skyrmion by `iTH`
--  `i_n = 0.0`: isorotate initial skyrmion around `i_n`
--  `jTH = 0.0`: isorotate by initial skyrmion by `jTH`
--  `j_n = 0.0`: isorotate initial skyrmion around `j_n`
+-  `baryon = nothing`: if the baryon number is not provided, it will be determined from the rational map
+-  `X = [0.0, 0.0, 0.0]`: translate the initial skyrmion by `X`
+-  `iTH = 0.0`: isorotate initial skyrmion by `iTH` about `i_n`
+-  `i_n = [0.0, 0.0, 1.0]`: axis about which to isorotate skyrmion
+-  `jTH = 0.0`: rotate initial skyrmion by `jTH` about `j_n`
+-  `j_n = [0.0, 0.0, 1.0]`: axis about which to rotate skyrmion
+-  `verbose = true`: determines whether the function will print the found baryon number (if it is not given)
 
 """
 function make_rational_map!(
     skyrmion,
     pfn,
     qfn,
-    prof;
+    prof = nothing;
+    baryon = nothing,
     X = [0.0, 0.0, 0.0],
     iTH = 0.0,
     i_n = [0.0, 0.0, 1.0],
     jTH = 0.0,
-    j_n = [0.0, 0.0, 0.0],
+    j_n = [0.0, 0.0, 1.0],
+    verbose = true,
 )
+    # If a profile function is not given choose a sensible choice
+    if isnothing(prof)
+        # If the baryon number has not been specified, deduce it from from the
+        # polynomials provided
+        if isnothing(baryon)
+            baryon1 = abs((log(pfn(10000)) - log(pfn(1)))/log(10000))
+            baryon2 = abs((log(qfn(10000)) - log(qfn(1)))/log(10000))
+            baryon = max(round(baryon1), round(baryon2))
+            if verbose
+                println(
+                    "I think your baryon number is ",
+                    baryon,
+                    ". If it is not, include '; baryon=B' in your argument.",
+                )
+            end
+        end
+        R(z) = pfn(z)/qfn(z)
+        k1, k2 = getOKprofile(1.0, baryon, getI(R), skyrmion.mpi)
+        # Need what seems like an extra line here to avoid "cannot add method
+        # to function argument" error here. 
+        prof = r -> pi/(1 - tanh(-k2*k1))*(-tanh(k2*(r - k1)) + 1.0);
+    end
 
     lp, x = skyrmion.grid.lp, skyrmion.grid.x
 
@@ -166,43 +192,6 @@ function make_rational_map!(
     if skyrmion.grid.boundary_conditions == "dirichlet"
         set_dirichlet_boudary!(skyrmion)
     end
-
-end
-
-function make_rational_map!(
-    skyrmion,
-    pfn,
-    qfn;
-    baryon = 0.0,
-    X = [0.0, 0.0, 0.0],
-    iTH = 0.0,
-    i_n = [0.0, 0.0, 1.0],
-    jTH = 0.0,
-    j_n = [0.0, 0.0, 0.0],
-    print_things = true,
-)
-
-    if baryon == 0.0
-        baryon1 = abs((log(pfn(10000)) - log(pfn(1)))/log(10000))
-        baryon2 = abs((log(qfn(10000)) - log(qfn(1)))/log(10000))
-        baryon = max(round(baryon1), round(baryon2))
-
-        if print_things == true
-            println(
-                "I think your baryon number is ",
-                baryon,
-                ". If it is not, include '; baryon=B' in your argument.",
-            )
-        end
-
-    end
-
-    R(z) = pfn(z)/qfn(z)
-    k1, k2=getOKprofile(1.0, baryon, getI(R), skyrmion.mpi)
-
-    prof(r) = pi/(1 - tanh(-k2*k1))*(-tanh(k2*(r - k1)) + 1.0);
-    make_rational_map!(skyrmion, pfn, qfn, prof; X, iTH, i_n, jTH, j_n)
-
 
 end
 
@@ -368,17 +357,14 @@ function R_from_axis_angle(th, n)
 end
 
 
-function make_ADHM!(an_ADHM_skyrmion, LM; tsteps = 42)
-    B = size(LM)[2]
-    make_ADHM!(an_ADHM_skyrmion, LM[1, 1:B], LM[2:(B+1), 1:B])
-end
-
 """
-    make_ADHM!(skyrmion, L, M; tsteps=42)
+    make_ADHM!(skyrmion, L, M = nothing; tsteps = 42)
     
 Writes an ADHM skyrmion in to `skyrmion`. The ADHM data is given by L and M. L and M should be given by `B` and `BxB` arrays of Quaternions, from the `Quaternions` package.
 
-`tsteps` determines the number of steps used to numerically compute the holonomy of the ADHM gauge field. 
+If `M` is `nothing` then it is assumed `L` is a `(B+1)xB` array containing all the ADHM data. 
+
+`tsteps` determines the number of steps used to numerically compute the holonomy of the ADHM gauge field.
 
 # Example
 ```
@@ -402,7 +388,14 @@ make_ADHM!(my_skyrmion, L, M)
 ```
 
 """
-function make_ADHM!(an_ADHM_skyrmion, L, M; tsteps = 42)
+function make_ADHM!(an_ADHM_skyrmion, L, M = nothing; tsteps = 42)
+    # If only one of L, M is provided, i.e. M is nothing, then we assume that
+    # the user has provided the combined matrix LM, and we extract the two. 
+    if isnothing(M)
+        B = size(L)[2]
+        M = L[2:(B+1), 1:B]
+        L = L[1, 1:B]
+    end 
 
     B = size(L)[1]
 
