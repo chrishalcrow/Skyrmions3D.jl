@@ -57,9 +57,9 @@ Explicit formula for skyrmion fields which attain the minimal energy are not kno
 
 There are a variety of ways one can manipulate a skyrmion:
 
-- translate, rotate and iso-rotate a skyrmion, for example by sending $U(x)$ to $U(x-x_0)$ when translating by fixed $x_0 \in \mathbb{R}^3$.
-- combine two skyrmions via the product ansatz.
-- evolve a skyrmion using a gradient flow, deforming it into a true energy minimiser.
+- Translate, rotate and iso-rotate a skyrmion, for example by sending $U(x)$ to $U(x-x_0)$ when translating by fixed $x_0 \in \mathbb{R}^3$.
+- Combine two skyrmions via the product ansatz.
+- Evolve a skyrmion using a gradient flow, deforming it into a true energy minimiser.
 
 There are a variety of properties of skyrmions which one may naturally wish to compute, such as the total energy. `Skyrmions3D.jl` has the ability to compute a large number of such properties which are commonly used. It also supports plotting via `Makie`. Furthermore, the ability to export skyrmion fields is supported by saving the pion field in HDF5 format, meaning it is easy to share skyrmions between collaborators.
 
