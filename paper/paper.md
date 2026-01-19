@@ -47,11 +47,12 @@ in each homotopy class. Here $R_i = (\partial_i U) U^{-1}$, while constants $F_\
 
 The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model qualitatively predict the observed properties of baryons when $F_\pi$, $e$ and $m_\pi$ are determined via experiment [@Adkins1983]. As a result, there is hope that studying the skyrme model (and simple modifications) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004], [@Manton2022]. 
 
-`Skyrmions3D.jl` implements a structure in Julia to describe numerically a skyrmion, containing four key data.
-- The discrete grid $(x_i, y_j, z_k)$ of spatial values at which the Skyrme field will be given.
-- The pion field value at the points in the spatial grid.
-- The physical parameters $m_\pi$, $F_\pi$, $e$.
-- Boundary conditions determing how the Skyrme field is to be treated at the edge of the grid. 
+`Skyrmions3D.jl` implements a structure in Julia to describe numerically a skyrmion. It has
+ 
+- the discrete grid $(x_i, y_j, z_k)$ of spatial values at which the Skyrme field will be given, 
+- the pion field value at the points in the spatial grid, 
+- the physical parameters $m_\pi$, $F_\pi$, $e$, and
+- boundary conditions determing how the Skyrme field is to be treated at the edge of the grid. 
 
 Explicit formula for skyrmion fields which attain the minimal energy are not known. Moreover, though (local) minimisers of the energy functional are given by solutions to the Euler-Lagrange PDE, attempting to solve these using standard Julia PDE implementations (such as those from SciML) with topologically non-trivial boundary conditions is not feasible. Hence one generally starts with well-motivated approximations where the toplogical constraints are imposed from the outset, then either study these approximations or use them as initial data which can be flowed to a true minimum. Two common approaches to skyrmions arising from the study of other topological solitons are the rational map approximation (motivated by monopoles) and the Atiyah-Manton or ADHM approximation (motivated by instantons): both are implemented in `Skyrmions3D.jl`. In addition, `Skyrmions3D.jl` has been written in a flexible manner such that it is simple to implement new approximations within the existing framework, see for example [@Cork2025]. 
 
