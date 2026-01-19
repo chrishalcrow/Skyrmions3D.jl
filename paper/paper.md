@@ -20,7 +20,7 @@ affiliations:
    index: 1
  - name: University of Leeds, United Kingdom
    index: 2
-date: 23 September 2025
+date: 19 January 2026
 bibliography: paper.bib
 ---
 
@@ -55,19 +55,39 @@ The remarkable fact about the Skyrme model is that, despite its simplicity, the 
 
 Explicit formula for skyrmion fields which attain the minimal energy are not known. Moreover, though (local) minimisers of the energy functional are given by solutions to the Euler-Lagrange PDE, attempting to solve these using standard Julia PDE implementations (such as those from SciML) with topologically non-trivial boundary conditions is not feasible. Hence one generally starts with well-motivated approximations where the toplogical constraints are imposed from the outset, then either study these approximations or use them as initial data which can be flowed to a true minimum. Two common approaches to skyrmions arising from the study of other topological solitons are the rational map approximation (motivated by monopoles) and the Atiyah-Manton or ADHM approximation (motivated by instantons): both are implemented in `Skyrmions3D.jl`. In addition, `Skyrmions3D.jl` has been written in a flexible manner such that it is simple to implement new approximations within the existing framework, see for example [@Cork2025]. 
 
-There are a variety of ways one can manipulate a skyrmion:
+There are a variety of ways one can manipulate a skyrmion implemented in `Skyrmions3D.jl`.
 
 - Translate, rotate and iso-rotate a skyrmion, for example by sending $U(x)$ to $U(x-x_0)$ when translating by fixed $x_0 \in \mathbb{R}^3$.
 - Combine two skyrmions via the product ansatz.
 - Evolve a skyrmion using a gradient flow, deforming it into a true energy minimiser.
 
-There are a variety of properties of skyrmions which one may naturally wish to compute, such as the total energy. `Skyrmions3D.jl` has the ability to compute a large number of such properties which are commonly used. It also supports plotting via `Makie`. Furthermore, the ability to export skyrmion fields is supported by saving the pion field in HDF5 format, meaning it is easy to share skyrmions between collaborators.
+Moreover there are many properties of skyrmions which one may naturally wish to compute, such as the total energy. `Skyrmions3D.jl` has the ability to compute a large number of such properties which are commonly used. It also supports plotting via `Makie`. Furthermore, the ability to export skyrmion fields is supported by saving the pion field in HDF5 format, meaning it is easy to share skyrmions between collaborators.
 
-Comprehensive documentation for `Skyrmions3D.jl` is provided via a webpage, including an API, examples of how to use key features, and guidance on requesting features or raising bug reports. In addition, this webpage provides a list of known publications which have used and cited `Skyrmions3D.jl`. The package also has a comprehensive unit-test suite.
+Comprehensive documentation for `Skyrmions3D.jl` is provided via a webpage, including an API, examples of how to use key features, and guidance on requesting features or raising bug reports. The package also has a comprehensive unit-test suite.
 
-While many of the underlying numerical methods are standard applications, there are notable exceptions which warrant special attention. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for the context of skyrmions, but has wider applicability. Moreover, the ODE solved to flow an approximate skyrmion towards the (locally) minimal energy configuration is "arrested Newton flow", a modification of gradient flow common to the field of topological solitons but less widely known, see [@Battye2002], [@Gudnason2020]. The colouring used in plotting of skyrmion baryon density represents the dominant Skyrme field at that point in space, via the Runge colour sphere as introduced in [@Manton2012]. 
+# Software design
 
-Future work on the package will focus on responding to the needs of the community. This may involve implementing new approximations for Skyrme fields, and by allowing for modifications of the standard Skyrme model. 
+Julia was chosen for the implementation due to its balance between speed of execution, required especially for the computation of high-dimensional numerical integrals, and accessibility, both in terms of simplicity of coding and reproducibility of scientific results. As an example of the latter, there exist many helpful Julia packages such as `Pkg.jl` and `Documenter.jl` which ease the process of creating high-quality packages with simple reproducible installation instructions and clear documentation; both of these examples were used in the creation of `Skyrmions3D.jl`. That this decision has been successful is evidenced by the fact that papers implementing code within the `Skyrmions3D.jl` framework are already appearing [@Cork2025]. 
+
+By having the skyrmion structure implemented retain the information of the underlying spatial grid, pion field at all these points, as well as additional parameters, a single instance of a skyrmion often takes up a large amount of memory. This trade-off was accepted in order to allow the implementation of the saving and loading procedure of skymrions, a functionality which bolsters the reproducibilty of any scientific experiments performed with `Skyrmions3D.jl`. Additional steps were taken in the design of the package to boost its stability, such as the removal of interactive plotting functionality, which commonly interfered with other package depdencies.
+
+The underlying code was deliberately modularised to support future development, as it is known that modularity makes code easier to read, test, and refactor in later instances. 
+
+# State of the field
+
+As previously written in the statement of need, there are no current alternatives to `Skyrmions3D.jl`, and this gives the software a unique relevance for researchers working on three dimensional skyrmions.
+
+Moreover, while many of the underlying numerical methods in `Skyrmions3D.jl` are standard applications, there are notable exceptions which warrant special attention due to their wider significance for the topological solitions and differential geometry communities. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for the context of skyrmions, but which has wider applicability. Moreover, the ODE solved to flow an approximate skyrmion towards the (locally) minimal energy configuration is "arrested Newton flow", a modification of gradient flow common to the field of topological solitons but less widely known, see [@Battye2002], [@Gudnason2020]. The colouring used in plotting of skyrmion baryon density represents the dominant Skyrme field at that point in space, via the Runge colour sphere as introduced in [@Manton2012]. 
+
+Future work on the package will focus on responding to the needs of the community. This may involve implementing new approximations for Skyrme fields, and by allowing for modifications of the standard Skyrme model. This further emphasizes the need to reproducible and refactorable code stated earlier. 
+
+# Research Impact Statement
+
+`Skyrmions3D.jl` is already having a tangible impact on the research of skyrmions, with a growing list of publications citing the package tracked in the software documentation. Moreover, the package has spurred future development with researchers independent of the core contributors creating forks of the code, and with new skyrmion software integrating `Skyrmions3D.jl` for its core functionality [@Cork2025]. 
+
+# AI usage disclosure
+
+No generative AI tools were used in the development of this software, the writing of this manuscript, or the preparation of supporting materials. 
 
 # Acknowledgements
 
