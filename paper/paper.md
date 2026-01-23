@@ -47,7 +47,7 @@ in each homotopy class. Here $R_i = (\partial_i U) U^{-1}$, while constants $F_\
 
 The remarkable fact about the Skyrme model is that, despite its simplicity, the scattering and energy levels of skyrmions within the model qualitatively predict the observed properties of baryons when $F_\pi$, $e$ and $m_\pi$ are determined via experiment [@Adkins1983]. As a result, there is hope that studying the skyrme model (and simple modifications) can shed light into the theory of nuclei. For a comprehensive background on skyrmions and the surrounding literature see [@Manton2004], [@Manton2022]. 
 
-`Skyrmions3D.jl` implements a structure in Julia to describe numerically a skyrmion. It has
+`Skyrmions3D.jl` implements a structure in Julia to describe numerically a skyrmion. It contains
  
 - the discrete grid $(x_i, y_j, z_k)$ of spatial values at which the Skyrme field will be given, 
 - the pion field value at the points in the spatial grid, 
@@ -70,13 +70,13 @@ Comprehensive documentation for `Skyrmions3D.jl` is provided via a webpage, incl
 
 Julia was chosen for the implementation due to its balance between speed of execution, required especially for the computation of high-dimensional numerical integrals, and accessibility, both in terms of simplicity of coding and reproducibility of scientific results. As an example of the latter, there exist many helpful Julia packages such as `Pkg.jl` and `Documenter.jl` which ease the process of creating high-quality packages with simple reproducible installation instructions and clear documentation; both of these examples were used in the creation of `Skyrmions3D.jl`. That this decision has been successful is evidenced by the fact that papers implementing code within the `Skyrmions3D.jl` framework are already appearing [@Cork2025]. 
 
-The implementation of the skyrmion structure in `Skyrmions3D.jl` retains the information of the underlying spatial grid, the pion field at these points, and several additional parameters; thus a single instance of a skyrmion often takes up a large amount of memory. This trade-off was accepted in order to allow the implementation of the saving and loading procedure of skymrions, a functionality which bolsters the reproducibilty of any scientific experiments performed with `Skyrmions3D.jl`. Additional steps were taken in the design of the package to boost its stability, such as the removal of interactive plotting functionality, which commonly interfered with other package depdencies.
+The implementation of the skyrmion structure in `Skyrmions3D.jl` retains the information of the underlying spatial grid, the pion field at these points, and several additional parameters; thus a single instance of a skyrmion often takes up a large amount of memory. This was a deliberate decision both to make the package more object-oriented, reducing the likelihood of errors by tying the computation of skyrmion properites which depend on parameter to the single structure, and to allow the implementation of the saving and loading procedure of skyrmions, a functionality which bolsters the reproducibility of any scientific experiments performed with `Skyrmions3D.jl`. Additional steps were taken in the design of the package to boost its stability, such as the removal of interactive plotting functionality, which commonly interfered with other package dependencies.
 
 The underlying code was deliberately modularised to support future development, as it is known that modularity makes code easier to read, test, and refactor in later instances. 
 
 # State of the field
 
-As previously written in the statement of need, there are no current alternatives to `Skyrmions3D.jl`, and this gives the software a unique relevance for researchers working on three dimensional skyrmions.
+There are no current alternatives to `Skyrmions3D.jl`, and this gives the software a unique relevance for researchers working on three dimensional skyrmions.
 
 Moreover, while many of the underlying numerical methods in `Skyrmions3D.jl` are standard applications, there are notable exceptions which warrant special attention due to their wider significance for the topological solitons and differential geometry communities. The method used to approximate the holonomy of the instanton gauge field necessary for the Atiyah-Manton approximation is the only known implementation of [@Harland2023], developed specifically for the context of skyrmions, but which has wider applicability. Moreover, the ODE solved to flow an approximate skyrmion towards the (locally) minimal energy configuration is "arrested Newton flow", a modification of gradient flow common to the field of topological solitons but less widely known, see [@Battye2002], [@Gudnason2020]. The colouring used in plotting of skyrmion baryon density represents the dominant Skyrme field at that point in space, via the Runge colour sphere as introduced in [@Manton2012]. 
 
