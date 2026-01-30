@@ -1,4 +1,4 @@
-# Properties
+# [Properties](@id tut/props)
 
 A skyrmion has many properties.
 In general, `Skyrmions3D` allows you to compute the integrand or integral of the property in question.
