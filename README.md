@@ -1,9 +1,8 @@
 # Skyrmions3D
 
 
-[![Build Status](https://app.travis-ci.com/chrishalcrow/Skyrmions3D.jl.svg?branch=main)](https://app.travis-ci.com/chrishalcrow/Skyrmions3D.jl)
-<!--- [![Build status](https://ci.appveyor.com/api/projects/status/2c982gbnj27dxb96?svg=true)](https://ci.appveyor.com/project/chrishalcrow/skyrmions3d-jl) -->
-[![Coverage Status](https://coveralls.io/repos/github/chrishalcrow/Skyrmions3D.jl/badge.svg?branch=)](https://coveralls.io/github/chrishalcrow/Skyrmions3D.jl?branch=)
+<!--[![Build](url_build_status_badge)](url_build_status)-->
+<!--[![Coverage](url_coverage_status_badge)](url_coverage_status)-->
 
 A package to create and visualise 3D Skyrmions in the Skyrme model.
 
