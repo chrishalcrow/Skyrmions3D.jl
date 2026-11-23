@@ -19,5 +19,5 @@ authors:
     orcid: 'https://orcid.org/0009-0001-4281-2766'
     affiliation: University of Leeds
 url: 'https://github.com/chrishalcrow/Skyrmions3D.jl'
-version: TBC
+version: 1.0.0
 date-released: TBC
