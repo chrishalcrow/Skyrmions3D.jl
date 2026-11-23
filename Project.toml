@@ -1,6 +1,6 @@
 name = "Skyrmions3D"
 uuid = "1ccad2fe-a5c3-464e-b06e-022e005d04e0"
-authors = ["Chris Halcrow"]
+authors = ["Chris Halcrow", "Linden Disney-Hogg", "Cas Chaudhuri"]
 version = "1.0.0"
 
 [deps]
